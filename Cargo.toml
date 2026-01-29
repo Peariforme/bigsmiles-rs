@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/smiles-core",
+    "crates/bigsmiles-core",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/Peariforme/bigsmiles-rs"
+authors = ["Richard Huot"]
+rust-version = "1.70"
+
+[workspace.dependencies]
+thiserror = "1"
+
+# Dev dependencies
+pretty_assertions = "1"
