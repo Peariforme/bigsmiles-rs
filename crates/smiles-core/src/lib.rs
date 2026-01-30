@@ -59,9 +59,23 @@ mod tests {
         assert_eq!(molecule.nodes().len(), 2);
         assert_eq!(molecule.bonds().len(), 1);
 
-        // Vérifier les atomes
-        assert_eq!(*molecule.nodes()[0].atom().element(), AtomSymbol::C);
-        assert_eq!(*molecule.nodes()[1].atom().element(), AtomSymbol::C);
+        // Vérifier le premier carbone (CH3-)
+        let node0 = &molecule.nodes()[0];
+        assert_eq!(*node0.atom().element(), AtomSymbol::C);
+        assert_eq!(node0.atom().charge(), 0);
+        assert_eq!(node0.atom().isotope(), None);
+        assert_eq!(node0.aromatic(), false);
+        assert_eq!(node0.class(), None);
+        assert_eq!(node0.hydrogens(), 3);
+
+        // Vérifier le deuxième carbone (-CH3)
+        let node1 = &molecule.nodes()[1];
+        assert_eq!(*node1.atom().element(), AtomSymbol::C);
+        assert_eq!(node1.atom().charge(), 0);
+        assert_eq!(node1.atom().isotope(), None);
+        assert_eq!(node1.aromatic(), false);
+        assert_eq!(node1.class(), None);
+        assert_eq!(node1.hydrogens(), 3);
 
         // Vérifier la liaison : C(0) - C(1)
         let bond = &molecule.bonds()[0];
@@ -79,17 +93,43 @@ mod tests {
         assert_eq!(molecule.nodes().len(), 3);
         assert_eq!(molecule.bonds().len(), 2);
 
-        // Vérifier les atomes
-        assert_eq!(*molecule.nodes()[0].atom().element(), AtomSymbol::C);
-        assert_eq!(*molecule.nodes()[1].atom().element(), AtomSymbol::C);
-        assert_eq!(*molecule.nodes()[2].atom().element(), AtomSymbol::O);
-        assert_eq!(molecule.nodes()[2].hydrogens(), 1);
+        // Vérifier le premier carbone (CH3-)
+        let node0 = &molecule.nodes()[0];
+        assert_eq!(*node0.atom().element(), AtomSymbol::C);
+        assert_eq!(node0.atom().charge(), 0);
+        assert_eq!(node0.atom().isotope(), None);
+        assert_eq!(node0.aromatic(), false);
+        assert_eq!(node0.class(), None);
+        assert_eq!(node0.hydrogens(), 3);
+
+        // Vérifier le deuxième carbone (-CH2-)
+        let node1 = &molecule.nodes()[1];
+        assert_eq!(*node1.atom().element(), AtomSymbol::C);
+        assert_eq!(node1.atom().charge(), 0);
+        assert_eq!(node1.atom().isotope(), None);
+        assert_eq!(node1.aromatic(), false);
+        assert_eq!(node1.class(), None);
+        assert_eq!(node1.hydrogens(), 2);
+
+        // Vérifier l'oxygène (-OH)
+        let node2 = &molecule.nodes()[2];
+        assert_eq!(*node2.atom().element(), AtomSymbol::O);
+        assert_eq!(node2.atom().charge(), 0);
+        assert_eq!(node2.atom().isotope(), None);
+        assert_eq!(node2.aromatic(), false);
+        assert_eq!(node2.class(), None);
+        assert_eq!(node2.hydrogens(), 1);
 
         // Vérifier les liaisons : C(0) - C(1) - O(2)
-        assert_eq!(molecule.bonds()[0].source(), 0);
-        assert_eq!(molecule.bonds()[0].target(), 1);
-        assert_eq!(molecule.bonds()[1].source(), 1);
-        assert_eq!(molecule.bonds()[1].target(), 2);
+        let bond0 = &molecule.bonds()[0];
+        assert_eq!(*bond0.kind(), BondType::Simple);
+        assert_eq!(bond0.source(), 0);
+        assert_eq!(bond0.target(), 1);
+
+        let bond1 = &molecule.bonds()[1];
+        assert_eq!(*bond1.kind(), BondType::Simple);
+        assert_eq!(bond1.source(), 1);
+        assert_eq!(bond1.target(), 2);
     }
 
     #[test]
@@ -97,9 +137,33 @@ mod tests {
         // CCl = chlorométhane : teste les atomes à 2 lettres
         let molecule = parse("CCl").expect("Failed to parse chloromethane");
 
+        // Vérifier le nombre de nodes et bonds
         assert_eq!(molecule.nodes().len(), 2);
-        assert_eq!(*molecule.nodes()[0].atom().element(), AtomSymbol::C);
-        assert_eq!(*molecule.nodes()[1].atom().element(), AtomSymbol::Cl);
+        assert_eq!(molecule.bonds().len(), 1);
+
+        // Vérifier le carbone (CH3-)
+        let node0 = &molecule.nodes()[0];
+        assert_eq!(*node0.atom().element(), AtomSymbol::C);
+        assert_eq!(node0.atom().charge(), 0);
+        assert_eq!(node0.atom().isotope(), None);
+        assert_eq!(node0.aromatic(), false);
+        assert_eq!(node0.class(), None);
+        assert_eq!(node0.hydrogens(), 3);
+
+        // Vérifier le chlore (-Cl)
+        let node1 = &molecule.nodes()[1];
+        assert_eq!(*node1.atom().element(), AtomSymbol::Cl);
+        assert_eq!(node1.atom().charge(), 0);
+        assert_eq!(node1.atom().isotope(), None);
+        assert_eq!(node1.aromatic(), false);
+        assert_eq!(node1.class(), None);
+        assert_eq!(node1.hydrogens(), 0);
+
+        // Vérifier la liaison : C(0) - Cl(1)
+        let bond = &molecule.bonds()[0];
+        assert_eq!(*bond.kind(), BondType::Simple);
+        assert_eq!(bond.source(), 0);
+        assert_eq!(bond.target(), 1);
     }
 
     #[test]
@@ -108,13 +172,23 @@ mod tests {
         // c1ccccc1 = benzène : 6 carbones aromatiques en cycle
         let molecule = parse("c1ccccc1").expect("Failed to parse benzene");
 
+        // Vérifier le nombre de nodes et bonds
         assert_eq!(molecule.nodes().len(), 6);
         assert_eq!(molecule.bonds().len(), 6); // cycle fermé
 
-        // Tous les atomes doivent être aromatiques
+        // Tous les atomes doivent être aromatiques avec les mêmes propriétés
         for node in molecule.nodes() {
             assert_eq!(*node.atom().element(), AtomSymbol::C);
+            assert_eq!(node.atom().charge(), 0);
+            assert_eq!(node.atom().isotope(), None);
             assert_eq!(node.aromatic(), true);
+            assert_eq!(node.class(), None);
+            assert_eq!(node.hydrogens(), 1); // chaque carbone aromatique a 1 hydrogène
+        }
+
+        // Vérifier que toutes les liaisons sont aromatiques
+        for bond in molecule.bonds() {
+            assert_eq!(*bond.kind(), BondType::Aromatic);
         }
     }
 }
