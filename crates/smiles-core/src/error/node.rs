@@ -1,33 +1,33 @@
-//! Erreurs liées aux nœuds (atomes dans le graphe moléculaire).
+//! Node-related errors (atoms in the molecular graph).
 
 use thiserror::Error;
 
 use super::AtomError;
 
-/// Erreurs pouvant survenir lors de la création ou manipulation d'un nœud.
+/// Errors that can occur when creating or manipulating a node.
 #[derive(Debug, Clone, PartialEq, Error)]
 pub enum NodeError {
-    /// Le nombre d'hydrogènes spécifié est invalide.
-    #[error("nombre d'hydrogènes invalide: {0}")]
+    /// The specified hydrogen count is invalid.
+    #[error("invalid hydrogen count: {0}")]
     InvalidHydrogen(u8),
 
-    /// Le nombre d'hydrogènes n'a pas été défini alors qu'il est requis.
-    #[error("nombre d'hydrogènes non défini")]
+    /// The hydrogen count was not defined when required.
+    #[error("undefined hydrogen count")]
     UndefinedHydrogen,
 
-    /// La classe d'atome spécifiée est invalide.
-    #[error("classe d'atome invalide: {0}")]
+    /// The specified atom class is invalid.
+    #[error("invalid atom class: {0}")]
     InvalidClass(u16),
 
-    /// L'aromaticité n'a pas été définie alors qu'elle est requise.
-    #[error("aromaticité non définie")]
+    /// Aromaticity was not defined when required.
+    #[error("undefined aromaticity")]
     UndefinedAromatic,
 
-    /// L'ordre de liaison est obligatoire pour les atomes organiques.
-    #[error("l'ordre de liaison est obligatoire pour les atomes organiques")]
+    /// Bond order is mandatory for organic atoms.
+    #[error("bond order is mandatory for organic atoms")]
     BondOrderMandatoryForOrganicAtom,
 
-    /// Erreur provenant de l'atome sous-jacent.
+    /// Error from the underlying atom.
     #[error(transparent)]
     AtomError(#[from] AtomError),
 }
@@ -40,27 +40,27 @@ mod tests {
     fn error_messages_are_descriptive() {
         assert_eq!(
             NodeError::InvalidHydrogen(10).to_string(),
-            "nombre d'hydrogènes invalide: 10"
+            "invalid hydrogen count: 10"
         );
 
         assert_eq!(
             NodeError::UndefinedHydrogen.to_string(),
-            "nombre d'hydrogènes non défini"
+            "undefined hydrogen count"
         );
 
         assert_eq!(
             NodeError::InvalidClass(65535).to_string(),
-            "classe d'atome invalide: 65535"
+            "invalid atom class: 65535"
         );
 
         assert_eq!(
             NodeError::UndefinedAromatic.to_string(),
-            "aromaticité non définie"
+            "undefined aromaticity"
         );
 
         assert_eq!(
             NodeError::BondOrderMandatoryForOrganicAtom.to_string(),
-            "l'ordre de liaison est obligatoire pour les atomes organiques"
+            "bond order is mandatory for organic atoms"
         );
     }
 
@@ -72,7 +72,7 @@ mod tests {
         assert!(matches!(node_err, NodeError::AtomError(_)));
         assert_eq!(
             node_err.to_string(),
-            "charge invalide: 20 (doit être entre -15 et +15)"
+            "invalid charge: 20 (must be between -15 and +15)"
         );
     }
 }

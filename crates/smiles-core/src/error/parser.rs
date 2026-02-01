@@ -1,57 +1,57 @@
-//! Erreurs liées au parsing SMILES.
+//! SMILES parsing errors.
 
 use thiserror::Error;
 
 use super::{MoleculeError, NodeError};
 
-/// Erreurs pouvant survenir lors du parsing d'une chaîne SMILES.
+/// Errors that can occur when parsing a SMILES string.
 #[derive(Debug, Clone, PartialEq, Error)]
 pub enum ParserError {
-    /// Fonctionnalité pas encore implémentée.
-    #[error("fonctionnalité pas encore implémentée")]
+    /// Feature not yet implemented.
+    #[error("feature not yet implemented")]
     NotYetImplemented,
 
-    /// La molécule contient trop de nœuds (maximum 65535).
-    #[error("trop de nœuds dans la molécule (maximum 65535)")]
+    /// The molecule contains too many nodes (maximum 65535).
+    #[error("too many nodes in molecule (maximum 65535)")]
     TooManyNodes,
 
-    /// Caractère inattendu dans la chaîne SMILES.
-    #[error("caractère inattendu '{0}' à la position {1}")]
+    /// Unexpected character in SMILES string.
+    #[error("unexpected character '{0}' at position {1}")]
     UnexpectedCharacter(char, usize),
 
-    /// Fin de chaîne inattendue.
-    #[error("fin de chaîne inattendue, attendu: {0}")]
+    /// Unexpected end of input.
+    #[error("unexpected end of input, expected: {0}")]
     UnexpectedEndOfInput(String),
 
-    /// Crochet fermant manquant.
-    #[error("crochet fermant ']' manquant")]
+    /// Missing closing bracket.
+    #[error("missing closing bracket ']'")]
     UnclosedBracket,
 
-    /// Parenthèse fermante manquante.
-    #[error("parenthèse fermante ')' manquante")]
+    /// Missing closing parenthesis.
+    #[error("missing closing parenthesis ')'")]
     UnclosedParenthesis,
 
-    /// Cycle non fermé.
-    #[error("cycle {0} non fermé")]
+    /// Unclosed ring.
+    #[error("unclosed ring {0}")]
     UnclosedRing(u8),
 
-    /// Types de liaison incompatibles pour la fermeture de cycle.
-    #[error("types de liaison incompatibles pour le cycle {0}")]
+    /// Mismatched bond types for ring closure.
+    #[error("mismatched bond types for ring {0}")]
     MismatchedRingBond(u8),
 
-    /// Liaison sans atome précédent.
-    #[error("liaison sans atome précédent")]
+    /// Bond without preceding atom.
+    #[error("bond without preceding atom")]
     BondWithoutPrecedingAtom,
 
-    /// Liaison sans atome suivant.
-    #[error("liaison sans atome suivant")]
+    /// Bond without following atom.
+    #[error("bond without following atom")]
     BondWithoutFollowingAtom,
 
-    /// Erreur provenant de la construction de molécule.
+    /// Error from molecule construction.
     #[error(transparent)]
     MoleculeError(#[from] MoleculeError),
 
-    /// Erreur provenant d'un nœud.
+    /// Error from a node.
     #[error(transparent)]
     NodeError(#[from] NodeError),
 }
@@ -64,52 +64,52 @@ mod tests {
     fn error_messages_are_descriptive() {
         assert_eq!(
             ParserError::NotYetImplemented.to_string(),
-            "fonctionnalité pas encore implémentée"
+            "feature not yet implemented"
         );
 
         assert_eq!(
             ParserError::TooManyNodes.to_string(),
-            "trop de nœuds dans la molécule (maximum 65535)"
+            "too many nodes in molecule (maximum 65535)"
         );
 
         assert_eq!(
             ParserError::UnexpectedCharacter('$', 5).to_string(),
-            "caractère inattendu '$' à la position 5"
+            "unexpected character '$' at position 5"
         );
 
         assert_eq!(
-            ParserError::UnexpectedEndOfInput("élément".to_string()).to_string(),
-            "fin de chaîne inattendue, attendu: élément"
+            ParserError::UnexpectedEndOfInput("element".to_string()).to_string(),
+            "unexpected end of input, expected: element"
         );
 
         assert_eq!(
             ParserError::UnclosedBracket.to_string(),
-            "crochet fermant ']' manquant"
+            "missing closing bracket ']'"
         );
 
         assert_eq!(
             ParserError::UnclosedParenthesis.to_string(),
-            "parenthèse fermante ')' manquante"
+            "missing closing parenthesis ')'"
         );
 
         assert_eq!(
             ParserError::UnclosedRing(1).to_string(),
-            "cycle 1 non fermé"
+            "unclosed ring 1"
         );
 
         assert_eq!(
             ParserError::MismatchedRingBond(2).to_string(),
-            "types de liaison incompatibles pour le cycle 2"
+            "mismatched bond types for ring 2"
         );
 
         assert_eq!(
             ParserError::BondWithoutPrecedingAtom.to_string(),
-            "liaison sans atome précédent"
+            "bond without preceding atom"
         );
 
         assert_eq!(
             ParserError::BondWithoutFollowingAtom.to_string(),
-            "liaison sans atome suivant"
+            "bond without following atom"
         );
     }
 
@@ -127,6 +127,6 @@ mod tests {
         let parser_err: ParserError = node_err.into();
 
         assert!(matches!(parser_err, ParserError::NodeError(_)));
-        assert_eq!(parser_err.to_string(), "nombre d'hydrogènes invalide: 99");
+        assert_eq!(parser_err.to_string(), "invalid hydrogen count: 99");
     }
 }

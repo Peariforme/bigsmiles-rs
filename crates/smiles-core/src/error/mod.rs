@@ -1,14 +1,14 @@
-//! Types d'erreurs pour le parser SMILES.
+//! Error types for the SMILES parser.
 //!
-//! Ce module contient tous les types d'erreurs utilisés par le parser SMILES,
-//! organisés par composant:
+//! This module contains all error types used by the SMILES parser,
+//! organized by component:
 //!
-//! - [`AtomError`] - Erreurs liées aux atomes (charge, isotope, élément)
-//! - [`NodeError`] - Erreurs liées aux nœuds (hydrogènes, classe, aromaticité)
-//! - [`MoleculeError`] - Erreurs liées à la construction de molécules
-//! - [`ParserError`] - Erreurs liées au parsing de chaînes SMILES
+//! - [`AtomError`] - Atom-related errors (charge, isotope, element)
+//! - [`NodeError`] - Node-related errors (hydrogens, class, aromaticity)
+//! - [`MoleculeError`] - Molecule construction errors
+//! - [`ParserError`] - SMILES string parsing errors
 //!
-//! # Hiérarchie des erreurs
+//! # Error hierarchy
 //!
 //! ```text
 //! ParserError
@@ -20,8 +20,8 @@
 //!     └── AtomError
 //! ```
 //!
-//! Les conversions `From` sont implémentées pour permettre l'utilisation
-//! de l'opérateur `?` à travers toute la hiérarchie.
+//! `From` conversions are implemented to allow using the `?` operator
+//! throughout the hierarchy.
 
 mod atom;
 mod molecule;
