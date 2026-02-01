@@ -1,128 +1,21 @@
 use std::str::FromStr;
 
-use crate::error::{AtomError, NodeError};
-// Atoms grammar
-#[derive(Debug, Clone, PartialEq)]
+use crate::AtomError;
+
+#[derive(Debug, Clone, PartialEq, Copy)]
+#[rustfmt::skip]
 pub enum AtomSymbol {
-    H,
-    He,
-    Li,
-    Be,
-    B,
-    C,
-    N,
-    O,
-    F,
-    Ne,
-    Na,
-    Mg,
-    Al,
-    Si,
-    P,
-    S,
-    Cl,
-    Ar,
-    K,
-    Ca,
-    Sc,
-    Ti,
-    V,
-    Cr,
-    Mn,
-    Fe,
-    Co,
-    Ni,
-    Cu,
-    Zn,
-    Ga,
-    Ge,
-    As,
-    Se,
-    Br,
-    Kr,
-    Rb,
-    Sr,
-    Y,
-    Zr,
-    Nb,
-    Mo,
-    Tc,
-    Ru,
-    Rh,
-    Pd,
-    Ag,
-    Cd,
-    In,
-    Sn,
-    Sb,
-    Te,
-    I,
-    Xe,
-    Cs,
-    Ba,
-    Lu,
-    Hf,
-    Ta,
-    W,
-    Re,
-    Os,
-    Ir,
-    Pt,
-    Au,
-    Hg,
-    Tl,
-    Pb,
-    Bi,
-    Po,
-    At,
-    Rn,
-    Fr,
-    Ra,
-    Lr,
-    Rf,
-    Db,
-    Sg,
-    Bh,
-    Hs,
-    Mt,
-    Ds,
-    Rg,
-    Cn,
-    Nh,
-    Fl,
-    Mc,
-    Lv,
-    Ts,
-    Og,
-    La,
-    Ce,
-    Pr,
-    Nd,
-    Pm,
-    Sm,
-    Eu,
-    Gd,
-    Tb,
-    Dy,
-    Ho,
-    Er,
-    Tm,
-    Yb,
-    Ac,
-    Th,
-    Pa,
-    U,
-    Np,
-    Pu,
-    Am,
-    Cm,
-    Bk,
-    Cf,
-    Es,
-    Fm,
-    Md,
-    No,
+    H, He,
+    Li, Be, Ne,
+    Na, Mg, Al, Si, Ar,
+    K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn, Ga, Ge, As, Se, Kr,
+    Rb, Sr, Y, Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd, In, Sn, Sb, Te, Xe,
+    Cs, Ba, Lu, Hf, Ta, W, Re, Os, Ir, Pt, Au, Hg, Tl, Pb, Bi, Po, At, Rn,
+    Fr, Ra, Lr, Rf, Db, Sg, Bh, Hs, Mt, Ds, Rg, Cn, Nh, Fl, Mc, Lv, Ts, Og,
+    La, Ce, Pr, Nd, Pm, Sm, Eu, Gd, Tb, Dy, Ho, Er, Tm, Yb, 
+    Ac, Th, Pa, U, Np, Pu, Am, Cm, Bk, Cf, Es, Fm, Md, No,
     Wildcard,
+    Organic(OrganicAtom)
 }
 
 impl FromStr for AtomSymbol {
@@ -134,19 +27,19 @@ impl FromStr for AtomSymbol {
             "He" => Ok(AtomSymbol::He),
             "Li" => Ok(AtomSymbol::Li),
             "Be" => Ok(AtomSymbol::Be),
-            "B" => Ok(AtomSymbol::B),
-            "C" => Ok(AtomSymbol::C),
-            "N" => Ok(AtomSymbol::N),
-            "O" => Ok(AtomSymbol::O),
-            "F" => Ok(AtomSymbol::F),
+            "B" => Ok(AtomSymbol::Organic(OrganicAtom::B)),
+            "C" => Ok(AtomSymbol::Organic(OrganicAtom::C)),
+            "N" => Ok(AtomSymbol::Organic(OrganicAtom::N)),
+            "O" => Ok(AtomSymbol::Organic(OrganicAtom::O)),
+            "F" => Ok(AtomSymbol::Organic(OrganicAtom::F)),
             "Ne" => Ok(AtomSymbol::Ne),
             "Na" => Ok(AtomSymbol::Na),
             "Mg" => Ok(AtomSymbol::Mg),
             "Al" => Ok(AtomSymbol::Al),
             "Si" => Ok(AtomSymbol::Si),
-            "P" => Ok(AtomSymbol::P),
-            "S" => Ok(AtomSymbol::S),
-            "Cl" => Ok(AtomSymbol::Cl),
+            "P" => Ok(AtomSymbol::Organic(OrganicAtom::P)),
+            "S" => Ok(AtomSymbol::Organic(OrganicAtom::S)),
+            "Cl" => Ok(AtomSymbol::Organic(OrganicAtom::Cl)),
             "Ar" => Ok(AtomSymbol::Ar),
             "K" => Ok(AtomSymbol::K),
             "Ca" => Ok(AtomSymbol::Ca),
@@ -164,7 +57,7 @@ impl FromStr for AtomSymbol {
             "Ge" => Ok(AtomSymbol::Ge),
             "As" => Ok(AtomSymbol::As),
             "Se" => Ok(AtomSymbol::Se),
-            "Br" => Ok(AtomSymbol::Br),
+            "Br" => Ok(AtomSymbol::Organic(OrganicAtom::Br)),
             "Kr" => Ok(AtomSymbol::Kr),
             "Rb" => Ok(AtomSymbol::Rb),
             "Sr" => Ok(AtomSymbol::Sr),
@@ -182,7 +75,7 @@ impl FromStr for AtomSymbol {
             "Sn" => Ok(AtomSymbol::Sn),
             "Sb" => Ok(AtomSymbol::Sb),
             "Te" => Ok(AtomSymbol::Te),
-            "I" => Ok(AtomSymbol::I),
+            "I" => Ok(AtomSymbol::Organic(OrganicAtom::I)),
             "Xe" => Ok(AtomSymbol::Xe),
             "Cs" => Ok(AtomSymbol::Cs),
             "Ba" => Ok(AtomSymbol::Ba),
@@ -254,7 +147,7 @@ impl FromStr for AtomSymbol {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum OrganicAtom {
     B,
     C,
@@ -266,7 +159,33 @@ pub enum OrganicAtom {
     Cl,
     Br,
     I,
-    Wildcard,
+}
+
+impl OrganicAtom {
+    pub fn valence(&self) -> &'static [u8] {
+        match self {
+            OrganicAtom::B => &[3],
+            OrganicAtom::C => &[4],
+            OrganicAtom::N => &[3, 5],
+            OrganicAtom::O => &[2],
+            OrganicAtom::P => &[3, 5],
+            OrganicAtom::S => &[2, 4, 6],
+            OrganicAtom::F => &[1],
+            OrganicAtom::Cl => &[1],
+            OrganicAtom::Br => &[1],
+            OrganicAtom::I => &[1],
+        }
+    }
+
+    pub fn implicit_hydrogens(&self, bond_order_sum: u8) -> u8 {
+        for v in self.valence() {
+            if *v >= bond_order_sum {
+                return *v - bond_order_sum;
+            }
+        }
+
+        0
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -298,6 +217,18 @@ impl Atom {
         })
     }
 
+    pub fn implicit_hydrogens(&self, bond_order_sum: Option<u8>) -> Result<u8, AtomError> {
+        if let AtomSymbol::Organic(organic) = self.element() {
+            Ok(organic.implicit_hydrogens(bond_order_sum.ok_or(AtomError::MissingBondOrder)?))
+        } else {
+            Ok(0)
+        }
+    }
+
+    pub fn is_organic(&self) -> bool {
+        matches!(self.element, AtomSymbol::Organic(_))
+    }
+
     pub fn element(&self) -> &AtomSymbol {
         &self.element
     }
@@ -308,119 +239,5 @@ impl Atom {
 
     pub fn isotope(&self) -> Option<u16> {
         self.isotope
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Node {
-    atom: Atom,
-    aromatic: bool,
-    hydrogens: u8,
-    class: Option<u16>, // arbitrary number to label the atom ([CH2:5])
-                        // TODO later  chirality: Chirality
-}
-
-impl Node {
-    pub fn new(
-        element: AtomSymbol,
-        charge: i8,
-        isotope: Option<u16>,
-        aromatic: bool,
-        hydrogens: u8,
-        class: Option<u16>,
-    ) -> Result<Node, NodeError> {
-        if hydrogens > 9 {
-            return Err(NodeError::InvalidHydrogen(hydrogens));
-        }
-
-        match class {
-            None => (),
-            Some(value) => {
-                if value > 999 {
-                    return Err(NodeError::InvalidClass(value));
-                }
-            }
-        }
-
-        let atom = Atom::new(element, charge, isotope)?;
-
-        Ok(Node {
-            atom,
-            aromatic,
-            hydrogens,
-            class,
-        })
-    }
-
-    pub fn atom(&self) -> &Atom {
-        &self.atom
-    }
-
-    pub fn aromatic(&self) -> bool {
-        self.aromatic
-    }
-
-    pub fn hydrogens(&self) -> u8 {
-        self.hydrogens
-    }
-
-    pub fn class(&self) -> Option<u16> {
-        self.class
-    }
-}
-
-// Bond grammar
-#[derive(Debug, Clone, PartialEq)]
-pub enum BondType {
-    Simple,
-    Double,
-    Triple,
-    Quadruple,
-    Aromatic,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Bond {
-    kind: BondType,
-    source: u16,
-    target: u16,
-}
-
-impl Bond {
-    pub fn new(kind: BondType, source: u16, target: u16) -> Bond {
-        Bond {kind, source, target }
-    }
-
-    pub fn kind(&self) -> &BondType {
-        &self.kind
-    }
-
-    pub fn source(&self) -> u16 {
-        self.source
-    }
-
-    pub fn target(&self) -> u16 {
-        self.target
-    }
-}
-
-// Smiles Result
-#[derive(Debug, Clone, PartialEq)]
-pub struct Molecule {
-    nodes: Vec<Node>,
-    bonds: Vec<Bond>,
-}
-
-impl Molecule {
-    pub fn new(nodes: Vec<Node>, bonds: Vec<Bond>) -> Molecule {
-        Molecule { nodes, bonds }
-    }
-
-    pub fn nodes(&self) -> &[Node] {
-        &self.nodes
-    }
-
-    pub fn bonds(&self) -> &[Bond] {
-        &self.bonds
     }
 }

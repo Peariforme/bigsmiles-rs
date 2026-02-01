@@ -41,7 +41,7 @@ mod tests {
 
         // Vérifier le premier atome
         let node = &molecule.nodes()[0];
-        assert_eq!(*node.atom().element(), AtomSymbol::C);
+        assert_eq!(*node.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
         assert_eq!(node.atom().charge(), 0);
         assert_eq!(node.atom().isotope(), None);
         assert_eq!(node.aromatic(), false);
@@ -61,7 +61,7 @@ mod tests {
 
         // Vérifier le premier carbone (CH3-)
         let node0 = &molecule.nodes()[0];
-        assert_eq!(*node0.atom().element(), AtomSymbol::C);
+        assert_eq!(*node0.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
         assert_eq!(node0.atom().charge(), 0);
         assert_eq!(node0.atom().isotope(), None);
         assert_eq!(node0.aromatic(), false);
@@ -70,7 +70,7 @@ mod tests {
 
         // Vérifier le deuxième carbone (-CH3)
         let node1 = &molecule.nodes()[1];
-        assert_eq!(*node1.atom().element(), AtomSymbol::C);
+        assert_eq!(*node1.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
         assert_eq!(node1.atom().charge(), 0);
         assert_eq!(node1.atom().isotope(), None);
         assert_eq!(node1.aromatic(), false);
@@ -95,7 +95,7 @@ mod tests {
 
         // Vérifier le premier carbone (CH3-)
         let node0 = &molecule.nodes()[0];
-        assert_eq!(*node0.atom().element(), AtomSymbol::C);
+        assert_eq!(*node0.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
         assert_eq!(node0.atom().charge(), 0);
         assert_eq!(node0.atom().isotope(), None);
         assert_eq!(node0.aromatic(), false);
@@ -104,7 +104,7 @@ mod tests {
 
         // Vérifier le deuxième carbone (-CH2-)
         let node1 = &molecule.nodes()[1];
-        assert_eq!(*node1.atom().element(), AtomSymbol::C);
+        assert_eq!(*node1.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
         assert_eq!(node1.atom().charge(), 0);
         assert_eq!(node1.atom().isotope(), None);
         assert_eq!(node1.aromatic(), false);
@@ -113,7 +113,7 @@ mod tests {
 
         // Vérifier l'oxygène (-OH)
         let node2 = &molecule.nodes()[2];
-        assert_eq!(*node2.atom().element(), AtomSymbol::O);
+        assert_eq!(*node2.atom().element(), AtomSymbol::Organic(OrganicAtom::O));
         assert_eq!(node2.atom().charge(), 0);
         assert_eq!(node2.atom().isotope(), None);
         assert_eq!(node2.aromatic(), false);
@@ -143,7 +143,7 @@ mod tests {
 
         // Vérifier le carbone (CH3-)
         let node0 = &molecule.nodes()[0];
-        assert_eq!(*node0.atom().element(), AtomSymbol::C);
+        assert_eq!(*node0.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
         assert_eq!(node0.atom().charge(), 0);
         assert_eq!(node0.atom().isotope(), None);
         assert_eq!(node0.aromatic(), false);
@@ -152,7 +152,7 @@ mod tests {
 
         // Vérifier le chlore (-Cl)
         let node1 = &molecule.nodes()[1];
-        assert_eq!(*node1.atom().element(), AtomSymbol::Cl);
+        assert_eq!(*node1.atom().element(), AtomSymbol::Organic(OrganicAtom::Cl));
         assert_eq!(node1.atom().charge(), 0);
         assert_eq!(node1.atom().isotope(), None);
         assert_eq!(node1.aromatic(), false);
@@ -178,7 +178,7 @@ mod tests {
 
         // Tous les atomes doivent être aromatiques avec les mêmes propriétés
         for node in molecule.nodes() {
-            assert_eq!(*node.atom().element(), AtomSymbol::C);
+            assert_eq!(*node.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
             assert_eq!(node.atom().charge(), 0);
             assert_eq!(node.atom().isotope(), None);
             assert_eq!(node.aromatic(), true);

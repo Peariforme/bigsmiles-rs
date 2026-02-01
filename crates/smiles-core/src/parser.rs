@@ -1,11 +1,9 @@
-use crate::BondType;
-use crate::ast::{AtomSymbol, Bond, Molecule, Node};
+use crate::{BondType, MoleculeBuilder, Molecule};
 use crate::error::ParserError;
-use std::str::FromStr;
+
 
 pub fn parse(input: &str) -> Result<Molecule, ParserError> {
-    let mut nodes: Vec<Node> = Vec::new();
-    let mut bonds: Vec<Bond> = Vec::new();
+    let mut builder = MoleculeBuilder::new();
 
     let mut chars = input.chars().peekable();
 
@@ -25,23 +23,23 @@ pub fn parse(input: &str) -> Result<Molecule, ParserError> {
                     }
                 }
             }
-            nodes.push(Node::new(
-                AtomSymbol::from_str(&elem)?,
+            builder.add_atom(
+                elem,
                 0,
                 None,
-                false,
-                4,
+                Some(false),
                 None,
-            )?);
+                None,
+            )?;
 
             // Si on a déja un noeud alors il faut faire un bond
-            if nodes.len() > 1 {
-                let target: u16 = (nodes.len() - 1).try_into().map_err(|_| ParserError::TooManyNodes)?;
-                bonds.push(Bond::new(
-                    BondType::Simple,
-                     target - 1, // on reconverti en index de nodes pour faciler retranscrir dans le futur
-                    target
-                ));
+            if builder.nodes().len() > 1 {
+                let target: u16 = (builder.nodes().len() - 1).try_into().map_err(|_| ParserError::TooManyNodes)?;
+                builder.add_bond(
+                    target - 1,
+                     target, // on reconverti en index de nodes pour faciler retranscrir dans le futur
+                    BondType::Simple
+                );
             }
         } else {
             return Err(ParserError::NotYetImplemented)
@@ -49,5 +47,5 @@ pub fn parse(input: &str) -> Result<Molecule, ParserError> {
         // cas 3 minuscule
     }
 
-    Ok(Molecule::new(nodes, bonds))
+    Ok(builder.build()?)
 }
