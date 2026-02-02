@@ -57,6 +57,17 @@ impl MoleculeBuilder {
         Ok(self.nodes.len() - 1)
     }
 
+    pub fn add_branch(&mut self, m: MoleculeBuilder, bond_type: BondType, source: Option<u16>) {
+        let node_count = self.nodes.len() as u16;
+        if let Some(src) = source {
+            self.add_bond( src, node_count, bond_type);
+        }
+        self.nodes.extend(m.nodes);
+        for bond in m.bonds {
+            self.add_bond(node_count + bond.source() + 1, node_count + bond.target() + 1, *bond.kind());
+        }
+    }
+
     pub fn add_bond(&mut self, source: u16, target: u16, kind: BondType) {
         self.bonds.push(Bond::new(kind, source, target));
     }

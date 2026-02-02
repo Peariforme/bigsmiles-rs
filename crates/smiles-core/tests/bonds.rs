@@ -10,7 +10,6 @@
 use smiles_core::{parse, BondType};
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_explicit_single_bond() {
     // C-C = éthane avec liaison simple explicite
     let molecule = parse("C-C").expect("Failed to parse C-C");
@@ -29,7 +28,6 @@ fn parse_explicit_single_bond() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_double_bond() {
     // C=C = éthène (éthylène) : liaison double
     let molecule = parse("C=C").expect("Failed to parse ethene");
@@ -48,7 +46,6 @@ fn parse_double_bond() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_triple_bond() {
     // C#C = éthyne (acétylène) : liaison triple
     let molecule = parse("C#C").expect("Failed to parse ethyne");
@@ -67,7 +64,6 @@ fn parse_triple_bond() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_quadruple_bond() {
     // C$C = liaison quadruple (rare, utilisé pour certains complexes métalliques)
     let molecule = parse("C$C").expect("Failed to parse quadruple bond");
@@ -86,7 +82,6 @@ fn parse_quadruple_bond() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_mixed_bonds() {
     // C=C-C#N = acrylonitrile : mélange de liaisons
     let molecule = parse("C=C-C#N").expect("Failed to parse acrylonitrile");
@@ -108,6 +103,29 @@ fn parse_mixed_bonds() {
     assert_eq!(*molecule.bonds()[2].kind(), BondType::Triple);
     assert_eq!(molecule.bonds()[2].source(), 2);
     assert_eq!(molecule.bonds()[2].target(), 3);
+}
+
+#[test]
+fn parse_explicit_then_implicit_bond() {
+    // C=CC = propene
+    let molecule = parse("C=CC").expect("Failed to parse propene");
+
+    assert_eq!(molecule.nodes().len(), 3);
+    assert_eq!(molecule.bonds().len(), 2);
+
+    // Liaison double C=C
+    assert_eq!(*molecule.bonds()[0].kind(), BondType::Double);
+    assert_eq!(molecule.bonds()[0].source(), 0);
+    assert_eq!(molecule.bonds()[0].target(), 1);
+
+    // Liaison simple C-C
+    assert_eq!(*molecule.bonds()[1].kind(), BondType::Simple);
+    assert_eq!(molecule.bonds()[1].source(), 1);
+    assert_eq!(molecule.bonds()[1].target(), 2);
+
+    assert_eq!(molecule.nodes()[0].hydrogens(), 2);
+    assert_eq!(molecule.nodes()[1].hydrogens(), 1);
+    assert_eq!(molecule.nodes()[2].hydrogens(), 3);
 }
 
 #[test]

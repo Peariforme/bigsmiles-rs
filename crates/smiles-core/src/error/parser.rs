@@ -2,7 +2,7 @@
 
 use thiserror::Error;
 
-use super::{MoleculeError, NodeError};
+use super::{MoleculeError, NodeError, BondError};
 
 /// Errors that can occur when parsing a SMILES string.
 #[derive(Debug, Clone, PartialEq, Error)]
@@ -31,6 +31,14 @@ pub enum ParserError {
     #[error("missing closing parenthesis ')'")]
     UnclosedParenthesis,
 
+    /// Missing opening parenthesis.
+    #[error("missing opening parenthesis '('")]
+    UnopenedParenthesis,
+
+    /// Empty branche
+    #[error("empty branch detected")]
+    EmptyBranch,
+
     /// Unclosed ring.
     #[error("unclosed ring {0}")]
     UnclosedRing(u8),
@@ -54,6 +62,10 @@ pub enum ParserError {
     /// Error from a node.
     #[error(transparent)]
     NodeError(#[from] NodeError),
+
+    /// Error from a bond.
+    #[error(transparent)]
+    BondError(#[from] BondError),
 }
 
 #[cfg(test)]
@@ -128,5 +140,14 @@ mod tests {
 
         assert!(matches!(parser_err, ParserError::NodeError(_)));
         assert_eq!(parser_err.to_string(), "invalid hydrogen count: 99");
+    }
+
+    #[test]
+    fn bond_error_conversion() {
+        let bond_err = super::super::BondError::UnknownBond('c');
+        let parser_err: ParserError = bond_err.into();
+
+        assert!(matches!(parser_err, ParserError::BondError(_)));
+        assert_eq!(parser_err.to_string(), "unknown bond: 'c'");
     }
 }

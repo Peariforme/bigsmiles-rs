@@ -1,3 +1,5 @@
+use crate::BondError;
+
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum BondType {
     Simple,
@@ -5,6 +7,20 @@ pub enum BondType {
     Triple,
     Quadruple,
     Aromatic,
+}
+
+impl TryFrom<&char> for BondType {
+    type Error = BondError;
+
+    fn try_from(c: &char) -> Result<Self, Self::Error> {
+        match c {
+            '-' => Ok(BondType::Simple),
+            '=' => Ok(BondType::Double),
+            '#' => Ok(BondType::Triple),
+            '$' => Ok(BondType::Quadruple),
+            _ => Err(BondError::UnknownBond(*c)),
+        }
+    }
 }
 
 impl BondType {

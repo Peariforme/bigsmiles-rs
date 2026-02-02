@@ -9,7 +9,6 @@
 use smiles_core::{parse, BondType};
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_simple_branch() {
     // CC(C)C = isobutane (2-méthylpropane)
     let molecule = parse("CC(C)C").expect("Failed to parse isobutane");
@@ -34,7 +33,6 @@ fn parse_simple_branch() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_multiple_branches() {
     // CC(C)(C)C = néopentane (2,2-diméthylpropane)
     let molecule = parse("CC(C)(C)C").expect("Failed to parse neopentane");
@@ -52,7 +50,6 @@ fn parse_multiple_branches() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_nested_branches() {
     // CC(C(C)C)C = 2,3-diméthylbutane
     let molecule = parse("CC(C(C)C)C").expect("Failed to parse 2,3-dimethylbutane");
@@ -62,7 +59,6 @@ fn parse_nested_branches() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_branch_with_double_bond() {
     // CC(=O)O = acide acétique
     let molecule = parse("CC(=O)O").expect("Failed to parse acetic acid");
@@ -79,7 +75,6 @@ fn parse_branch_with_double_bond() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_branch_with_triple_bond() {
     // CC(C#N)C = isobutyronitrile
     let molecule =
@@ -94,7 +89,6 @@ fn parse_branch_with_triple_bond() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_long_branch() {
     // C(CCCC)C = hexane avec branche longue
     let molecule = parse("C(CCCC)C").expect("Failed to parse molecule with long branch");
@@ -104,7 +98,6 @@ fn parse_long_branch() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_branch_at_start() {
     // (C)CC = propane (branche au début, équivalent à CCC)
     let molecule = parse("(C)CC").expect("Failed to parse branch at start");
@@ -114,7 +107,6 @@ fn parse_branch_at_start() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_empty_branch() {
     // C()C = devrait être équivalent à CC ou erreur selon l'implémentation
     // Selon OpenSMILES, les branches vides ne sont pas valides
