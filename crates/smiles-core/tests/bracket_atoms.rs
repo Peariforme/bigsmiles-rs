@@ -7,14 +7,13 @@
 //! - Classes/atom mapping (`[C:1]`, `[N:2]`, etc.)
 //! - Toutes les combinaisons possibles de ces attributs
 
-use smiles_core::{parse, AtomSymbol, OrganicAtom};
+use smiles_core::{AtomSymbol, MoleculeError, NodeError, OrganicAtom, ParserError, parse};
 
 // ============================================================================
 // Hydrogènes explicites
 // ============================================================================
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_no_hydrogen() {
     // [C] = carbone sans hydrogène explicite (radical)
     let molecule = parse("[C]").expect("Failed to parse [C]");
@@ -30,7 +29,6 @@ fn parse_bracket_atom_no_hydrogen() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_with_hydrogen_count() {
     // [CH4] = méthane avec hydrogènes explicites
     let molecule = parse("[CH4]").expect("Failed to parse [CH4]");
@@ -43,7 +41,6 @@ fn parse_bracket_atom_with_hydrogen_count() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_hydrogen_implicit_one() {
     // [CH] = carbone avec 1 hydrogène (H sans nombre = 1)
     let molecule = parse("[CH]").expect("Failed to parse [CH]");
@@ -53,7 +50,6 @@ fn parse_bracket_atom_hydrogen_implicit_one() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_hydrogen_variations() {
     // Tester différentes valeurs d'hydrogènes
     let test_cases = [
@@ -81,7 +77,6 @@ fn parse_bracket_hydrogen_variations() {
 // ============================================================================
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_positive_charge() {
     // [NH4+] = ion ammonium
     let molecule = parse("[NH4+]").expect("Failed to parse [NH4+]");
@@ -95,7 +90,6 @@ fn parse_bracket_atom_positive_charge() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_negative_charge() {
     // [O-] = ion oxyde
     let molecule = parse("[O-]").expect("Failed to parse [O-]");
@@ -108,7 +102,6 @@ fn parse_bracket_atom_negative_charge() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_multiple_charge_plus() {
     // [Fe++] ou [Fe+2] = ion fer(II)
     let molecule1 = parse("[Fe++]").expect("Failed to parse [Fe++]");
@@ -119,7 +112,6 @@ fn parse_bracket_atom_multiple_charge_plus() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_multiple_charge_minus() {
     // [O--] ou [O-2] = ion oxyde doublement chargé
     let molecule1 = parse("[O--]").expect("Failed to parse [O--]");
@@ -130,7 +122,6 @@ fn parse_bracket_atom_multiple_charge_minus() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_high_charge() {
     // Charges élevées (jusqu'à +/-15 selon la spécification)
     let molecule_pos = parse("[Fe+3]").expect("Failed to parse [Fe+3]");
@@ -145,7 +136,6 @@ fn parse_bracket_atom_high_charge() {
 // ============================================================================
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_isotope() {
     // [13C] = carbone-13
     let molecule = parse("[13C]").expect("Failed to parse [13C]");
@@ -158,7 +148,6 @@ fn parse_bracket_atom_isotope() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_deuterium() {
     // [2H] = deutérium
     let molecule = parse("[2H]").expect("Failed to parse [2H]");
@@ -169,7 +158,6 @@ fn parse_bracket_atom_deuterium() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_tritium() {
     // [3H] = tritium
     let molecule = parse("[3H]").expect("Failed to parse [3H]");
@@ -178,7 +166,6 @@ fn parse_bracket_atom_tritium() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_oxygen_18() {
     // [18O] = oxygène-18
     let molecule = parse("[18O]").expect("Failed to parse [18O]");
@@ -195,7 +182,6 @@ fn parse_bracket_atom_oxygen_18() {
 // ============================================================================
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_class() {
     // [C:1] = carbone avec classe 1
     let molecule = parse("[C:1]").expect("Failed to parse [C:1]");
@@ -208,7 +194,6 @@ fn parse_bracket_atom_class() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_class_variations() {
     // Tester différentes valeurs de classes
     let test_cases = [("[C:0]", 0), ("[C:1]", 1), ("[C:42]", 42), ("[C:999]", 999)];
@@ -229,7 +214,6 @@ fn parse_bracket_atom_class_variations() {
 // ============================================================================
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_hydrogen_and_charge() {
     // [NH4+] = ammonium : hydrogènes + charge
     let molecule = parse("[NH4+]").expect("Failed to parse [NH4+]");
@@ -240,7 +224,6 @@ fn parse_bracket_atom_hydrogen_and_charge() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_isotope_and_hydrogen() {
     // [13CH4] = méthane marqué au carbone-13
     let molecule = parse("[13CH4]").expect("Failed to parse [13CH4]");
@@ -251,7 +234,6 @@ fn parse_bracket_atom_isotope_and_hydrogen() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_isotope_and_charge() {
     // [13C-] = carbone-13 anionique
     let molecule = parse("[13C-]").expect("Failed to parse [13C-]");
@@ -262,7 +244,6 @@ fn parse_bracket_atom_isotope_and_charge() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_hydrogen_and_class() {
     // [CH3:1] = méthyle avec classe
     let molecule = parse("[CH3:1]").expect("Failed to parse [CH3:1]");
@@ -273,7 +254,20 @@ fn parse_bracket_atom_hydrogen_and_class() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
+fn parse_bracket_atom_out_of_range_hydrogen() {
+    let result = parse("[CH256]");
+    dbg!(&result);
+    assert!(matches!(&result, Err(ParserError::HydrogenOutOfRange(s)) if s == "256"));
+}
+
+#[test]
+fn parse_bracket_atom_too_much_hydrogen() {
+    let result = parse("[CH10]");
+    dbg!(&result);
+    assert!(matches!(&result, Err(ParserError::MoleculeError(MoleculeError::NodeError(NodeError::InvalidHydrogen(10))))));
+}
+
+#[test]
 fn parse_bracket_atom_charge_and_class() {
     // [O-:2] = oxyde avec classe
     let molecule = parse("[O-:2]").expect("Failed to parse [O-:2]");
@@ -284,7 +278,6 @@ fn parse_bracket_atom_charge_and_class() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_isotope_and_class() {
     // [13C:1] = carbone-13 avec classe
     let molecule = parse("[13C:1]").expect("Failed to parse [13C:1]");
@@ -299,7 +292,6 @@ fn parse_bracket_atom_isotope_and_class() {
 // ============================================================================
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_isotope_hydrogen_charge() {
     // [13CH3+] = méthyle cation marqué
     let molecule = parse("[13CH3+]").expect("Failed to parse [13CH3+]");
@@ -311,7 +303,6 @@ fn parse_bracket_atom_isotope_hydrogen_charge() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_isotope_hydrogen_class() {
     // [13CH4:1] = méthane marqué avec classe
     let molecule = parse("[13CH4:1]").expect("Failed to parse [13CH4:1]");
@@ -323,7 +314,6 @@ fn parse_bracket_atom_isotope_hydrogen_class() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_isotope_charge_class() {
     // [13C+:1] = carbone-13 cation avec classe
     let molecule = parse("[13C+:1]").expect("Failed to parse [13C+:1]");
@@ -335,7 +325,6 @@ fn parse_bracket_atom_isotope_charge_class() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_hydrogen_charge_class() {
     // [NH4+:1] = ammonium avec classe
     let molecule = parse("[NH4+:1]").expect("Failed to parse [NH4+:1]");
@@ -351,7 +340,6 @@ fn parse_bracket_atom_hydrogen_charge_class() {
 // ============================================================================
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_all_attributes() {
     // [13CH4+:1] = toutes les propriétés combinées
     let molecule = parse("[13CH4+:1]").expect("Failed to parse [13CH4+:1]");
@@ -365,7 +353,6 @@ fn parse_bracket_atom_all_attributes() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_atom_all_attributes_negative() {
     // [18OH-:5] = hydroxyde marqué avec classe
     let molecule = parse("[18OH-:5]").expect("Failed to parse [18OH-:5]");
@@ -383,7 +370,6 @@ fn parse_bracket_atom_all_attributes_negative() {
 // ============================================================================
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_metal() {
     // [Fe] = fer
     let molecule = parse("[Fe]").expect("Failed to parse [Fe]");
@@ -393,7 +379,6 @@ fn parse_bracket_metal() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_noble_gas() {
     // [He] = hélium
     let molecule = parse("[He]").expect("Failed to parse [He]");
@@ -402,7 +387,6 @@ fn parse_bracket_noble_gas() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_bracket_lanthanide() {
     // [La] = lanthane
     let molecule = parse("[La]").expect("Failed to parse [La]");

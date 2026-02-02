@@ -11,9 +11,7 @@ pub struct Node {
 
 impl Node {
     pub fn new(
-        element: AtomSymbol,
-        charge: i8,
-        isotope: Option<u16>,
+        atom: Atom,
         aromatic: bool,
         hydrogens: u8,
         class: Option<u16>,
@@ -30,8 +28,6 @@ impl Node {
                 }
             }
         }
-
-        let atom = Atom::new(element, charge, isotope)?;
 
         Ok(Node {
             atom,
@@ -123,11 +119,11 @@ impl NodeBuilder {
             self.set_hydrogens(self.atom.implicit_hydrogens(bond_order_sum)?);
         }
 
-        Ok(Node {
-            atom: self.atom,
-            aromatic: self.aromatic.ok_or(NodeError::UndefinedAromatic)?,
-            class: self.class,
-            hydrogens: self.hydrogens.ok_or(NodeError::UndefinedHydrogen)?
-        })
+        Ok(Node::new(
+            self.atom,
+            self.aromatic.ok_or(NodeError::UndefinedAromatic)?,
+            self.hydrogens.ok_or(NodeError::UndefinedHydrogen)?,
+            self.class,
+        )?)
     }
 }

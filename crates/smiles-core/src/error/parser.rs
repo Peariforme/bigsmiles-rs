@@ -55,6 +55,16 @@ pub enum ParserError {
     #[error("bond without following atom")]
     BondWithoutFollowingAtom,
 
+    /// Hydrogens having hydrogens count is illegal
+    #[error("hydrogens cannot have hydrogens count")]
+    HydrogenWithHydrogenCount,
+
+    #[error("charge should be between -15 and +15 {0}")]
+    ChargeOutOfRange(String),
+
+    #[error("hydrogen cannot be greater than 9 {0}")]
+    HydrogenOutOfRange(String),
+
     /// Error from molecule construction.
     #[error(transparent)]
     MoleculeError(#[from] MoleculeError),
