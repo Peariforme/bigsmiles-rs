@@ -138,7 +138,6 @@ fn parse_empty_string() {
 }
 
 #[test]
-#[ignore] // Not yet implemented - requires dangling bond validation
 fn parse_single_bond_at_start() {
     // -C should be invalid (bond without preceding atom)
     let result = parse("-C");
@@ -146,7 +145,6 @@ fn parse_single_bond_at_start() {
 }
 
 #[test]
-#[ignore] // Not yet implemented - requires dangling bond validation
 fn parse_double_bond_at_end() {
     // C= should be invalid (bond without following atom)
     let result = parse("C=");

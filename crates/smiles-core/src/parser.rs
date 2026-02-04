@@ -65,7 +65,8 @@ impl<'a> Parser<'a> {
     ) -> Result<
         (
             MoleculeBuilder,
-            Option<BondType>,
+            Option<BondType>,  // branch_bond_type
+            Option<BondType>,  // next_bond_type (for dangling bond detection)
             HashMap<u8, u16>,
             Vec<(u16, u16, BondType)>,
         ),
@@ -151,6 +152,7 @@ impl<'a> Parser<'a> {
         Ok((
             self.builder,
             self.branch_bond_type,
+            self.next_bond_type,
             self.cycles_target,
             self.deferred_ring_bonds,
         ))
@@ -194,7 +196,7 @@ impl<'a> Parser<'a> {
             branch_node_offset,
             std::mem::take(&mut self.cycles_target),
         );
-        let (branch_builder, branch_bond_type, updated_cycles, deferred_bonds) =
+        let (branch_builder, branch_bond_type, _, updated_cycles, deferred_bonds) =
             branch_parser.parse()?;
 
         // Restore the updated cycles_target
@@ -427,11 +429,24 @@ impl<'a> Parser<'a> {
 
 pub fn parse(input: &str) -> Result<Molecule, ParserError> {
     let parser = Parser::new(input);
-    let (builder, _, cycles_target, _) = parser.parse()?;
+    let (builder, branch_bond_type, next_bond_type, cycles_target, _) = parser.parse()?;
 
     // Check for unclosed rings at the top level
     if !cycles_target.is_empty() {
-        return Err(ParserError::UnclosedRing(cycles_target.into_keys().collect()));
+        return Err(ParserError::UnclosedRing(
+            cycles_target.into_keys().collect(),
+        ));
+    }
+
+    // Check for bond at start (e.g., "-C") - only invalid at top level
+    if branch_bond_type.is_some() {
+        return Err(ParserError::BondWithoutPrecedingAtom);
+    }
+
+    // Check for dangling bond at end (e.g., "C=")
+    // Note: if branch_bond_type was Some, we already returned above
+    if next_bond_type.is_some() {
+        return Err(ParserError::BondWithoutFollowingAtom);
     }
 
     Ok(builder.build()?)
