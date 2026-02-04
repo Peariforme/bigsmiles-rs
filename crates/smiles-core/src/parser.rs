@@ -13,6 +13,8 @@ struct Parser<'a> {
     next_bond_source: Option<u16>,
     branch_bond_type: Option<BondType>,
     cycles_target: HashMap<u8, u16>,
+    node_offset: u16, // Offset for global node indexing (used in branches)
+    deferred_ring_bonds: Vec<(u16, u16, BondType)>, // (main_target, local_source, bond_type)
 }
 
 impl<'a> Parser<'a> {
@@ -25,18 +27,27 @@ impl<'a> Parser<'a> {
             next_bond_source: None,
             branch_bond_type: None,
             cycles_target: HashMap::new(),
+            node_offset: 0,
+            deferred_ring_bonds: Vec::new(),
         }
     }
 
-    fn new_with_offset(input: &'a str, offset: usize) -> Self {
+    fn new_with_offset(
+        input: &'a str,
+        position_offset: usize,
+        node_offset: u16,
+        cycles_target: HashMap<u8, u16>,
+    ) -> Self {
         Parser {
             chars: input.chars().peekable(),
-            position: offset,
+            position: position_offset,
             builder: MoleculeBuilder::new(),
             next_bond_type: None,
             next_bond_source: None,
             branch_bond_type: None,
-            cycles_target: HashMap::new(),
+            cycles_target,
+            node_offset,
+            deferred_ring_bonds: Vec::new(),
         }
     }
 
@@ -49,11 +60,21 @@ impl<'a> Parser<'a> {
         self.chars.peek()
     }
 
-    fn parse(mut self) -> Result<(MoleculeBuilder, Option<BondType>), ParserError> {
+    fn parse(
+        mut self,
+    ) -> Result<
+        (
+            MoleculeBuilder,
+            Option<BondType>,
+            HashMap<u8, u16>,
+            Vec<(u16, u16, BondType)>,
+        ),
+        ParserError,
+    > {
         while let Some(c) = self.next() {
             // Atom
             if c.is_ascii_alphabetic() || c == '*' {
-                let elem = self.parse_element_symbol(c);
+                let elem = self.parse_element_symbol(c, false);
                 // Aromaticity is indicated by lowercase letters (c, n, o, etc.)
                 // Wildcard '*' outside brackets is non-aromatic by default
                 let aromatic = Some(c.is_ascii_lowercase());
@@ -70,7 +91,7 @@ impl<'a> Parser<'a> {
             // Explicit bond
             } else if c == '-' || c == '=' || c == '#' || c == '$' || c == '.' || c == ':' {
                 self.next_bond_type = Some(BondType::try_from(&c)?);
-                if self.builder.nodes().len() == 0 {
+                if self.builder.nodes().is_empty() {
                     self.branch_bond_type = self.next_bond_type;
                 }
 
@@ -101,30 +122,38 @@ impl<'a> Parser<'a> {
                 }
 
                 // If the key already exists, close the ring
-                if let Some(n) = self.cycles_target.get(&cycle_number) {
-                    self.connect_ring_closure(*n)?;
+                if let Some(target) = self.cycles_target.get(&cycle_number).copied() {
+                    let local_index = self.get_current_atom_index()?;
+
+                    // Check if the target is from a parent parser (before our node_offset)
+                    if target < self.node_offset {
+                        // Defer this bond - it connects to a node in the parent
+                        let bond_type = self.next_bond_type.take().unwrap_or(BondType::Simple);
+                        self.deferred_ring_bonds.push((target, local_index, bond_type));
+                    } else {
+                        // Target is within this parser's nodes, handle normally
+                        self.connect_ring_closure(target)?;
+                    }
                     // Remove the key so it can be reused
                     self.cycles_target.remove(&cycle_number);
                 // Otherwise, this is the start of a new ring
                 } else {
-                    self.cycles_target.insert(
-                        cycle_number,
-                        self.next_bond_source
-                            .ok_or(ParserError::UnexpectedCharacter(c, self.position))?,
-                    );
+                    let local_index = self.next_bond_source
+                        .ok_or(ParserError::UnexpectedCharacter(c, self.position))?;
+                    let global_index = self.node_offset + local_index;
+                    self.cycles_target.insert(cycle_number, global_index);
                 }
             } else {
                 return Err(ParserError::NotYetImplemented);
             }
         }
 
-        if !self.cycles_target.is_empty() {
-            return Err(ParserError::UnclosedRing(
-                self.cycles_target.into_keys().collect(),
-            ));
-        }
-
-        Ok((self.builder, self.branch_bond_type))
+        Ok((
+            self.builder,
+            self.branch_bond_type,
+            self.cycles_target,
+            self.deferred_ring_bonds,
+        ))
     }
 
     fn parse_branch(&mut self) -> Result<(), ParserError> {
@@ -151,28 +180,63 @@ impl<'a> Parser<'a> {
         if parenthesis_count < 0 {
             return Err(ParserError::UnopenedParenthesis);
         }
-        if s == "" {
+        if s.is_empty() {
             return Err(ParserError::EmptyBranch);
         }
-        let branch_parser = Parser::new_with_offset(&s, position);
-        let (branch_builder, branch_bond_type) = branch_parser.parse()?;
+
+        // Calculate the global node offset for the branch
+        let branch_node_offset = self.node_offset + self.builder.nodes().len() as u16;
+
+        // Pass cycles_target to branch so rings can span branch boundaries
+        let branch_parser = Parser::new_with_offset(
+            &s,
+            position,
+            branch_node_offset,
+            std::mem::take(&mut self.cycles_target),
+        );
+        let (branch_builder, branch_bond_type, updated_cycles, deferred_bonds) =
+            branch_parser.parse()?;
+
+        // Restore the updated cycles_target
+        self.cycles_target = updated_cycles;
+
+        // Add the branch to the main builder
         let bond_type = branch_bond_type.unwrap_or(BondType::Simple);
         self.builder
             .add_branch(branch_builder, bond_type, self.next_bond_source);
+
+        // Create deferred ring bonds (rings opened in parent, closed in branch)
+        for (main_target, branch_local_source, ring_bond_type) in deferred_bonds {
+            // branch_local_source needs to be adjusted to main molecule space
+            let main_source = branch_node_offset + branch_local_source;
+            self.builder.add_bond(main_target, main_source, ring_bond_type);
+        }
+
         if self.next_bond_source.is_none() {
             self.next_bond_source = Some(0);
         }
         Ok(())
     }
 
-    fn parse_element_symbol(&mut self, c: char) -> String {
+    /// Parse element symbol. `in_bracket` controls whether all two-letter elements
+    /// are allowed (true) or only organic subset Cl/Br (false).
+    fn parse_element_symbol(&mut self, c: char, in_bracket: bool) -> String {
         if c.is_ascii_uppercase() {
             if let Some(&next_c) = self.peek() {
                 if next_c.is_ascii_lowercase() {
                     let two_letter = format!("{}{}", c, next_c);
-                    if AtomSymbol::from_str(&two_letter).is_ok() {
-                        self.next();
-                        return two_letter;
+                    if in_bracket {
+                        // In brackets, all valid two-letter elements are allowed
+                        if AtomSymbol::from_str(&two_letter).is_ok() {
+                            self.next();
+                            return two_letter;
+                        }
+                    } else {
+                        // Outside brackets, only Cl and Br are valid two-letter elements
+                        if two_letter == "Cl" || two_letter == "Br" {
+                            self.next();
+                            return two_letter;
+                        }
                     }
                 }
             }
@@ -209,7 +273,7 @@ impl<'a> Parser<'a> {
         if !first_char.is_alphabetic() && first_char != '*' {
             return Err(ParserError::MissingElementInBracketAtom);
         }
-        elem = self.parse_element_symbol(first_char);
+        elem = self.parse_element_symbol(first_char, true);
 
         hydrogen = self.parse_hydrogen()?;
 
@@ -363,6 +427,12 @@ impl<'a> Parser<'a> {
 
 pub fn parse(input: &str) -> Result<Molecule, ParserError> {
     let parser = Parser::new(input);
-    let (builder, _) = parser.parse()?;
+    let (builder, _, cycles_target, _) = parser.parse()?;
+
+    // Check for unclosed rings at the top level
+    if !cycles_target.is_empty() {
+        return Err(ParserError::UnclosedRing(cycles_target.into_keys().collect()));
+    }
+
     Ok(builder.build()?)
 }
