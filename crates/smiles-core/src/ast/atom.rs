@@ -31,6 +31,8 @@ impl AtomSymbol {
             AtomSymbol::As => true,
             AtomSymbol::Organic(OrganicAtom::B) => true,
             AtomSymbol::Te => true,
+            // Wildcard can be part of an aromatic ring per OpenSMILES spec
+            AtomSymbol::Wildcard => true,
             _ => false,
         }
     }

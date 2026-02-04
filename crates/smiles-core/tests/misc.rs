@@ -12,7 +12,6 @@ use smiles_core::{parse, AtomSymbol};
 // ============================================================================
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_wildcard_atom() {
     // * = wildcard atom (any atom)
     let molecule = parse("*").expect("Failed to parse wildcard");
@@ -22,7 +21,6 @@ fn parse_wildcard_atom() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_wildcard_in_chain() {
     // C*C = chain with wildcard in the middle
     let molecule = parse("C*C").expect("Failed to parse C*C");
@@ -34,7 +32,6 @@ fn parse_wildcard_in_chain() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_wildcard_in_ring() {
     // C1*CC1 = ring with wildcard
     let molecule = parse("C1*CC1").expect("Failed to parse ring with wildcard");

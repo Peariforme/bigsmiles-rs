@@ -52,9 +52,11 @@ impl<'a> Parser<'a> {
     fn parse(mut self) -> Result<(MoleculeBuilder, Option<BondType>), ParserError> {
         while let Some(c) = self.next() {
             // Atom
-            if c.is_ascii_alphabetic() {
+            if c.is_ascii_alphabetic() || c == '*' {
                 let elem = self.parse_element_symbol(c);
-                let aromatic = Some(elem.to_lowercase() == elem);
+                // Aromaticity is indicated by lowercase letters (c, n, o, etc.)
+                // Wildcard '*' outside brackets is non-aromatic by default
+                let aromatic = Some(c.is_ascii_lowercase());
                 self.builder.add_atom(elem, 0, None, aromatic, None, None)?;
                 self.connect_current_atom()?;
             // Brackets Atom
@@ -204,7 +206,7 @@ impl<'a> Parser<'a> {
         let first_char = self.next().ok_or(ParserError::UnexpectedEndOfInput(
             "Element identifier".to_string(),
         ))?;
-        if !first_char.is_alphabetic() {
+        if !first_char.is_alphabetic() && first_char != '*' {
             return Err(ParserError::MissingElementInBracketAtom);
         }
         elem = self.parse_element_symbol(first_char);
