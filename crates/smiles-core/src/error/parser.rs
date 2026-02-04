@@ -15,6 +15,9 @@ pub enum ParserError {
     #[error("too many nodes in molecule (maximum 65535)")]
     TooManyNodes,
 
+    #[error("At least one node is necessary before creating a bond")]
+    NoAtomToBond,
+
     /// Unexpected character in SMILES string.
     #[error("unexpected character '{0}' at position {1}")]
     UnexpectedCharacter(char, usize),
@@ -22,6 +25,13 @@ pub enum ParserError {
     /// Unexpected end of input.
     #[error("unexpected end of input, expected: {0}")]
     UnexpectedEndOfInput(String),
+
+    /// Bracket Atom must have an element
+    #[error("brackets atom must have an element")]
+    MissingElementInBracketAtom,
+
+    #[error("charge in bracket atom must have a sign")]
+    ChargeWithoutSign,
 
     /// Missing closing bracket.
     #[error("missing closing bracket ']'")]

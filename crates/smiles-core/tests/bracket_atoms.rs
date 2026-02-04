@@ -393,3 +393,19 @@ fn parse_bracket_lanthanide() {
 
     assert_eq!(*molecule.nodes()[0].atom().element(), AtomSymbol::La);
 }
+
+// ============================================================================
+// Errors
+// ============================================================================
+
+#[test]
+fn parse_bracket_unexpected_char() {
+    // [Fe] = fer
+    match parse("[C+X]") {
+        Err(ParserError::UnexpectedCharacter(c, pos, )) => {
+            assert_eq!(c, 'X');
+            assert_eq!(pos, 4);
+        },
+        other => panic!("Expected UnexpectedCharacter, got {:?}", other)
+    }
+}

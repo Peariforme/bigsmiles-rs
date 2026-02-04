@@ -6,7 +6,7 @@
 //! - Branches imbriquées `CC(C(C)C)C`
 //! - Branches avec différents types de liaisons
 
-use smiles_core::{parse, BondType};
+use smiles_core::{parse, BondType, ParserError};
 
 #[test]
 fn parse_simple_branch() {
@@ -112,4 +112,19 @@ fn parse_empty_branch() {
     // Selon OpenSMILES, les branches vides ne sont pas valides
     let result = parse("C()C");
     assert!(result.is_err(), "Empty branches should not be allowed");
+}
+
+#[test]
+fn error_position_in_branch() {
+    // C([C+X])C - le X est un caractère invalide dans le bracket atom
+    // Position: C=1, (=2, [=3, C=4, +=5, X=6
+    // L'erreur devrait indiquer la position 6 (position absolue, pas relative à la branche)
+    match parse("C([C+X])C") {
+        Err(ParserError::UnexpectedCharacter(c, pos)) => {
+            assert_eq!(c, 'X', "Expected unexpected character 'X'");
+            assert_eq!(pos, 6, "Position should be absolute (6), not relative to branch");
+        }
+        Ok(_) => panic!("Expected error, but parsing succeeded"),
+        Err(other) => panic!("Expected UnexpectedCharacter, got {:?}", other),
+    }
 }
