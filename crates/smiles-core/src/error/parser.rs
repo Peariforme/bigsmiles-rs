@@ -50,8 +50,8 @@ pub enum ParserError {
     EmptyBranch,
 
     /// Unclosed ring.
-    #[error("unclosed ring {0}")]
-    UnclosedRing(u8),
+    #[error("unclosed ring(s): {0:?}")]
+    UnclosedRing(Vec<u8>),
 
     /// Mismatched bond types for ring closure.
     #[error("mismatched bond types for ring {0}")]
@@ -125,8 +125,8 @@ mod tests {
         );
 
         assert_eq!(
-            ParserError::UnclosedRing(1).to_string(),
-            "unclosed ring 1"
+            ParserError::UnclosedRing(vec!(1, 2, 5)).to_string(),
+            "unclosed ring(s): [1, 2, 5]"
         );
 
         assert_eq!(

@@ -1,26 +1,26 @@
-//! Tests de stœchiométrie (structures déconnectées)
+//! Stoichiometry tests (disconnected structures)
 //!
-//! Ces tests vérifient le parsing des molécules avec le séparateur `.`:
-//! - Molécules simples déconnectées `C.C`
-//! - Composés ioniques `[Na+].[Cl-]`
-//! - Mélanges complexes
+//! These tests verify the parsing of molecules with the `.` separator:
+//! - Simple disconnected molecules `C.C`
+//! - Ionic compounds `[Na+].[Cl-]`
+//! - Complex mixtures
 
 use smiles_core::{parse, AtomSymbol, OrganicAtom};
 
 #[test]
-#[ignore] // Pas encore implémenté
+#[ignore] // Not yet implemented
 fn parse_disconnected_simple() {
-    // C.C = deux molécules de méthane séparées
+    // C.C = two separate methane molecules
     let molecule = parse("C.C").expect("Failed to parse C.C");
 
     assert_eq!(molecule.nodes().len(), 2);
-    assert_eq!(molecule.bonds().len(), 0); // Pas de liaison entre les deux
+    assert_eq!(molecule.bonds().len(), 0); // No bond between the two
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
+#[ignore] // Not yet implemented
 fn parse_disconnected_ionic() {
-    // [Na+].[Cl-] = chlorure de sodium (sel)
+    // [Na+].[Cl-] = sodium chloride (salt)
     let molecule = parse("[Na+].[Cl-]").expect("Failed to parse NaCl");
 
     assert_eq!(molecule.nodes().len(), 2);
@@ -37,9 +37,9 @@ fn parse_disconnected_ionic() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
+#[ignore] // Not yet implemented
 fn parse_disconnected_multiple() {
-    // C.C.C = trois molécules de méthane
+    // C.C.C = three methane molecules
     let molecule = parse("C.C.C").expect("Failed to parse C.C.C");
 
     assert_eq!(molecule.nodes().len(), 3);
@@ -47,47 +47,47 @@ fn parse_disconnected_multiple() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
+#[ignore] // Not yet implemented
 fn parse_disconnected_complex() {
-    // CC.CC = deux molécules d'éthane
+    // CC.CC = two ethane molecules
     let molecule = parse("CC.CC").expect("Failed to parse CC.CC");
 
     assert_eq!(molecule.nodes().len(), 4);
-    assert_eq!(molecule.bonds().len(), 2); // Une liaison par molécule d'éthane
+    assert_eq!(molecule.bonds().len(), 2); // One bond per ethane molecule
 
-    // Vérifier que les liaisons sont dans les bonnes molécules
+    // Check that bonds are in the correct molecules
     let bond0 = &molecule.bonds()[0];
     let bond1 = &molecule.bonds()[1];
 
-    // Première liaison : entre atomes 0 et 1
+    // First bond: between atoms 0 and 1
     assert_eq!(bond0.source(), 0);
     assert_eq!(bond0.target(), 1);
 
-    // Deuxième liaison : entre atomes 2 et 3
+    // Second bond: between atoms 2 and 3
     assert_eq!(bond1.source(), 2);
     assert_eq!(bond1.target(), 3);
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
+#[ignore] // Not yet implemented
 fn parse_disconnected_with_branches() {
-    // CC(C)C.CC = isobutane + éthane
+    // CC(C)C.CC = isobutane + ethane
     let molecule = parse("CC(C)C.CC").expect("Failed to parse CC(C)C.CC");
 
     assert_eq!(molecule.nodes().len(), 6);
-    assert_eq!(molecule.bonds().len(), 4); // 3 pour isobutane + 1 pour éthane
+    assert_eq!(molecule.bonds().len(), 4); // 3 for isobutane + 1 for ethane
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
+#[ignore] // Not yet implemented
 fn parse_water_hydronium() {
-    // [OH2].[H+] = eau + proton (acide)
+    // [OH2].[H+] = water + proton (acid)
     let molecule = parse("[OH2].[H+]").expect("Failed to parse water + hydronium");
 
     assert_eq!(molecule.nodes().len(), 2);
     assert_eq!(molecule.bonds().len(), 0);
 
-    // Eau
+    // Water
     assert_eq!(
         *molecule.nodes()[0].atom().element(),
         AtomSymbol::Organic(OrganicAtom::O)
@@ -100,19 +100,19 @@ fn parse_water_hydronium() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
+#[ignore] // Not yet implemented
 fn parse_hydrate() {
-    // CCO.[OH2] = éthanol + eau (représentation d'un hydrate)
+    // CCO.[OH2] = ethanol + water (representation of a hydrate)
     let molecule = parse("CCO.[OH2]").expect("Failed to parse ethanol hydrate");
 
-    assert_eq!(molecule.nodes().len(), 4); // 3 pour éthanol + 1 pour eau
-    assert_eq!(molecule.bonds().len(), 2); // Seulement les liaisons de l'éthanol
+    assert_eq!(molecule.nodes().len(), 4); // 3 for ethanol + 1 for water
+    assert_eq!(molecule.bonds().len(), 2); // Only ethanol bonds
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
+#[ignore] // Not yet implemented
 fn parse_metal_complex() {
-    // [Cu+2].[O-].[O-] = oxyde de cuivre (II)
+    // [Cu+2].[O-].[O-] = copper(II) oxide
     let molecule = parse("[Cu+2].[O-].[O-]").expect("Failed to parse copper oxide");
 
     assert_eq!(molecule.nodes().len(), 3);

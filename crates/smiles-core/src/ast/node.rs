@@ -29,6 +29,10 @@ impl Node {
             }
         }
 
+        if aromatic && !atom.element().can_be_aromatic() {
+            return Err(NodeError::InvalidAromaticElement(*atom.element()));
+        }
+
         Ok(Node {
             atom,
             aromatic,

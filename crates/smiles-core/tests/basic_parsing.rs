@@ -1,22 +1,22 @@
-//! Tests de base pour le parsing SMILES
+//! Basic SMILES parsing tests
 //!
-//! Ces tests vérifient les fonctionnalités de base du parser:
-//! - Atomes simples (méthane)
-//! - Chaînes linéaires (éthane, éthanol)
-//! - Atomes à deux lettres (chlorométhane)
+//! These tests verify the basic parser functionality:
+//! - Simple atoms (methane)
+//! - Linear chains (ethane, ethanol)
+//! - Two-letter atoms (chloromethane)
 
 use smiles_core::{parse, AtomSymbol, BondType, OrganicAtom};
 
 #[test]
 fn parse_methane() {
-    // C = méthane : 1 carbone, 0 liaisons
+    // C = methane: 1 carbon, 0 bonds
     let molecule = parse("C").expect("Failed to parse methane");
 
-    // Vérifier le nombre de nodes et bonds
+    // Check node and bond count
     assert_eq!(molecule.nodes().len(), 1);
     assert_eq!(molecule.bonds().len(), 0);
 
-    // Vérifier le premier atome
+    // Check the first atom
     let node = &molecule.nodes()[0];
     assert_eq!(*node.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node.atom().charge(), 0);
@@ -28,14 +28,14 @@ fn parse_methane() {
 
 #[test]
 fn parse_ethane() {
-    // CC = éthane : 2 carbones, 1 liaison simple
+    // CC = ethane: 2 carbons, 1 simple bond
     let molecule = parse("CC").expect("Failed to parse ethane");
 
-    // Vérifier le nombre de nodes et bonds
+    // Check node and bond count
     assert_eq!(molecule.nodes().len(), 2);
     assert_eq!(molecule.bonds().len(), 1);
 
-    // Vérifier le premier carbone (CH3-)
+    // Check the first carbon (CH3-)
     let node0 = &molecule.nodes()[0];
     assert_eq!(*node0.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node0.atom().charge(), 0);
@@ -44,7 +44,7 @@ fn parse_ethane() {
     assert_eq!(node0.class(), None);
     assert_eq!(node0.hydrogens(), 3);
 
-    // Vérifier le deuxième carbone (-CH3)
+    // Check the second carbon (-CH3)
     let node1 = &molecule.nodes()[1];
     assert_eq!(*node1.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node1.atom().charge(), 0);
@@ -53,7 +53,7 @@ fn parse_ethane() {
     assert_eq!(node1.class(), None);
     assert_eq!(node1.hydrogens(), 3);
 
-    // Vérifier la liaison : C(0) - C(1)
+    // Check the bond: C(0) - C(1)
     let bond = &molecule.bonds()[0];
     assert_eq!(*bond.kind(), BondType::Simple);
     assert_eq!(bond.source(), 0);
@@ -62,14 +62,14 @@ fn parse_ethane() {
 
 #[test]
 fn parse_ethanol() {
-    // CCO = éthanol : 2 carbones + 1 oxygène, 2 liaisons simples
+    // CCO = ethanol: 2 carbons + 1 oxygen, 2 simple bonds
     let molecule = parse("CCO").expect("Failed to parse ethanol");
 
-    // Vérifier le nombre de nodes et bonds
+    // Check node and bond count
     assert_eq!(molecule.nodes().len(), 3);
     assert_eq!(molecule.bonds().len(), 2);
 
-    // Vérifier le premier carbone (CH3-)
+    // Check the first carbon (CH3-)
     let node0 = &molecule.nodes()[0];
     assert_eq!(*node0.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node0.atom().charge(), 0);
@@ -78,7 +78,7 @@ fn parse_ethanol() {
     assert_eq!(node0.class(), None);
     assert_eq!(node0.hydrogens(), 3);
 
-    // Vérifier le deuxième carbone (-CH2-)
+    // Check the second carbon (-CH2-)
     let node1 = &molecule.nodes()[1];
     assert_eq!(*node1.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node1.atom().charge(), 0);
@@ -87,7 +87,7 @@ fn parse_ethanol() {
     assert_eq!(node1.class(), None);
     assert_eq!(node1.hydrogens(), 2);
 
-    // Vérifier l'oxygène (-OH)
+    // Check the oxygen (-OH)
     let node2 = &molecule.nodes()[2];
     assert_eq!(*node2.atom().element(), AtomSymbol::Organic(OrganicAtom::O));
     assert_eq!(node2.atom().charge(), 0);
@@ -96,7 +96,7 @@ fn parse_ethanol() {
     assert_eq!(node2.class(), None);
     assert_eq!(node2.hydrogens(), 1);
 
-    // Vérifier les liaisons : C(0) - C(1) - O(2)
+    // Check the bonds: C(0) - C(1) - O(2)
     let bond0 = &molecule.bonds()[0];
     assert_eq!(*bond0.kind(), BondType::Simple);
     assert_eq!(bond0.source(), 0);
@@ -110,14 +110,14 @@ fn parse_ethanol() {
 
 #[test]
 fn parse_chloromethane() {
-    // CCl = chlorométhane : teste les atomes à 2 lettres
+    // CCl = chloromethane: tests two-letter atoms
     let molecule = parse("CCl").expect("Failed to parse chloromethane");
 
-    // Vérifier le nombre de nodes et bonds
+    // Check node and bond count
     assert_eq!(molecule.nodes().len(), 2);
     assert_eq!(molecule.bonds().len(), 1);
 
-    // Vérifier le carbone (CH3-)
+    // Check the carbon (CH3-)
     let node0 = &molecule.nodes()[0];
     assert_eq!(*node0.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node0.atom().charge(), 0);
@@ -126,7 +126,7 @@ fn parse_chloromethane() {
     assert_eq!(node0.class(), None);
     assert_eq!(node0.hydrogens(), 3);
 
-    // Vérifier le chlore (-Cl)
+    // Check the chlorine (-Cl)
     let node1 = &molecule.nodes()[1];
     assert_eq!(*node1.atom().element(), AtomSymbol::Organic(OrganicAtom::Cl));
     assert_eq!(node1.atom().charge(), 0);
@@ -135,7 +135,7 @@ fn parse_chloromethane() {
     assert_eq!(node1.class(), None);
     assert_eq!(node1.hydrogens(), 0);
 
-    // Vérifier la liaison : C(0) - Cl(1)
+    // Check the bond: C(0) - Cl(1)
     let bond = &molecule.bonds()[0];
     assert_eq!(*bond.kind(), BondType::Simple);
     assert_eq!(bond.source(), 0);

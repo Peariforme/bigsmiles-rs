@@ -1,17 +1,17 @@
-//! Tests des liaisons explicites
+//! Explicit bond tests
 //!
-//! Ces tests vérifient le parsing des différents types de liaisons:
+//! These tests verify the parsing of different bond types:
 //! - Simple (`-`)
 //! - Double (`=`)
 //! - Triple (`#`)
 //! - Quadruple (`$`)
-//! - Aromatique (`:`)
+//! - Aromatic (`:`)
 
 use smiles_core::{parse, BondType};
 
 #[test]
 fn parse_explicit_single_bond() {
-    // C-C = éthane avec liaison simple explicite
+    // C-C = ethane with explicit single bond
     let molecule = parse("C-C").expect("Failed to parse C-C");
 
     assert_eq!(molecule.nodes().len(), 2);
@@ -22,14 +22,14 @@ fn parse_explicit_single_bond() {
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 
-    // Vérifier les hydrogènes implicites (CH3-CH3)
+    // Check implicit hydrogens (CH3-CH3)
     assert_eq!(molecule.nodes()[0].hydrogens(), 3);
     assert_eq!(molecule.nodes()[1].hydrogens(), 3);
 }
 
 #[test]
 fn parse_double_bond() {
-    // C=C = éthène (éthylène) : liaison double
+    // C=C = ethene (ethylene): double bond
     let molecule = parse("C=C").expect("Failed to parse ethene");
 
     assert_eq!(molecule.nodes().len(), 2);
@@ -40,14 +40,14 @@ fn parse_double_bond() {
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 
-    // CH2=CH2 : chaque carbone a 2 hydrogènes
+    // CH2=CH2: each carbon has 2 hydrogens
     assert_eq!(molecule.nodes()[0].hydrogens(), 2);
     assert_eq!(molecule.nodes()[1].hydrogens(), 2);
 }
 
 #[test]
 fn parse_triple_bond() {
-    // C#C = éthyne (acétylène) : liaison triple
+    // C#C = ethyne (acetylene): triple bond
     let molecule = parse("C#C").expect("Failed to parse ethyne");
 
     assert_eq!(molecule.nodes().len(), 2);
@@ -58,14 +58,14 @@ fn parse_triple_bond() {
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 
-    // HC≡CH : chaque carbone a 1 hydrogène
+    // HC≡CH: each carbon has 1 hydrogen
     assert_eq!(molecule.nodes()[0].hydrogens(), 1);
     assert_eq!(molecule.nodes()[1].hydrogens(), 1);
 }
 
 #[test]
 fn parse_quadruple_bond() {
-    // C$C = liaison quadruple (rare, utilisé pour certains complexes métalliques)
+    // C$C = quadruple bond (rare, used for some metal complexes)
     let molecule = parse("C$C").expect("Failed to parse quadruple bond");
 
     assert_eq!(molecule.nodes().len(), 2);
@@ -76,30 +76,30 @@ fn parse_quadruple_bond() {
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 
-    // Pas d'hydrogènes avec une liaison quadruple
+    // No hydrogens with a quadruple bond
     assert_eq!(molecule.nodes()[0].hydrogens(), 0);
     assert_eq!(molecule.nodes()[1].hydrogens(), 0);
 }
 
 #[test]
 fn parse_mixed_bonds() {
-    // C=C-C#N = acrylonitrile : mélange de liaisons
+    // C=C-C#N = acrylonitrile: mix of bonds
     let molecule = parse("C=C-C#N").expect("Failed to parse acrylonitrile");
 
     assert_eq!(molecule.nodes().len(), 4);
     assert_eq!(molecule.bonds().len(), 3);
 
-    // Liaison double C=C
+    // Double bond C=C
     assert_eq!(*molecule.bonds()[0].kind(), BondType::Double);
     assert_eq!(molecule.bonds()[0].source(), 0);
     assert_eq!(molecule.bonds()[0].target(), 1);
 
-    // Liaison simple C-C
+    // Single bond C-C
     assert_eq!(*molecule.bonds()[1].kind(), BondType::Simple);
     assert_eq!(molecule.bonds()[1].source(), 1);
     assert_eq!(molecule.bonds()[1].target(), 2);
 
-    // Liaison triple C#N
+    // Triple bond C#N
     assert_eq!(*molecule.bonds()[2].kind(), BondType::Triple);
     assert_eq!(molecule.bonds()[2].source(), 2);
     assert_eq!(molecule.bonds()[2].target(), 3);
@@ -113,12 +113,12 @@ fn parse_explicit_then_implicit_bond() {
     assert_eq!(molecule.nodes().len(), 3);
     assert_eq!(molecule.bonds().len(), 2);
 
-    // Liaison double C=C
+    // Double bond C=C
     assert_eq!(*molecule.bonds()[0].kind(), BondType::Double);
     assert_eq!(molecule.bonds()[0].source(), 0);
     assert_eq!(molecule.bonds()[0].target(), 1);
 
-    // Liaison simple C-C
+    // Single bond C-C
     assert_eq!(*molecule.bonds()[1].kind(), BondType::Simple);
     assert_eq!(molecule.bonds()[1].source(), 1);
     assert_eq!(molecule.bonds()[1].target(), 2);
@@ -129,9 +129,8 @@ fn parse_explicit_then_implicit_bond() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_aromatic_bond() {
-    // c:c = liaison aromatique explicite
+    // c:c = explicit aromatic bond
     let molecule = parse("c:c").expect("Failed to parse aromatic bond");
 
     assert_eq!(molecule.nodes().len(), 2);
@@ -140,7 +139,7 @@ fn parse_aromatic_bond() {
     let bond = &molecule.bonds()[0];
     assert_eq!(*bond.kind(), BondType::Aromatic);
 
-    // Les deux atomes doivent être aromatiques
+    // Both atoms must be aromatic
     assert_eq!(molecule.nodes()[0].aromatic(), true);
     assert_eq!(molecule.nodes()[1].aromatic(), true);
 }

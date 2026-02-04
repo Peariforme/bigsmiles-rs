@@ -2,6 +2,8 @@
 
 use thiserror::Error;
 
+use crate::AtomSymbol;
+
 use super::AtomError;
 
 /// Errors that can occur when creating or manipulating a node.
@@ -14,6 +16,9 @@ pub enum NodeError {
     /// The hydrogen count was not defined when required.
     #[error("undefined hydrogen count")]
     UndefinedHydrogen,
+
+    #[error("Invalid element {0} cannot be aromatic")]
+    InvalidAromaticElement(AtomSymbol),
 
     /// The specified atom class is invalid.
     #[error("invalid atom class: {0}")]

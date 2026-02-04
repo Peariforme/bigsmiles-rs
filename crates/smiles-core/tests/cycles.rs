@@ -1,23 +1,22 @@
-//! Tests des cycles (ring closures)
+//! Ring closure tests
 //!
-//! Ces tests vérifient le parsing des structures cycliques:
-//! - Cycles simples (cyclopropane à cyclohexane)
-//! - Cycles avec différentes liaisons
-//! - Cycles fusionnés et spiro
-//! - Notation à deux chiffres (%nn)
+//! These tests verify the parsing of cyclic structures:
+//! - Simple rings (cyclopropane to cyclohexane)
+//! - Rings with different bond types
+//! - Fused and spiro rings
+//! - Two-digit notation (%nn)
 
 use smiles_core::{parse, BondType};
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_cyclopropane() {
-    // C1CC1 = cyclopropane (cycle à 3 carbones)
+    // C1CC1 = cyclopropane (3-carbon ring)
     let molecule = parse("C1CC1").expect("Failed to parse cyclopropane");
 
     assert_eq!(molecule.nodes().len(), 3);
-    assert_eq!(molecule.bonds().len(), 3); // Cycle fermé
+    assert_eq!(molecule.bonds().len(), 3); // Closed ring
 
-    // Vérifier qu'il y a une liaison qui ferme le cycle (0-2)
+    // Check that there is a bond that closes the ring (0-2)
     let closing_bond = molecule
         .bonds()
         .iter()
@@ -26,9 +25,8 @@ fn parse_cyclopropane() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_cyclobutane() {
-    // C1CCC1 = cyclobutane (cycle à 4 carbones)
+    // C1CCC1 = cyclobutane (4-carbon ring)
     let molecule = parse("C1CCC1").expect("Failed to parse cyclobutane");
 
     assert_eq!(molecule.nodes().len(), 4);
@@ -36,9 +34,8 @@ fn parse_cyclobutane() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_cyclopentane() {
-    // C1CCCC1 = cyclopentane (cycle à 5 carbones)
+    // C1CCCC1 = cyclopentane (5-carbon ring)
     let molecule = parse("C1CCCC1").expect("Failed to parse cyclopentane");
 
     assert_eq!(molecule.nodes().len(), 5);
@@ -46,30 +43,28 @@ fn parse_cyclopentane() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_cyclohexane() {
-    // C1CCCCC1 = cyclohexane (cycle à 6 carbones)
+    // C1CCCCC1 = cyclohexane (6-carbon ring)
     let molecule = parse("C1CCCCC1").expect("Failed to parse cyclohexane");
 
     assert_eq!(molecule.nodes().len(), 6);
     assert_eq!(molecule.bonds().len(), 6);
 
-    // Chaque carbone dans cyclohexane a 2 hydrogènes
+    // Each carbon in cyclohexane has 2 hydrogens
     for node in molecule.nodes() {
         assert_eq!(node.hydrogens(), 2);
     }
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_cyclohexene() {
-    // C1=CCCCC1 = cyclohexène (cycle avec une double liaison)
+    // C1=CCCCC1 = cyclohexene (ring with a double bond)
     let molecule = parse("C1=CCCCC1").expect("Failed to parse cyclohexene");
 
     assert_eq!(molecule.nodes().len(), 6);
     assert_eq!(molecule.bonds().len(), 6);
 
-    // Vérifier qu'il y a exactement une liaison double
+    // Check that there is exactly one double bond
     let double_bonds: Vec<_> = molecule
         .bonds()
         .iter()
@@ -79,63 +74,58 @@ fn parse_cyclohexene() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_benzene() {
-    // c1ccccc1 = benzène (cycle aromatique)
+    // c1ccccc1 = benzene (aromatic ring)
     let molecule = parse("c1ccccc1").expect("Failed to parse benzene");
 
     assert_eq!(molecule.nodes().len(), 6);
     assert_eq!(molecule.bonds().len(), 6);
 
-    // Tous les atomes doivent être aromatiques
+    // All atoms must be aromatic
     for node in molecule.nodes() {
         assert_eq!(node.aromatic(), true);
     }
 
-    // Toutes les liaisons doivent être aromatiques
+    // All bonds must be aromatic
     for bond in molecule.bonds() {
         assert_eq!(*bond.kind(), BondType::Aromatic);
     }
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_multiple_ring_closures() {
-    // C12CC1CC2 = spiro[2.2]pentane (deux cycles partageant un atome)
+    // C12CC1CC2 = spiro[2.2]pentane (two rings sharing one atom)
     let molecule = parse("C12CC1CC2").expect("Failed to parse spiro compound");
 
-    // Structure: atome 0 est partagé par deux cycles de 3
+    // Structure: atom 0 is shared by two 3-membered rings
     assert_eq!(molecule.nodes().len(), 5);
-    // 4 liaisons linéaires + 2 fermetures de cycle = 6 liaisons
+    // 4 linear bonds + 2 ring closures = 6 bonds
     assert_eq!(molecule.bonds().len(), 6);
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_fused_rings() {
-    // C1CC2CCCCC2C1 = décaline (deux cyclohexanes fusionnés)
-    let molecule = parse("C1CC2CCCCC2C1").expect("Failed to parse decalin");
+    // C1CCC2CCCCC2C1 = decalin (two fused cyclohexanes)
+    let molecule = parse("C1CCC2CCCCC2C1").expect("Failed to parse decalin");
 
     assert_eq!(molecule.nodes().len(), 10);
-    // 10 atomes, 11 liaisons pour deux cycles fusionnés
+    // 10 atoms, 11 bonds for two fused rings
     assert_eq!(molecule.bonds().len(), 11);
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_ring_with_branch() {
-    // C1CC(C)CC1 = méthylcyclopentane
+    // C1CC(C)CC1 = methylcyclopentane
     let molecule = parse("C1CC(C)CC1").expect("Failed to parse methylcyclopentane");
 
     assert_eq!(molecule.nodes().len(), 6);
-    assert_eq!(molecule.bonds().len(), 6); // 5 pour le cycle + 1 pour la branche
+    assert_eq!(molecule.bonds().len(), 6); // 5 for the ring + 1 for the branch
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_two_digit_ring() {
-    // Pour les grands cycles, utiliser %10, %11, etc.
-    // C%10CCCCCCCCC%10 = cyclodécane
+    // For large rings, use %10, %11, etc.
+    // C%10CCCCCCCCC%10 = cyclodecane
     let molecule = parse("C%10CCCCCCCCC%10").expect("Failed to parse cyclodecane");
 
     assert_eq!(molecule.nodes().len(), 10);
@@ -143,41 +133,38 @@ fn parse_two_digit_ring() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_multiple_two_digit_rings() {
-    // Utilisation de plusieurs identifiants à deux chiffres
+    // Use of multiple two-digit identifiers
     let molecule =
         parse("C%10%11CC%10CC%11").expect("Failed to parse molecule with multiple ring closures");
 
-    // Vérifier que les cycles sont correctement fermés
+    // Check that rings are correctly closed
     assert!(molecule.bonds().len() >= 4);
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_naphthalene() {
-    // c1ccc2ccccc2c1 = naphtalène (deux benzènes fusionnés)
+    // c1ccc2ccccc2c1 = naphthalene (two fused benzenes)
     let molecule = parse("c1ccc2ccccc2c1").expect("Failed to parse naphthalene");
 
     assert_eq!(molecule.nodes().len(), 10);
     assert_eq!(molecule.bonds().len(), 11);
 
-    // Tous les atomes doivent être aromatiques
+    // All atoms must be aromatic
     for node in molecule.nodes() {
         assert_eq!(node.aromatic(), true);
     }
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_cyclopropene() {
-    // C1=CC1 = cyclopropène (cycle à 3 avec double liaison)
+    // C1=CC1 = cyclopropene (3-membered ring with double bond)
     let molecule = parse("C1=CC1").expect("Failed to parse cyclopropene");
 
     assert_eq!(molecule.nodes().len(), 3);
     assert_eq!(molecule.bonds().len(), 3);
 
-    // Vérifier qu'il y a une liaison double
+    // Check that there is a double bond
     let double_bonds: Vec<_> = molecule
         .bonds()
         .iter()
@@ -187,11 +174,10 @@ fn parse_cyclopropene() {
 }
 
 #[test]
-#[ignore] // Pas encore implémenté
 fn parse_cubane() {
-    // C12C3C4C1C5C4C3C25 = cubane (structure cubique)
+    // C12C3C4C1C5C4C3C25 = cubane (cubic structure)
     let molecule = parse("C12C3C4C1C5C4C3C25").expect("Failed to parse cubane");
 
-    assert_eq!(molecule.nodes().len(), 8); // 8 sommets du cube
-    assert_eq!(molecule.bonds().len(), 12); // 12 arêtes du cube
+    assert_eq!(molecule.nodes().len(), 8); // 8 vertices of the cube
+    assert_eq!(molecule.bonds().len(), 12); // 12 edges of the cube
 }

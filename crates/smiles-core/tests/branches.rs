@@ -1,29 +1,29 @@
-//! Tests des branches (ramifications)
+//! Branch tests
 //!
-//! Ces tests vérifient le parsing des branches dans les molécules:
-//! - Branches simples `CC(C)C`
-//! - Branches multiples `CC(C)(C)C`
-//! - Branches imbriquées `CC(C(C)C)C`
-//! - Branches avec différents types de liaisons
+//! These tests verify the parsing of branches in molecules:
+//! - Simple branches `CC(C)C`
+//! - Multiple branches `CC(C)(C)C`
+//! - Nested branches `CC(C(C)C)C`
+//! - Branches with different bond types
 
 use smiles_core::{parse, BondType, ParserError};
 
 #[test]
 fn parse_simple_branch() {
-    // CC(C)C = isobutane (2-méthylpropane)
+    // CC(C)C = isobutane (2-methylpropane)
     let molecule = parse("CC(C)C").expect("Failed to parse isobutane");
 
     assert_eq!(molecule.nodes().len(), 4);
     assert_eq!(molecule.bonds().len(), 3);
 
-    // Vérifier la connectivité : atome 1 est connecté à 0, 2, et 3
+    // Check connectivity: atom 1 is connected to 0, 2, and 3
     let bonds: Vec<_> = molecule.bonds().iter().collect();
 
     // Bond 0: C(0) - C(1)
     assert_eq!(bonds[0].source(), 0);
     assert_eq!(bonds[0].target(), 1);
 
-    // Bond 1: C(1) - C(2) (branche)
+    // Bond 1: C(1) - C(2) (branch)
     assert_eq!(bonds[1].source(), 1);
     assert_eq!(bonds[1].target(), 2);
 
@@ -34,13 +34,13 @@ fn parse_simple_branch() {
 
 #[test]
 fn parse_multiple_branches() {
-    // CC(C)(C)C = néopentane (2,2-diméthylpropane)
+    // CC(C)(C)C = neopentane (2,2-dimethylpropane)
     let molecule = parse("CC(C)(C)C").expect("Failed to parse neopentane");
 
     assert_eq!(molecule.nodes().len(), 5);
     assert_eq!(molecule.bonds().len(), 4);
 
-    // L'atome central (index 1) doit avoir 4 liaisons
+    // The central atom (index 1) must have 4 bonds
     let central_bonds: Vec<_> = molecule
         .bonds()
         .iter()
@@ -51,7 +51,7 @@ fn parse_multiple_branches() {
 
 #[test]
 fn parse_nested_branches() {
-    // CC(C(C)C)C = 2,3-diméthylbutane
+    // CC(C(C)C)C = 2,3-dimethylbutane
     let molecule = parse("CC(C(C)C)C").expect("Failed to parse 2,3-dimethylbutane");
 
     assert_eq!(molecule.nodes().len(), 6);
@@ -60,13 +60,13 @@ fn parse_nested_branches() {
 
 #[test]
 fn parse_branch_with_double_bond() {
-    // CC(=O)O = acide acétique
+    // CC(=O)O = acetic acid
     let molecule = parse("CC(=O)O").expect("Failed to parse acetic acid");
 
     assert_eq!(molecule.nodes().len(), 4);
     assert_eq!(molecule.bonds().len(), 3);
 
-    // Trouver la liaison double C=O
+    // Find the double bond C=O
     let double_bond = molecule
         .bonds()
         .iter()
@@ -80,7 +80,7 @@ fn parse_branch_with_triple_bond() {
     let molecule =
         parse("CC(C#N)C").expect("Failed to parse molecule with triple bond in branch");
 
-    // Vérifier qu'il y a une liaison triple
+    // Check that there is a triple bond
     let triple_bond = molecule
         .bonds()
         .iter()
@@ -90,7 +90,7 @@ fn parse_branch_with_triple_bond() {
 
 #[test]
 fn parse_long_branch() {
-    // C(CCCC)C = hexane avec branche longue
+    // C(CCCC)C = hexane with long branch
     let molecule = parse("C(CCCC)C").expect("Failed to parse molecule with long branch");
 
     assert_eq!(molecule.nodes().len(), 6);
@@ -99,7 +99,7 @@ fn parse_long_branch() {
 
 #[test]
 fn parse_branch_at_start() {
-    // (C)CC = propane (branche au début, équivalent à CCC)
+    // (C)CC = propane (branch at start, equivalent to CCC)
     let molecule = parse("(C)CC").expect("Failed to parse branch at start");
 
     assert_eq!(molecule.nodes().len(), 3);
@@ -108,17 +108,17 @@ fn parse_branch_at_start() {
 
 #[test]
 fn parse_empty_branch() {
-    // C()C = devrait être équivalent à CC ou erreur selon l'implémentation
-    // Selon OpenSMILES, les branches vides ne sont pas valides
+    // C()C = should be equivalent to CC or error depending on implementation
+    // According to OpenSMILES, empty branches are not valid
     let result = parse("C()C");
     assert!(result.is_err(), "Empty branches should not be allowed");
 }
 
 #[test]
 fn error_position_in_branch() {
-    // C([C+X])C - le X est un caractère invalide dans le bracket atom
+    // C([C+X])C - X is an invalid character in the bracket atom
     // Position: C=1, (=2, [=3, C=4, +=5, X=6
-    // L'erreur devrait indiquer la position 6 (position absolue, pas relative à la branche)
+    // The error should indicate position 6 (absolute position, not relative to branch)
     match parse("C([C+X])C") {
         Err(ParserError::UnexpectedCharacter(c, pos)) => {
             assert_eq!(c, 'X', "Expected unexpected character 'X'");
