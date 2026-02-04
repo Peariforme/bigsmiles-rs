@@ -13,7 +13,7 @@ fn parse_aromatic_carbon() {
     let molecule = parse("c").expect("Failed to parse aromatic carbon");
 
     assert_eq!(molecule.nodes().len(), 1);
-    assert_eq!(molecule.nodes()[0].aromatic(), true);
+    assert!(molecule.nodes()[0].aromatic());
     assert_eq!(
         *molecule.nodes()[0].atom().element(),
         AtomSymbol::Organic(OrganicAtom::C)
@@ -25,7 +25,7 @@ fn parse_aromatic_nitrogen() {
     // n = aromatic nitrogen
     let molecule = parse("n").expect("Failed to parse aromatic nitrogen");
 
-    assert_eq!(molecule.nodes()[0].aromatic(), true);
+    assert!(molecule.nodes()[0].aromatic());
     assert_eq!(
         *molecule.nodes()[0].atom().element(),
         AtomSymbol::Organic(OrganicAtom::N)
@@ -37,7 +37,7 @@ fn parse_aromatic_oxygen() {
     // o = aromatic oxygen
     let molecule = parse("o").expect("Failed to parse aromatic oxygen");
 
-    assert_eq!(molecule.nodes()[0].aromatic(), true);
+    assert!(molecule.nodes()[0].aromatic());
     assert_eq!(
         *molecule.nodes()[0].atom().element(),
         AtomSymbol::Organic(OrganicAtom::O)
@@ -49,7 +49,7 @@ fn parse_aromatic_sulfur() {
     // s = aromatic sulfur
     let molecule = parse("s").expect("Failed to parse aromatic sulfur");
 
-    assert_eq!(molecule.nodes()[0].aromatic(), true);
+    assert!(molecule.nodes()[0].aromatic());
     assert_eq!(
         *molecule.nodes()[0].atom().element(),
         AtomSymbol::Organic(OrganicAtom::S)
@@ -70,7 +70,7 @@ fn parse_benzene() {
         assert_eq!(*node.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
         assert_eq!(node.atom().charge(), 0);
         assert_eq!(node.atom().isotope(), None);
-        assert_eq!(node.aromatic(), true);
+        assert!(node.aromatic());
         assert_eq!(node.class(), None);
         assert_eq!(node.hydrogens(), 1); // each aromatic carbon has 1 hydrogen
     }
@@ -106,7 +106,7 @@ fn parse_pyridine() {
 
     // All must be aromatic
     for node in molecule.nodes() {
-        assert_eq!(node.aromatic(), true);
+        assert!(node.aromatic());
     }
 }
 
@@ -124,7 +124,7 @@ fn parse_furan() {
         .iter()
         .find(|n| *n.atom().element() == AtomSymbol::Organic(OrganicAtom::O));
     assert!(oxygen.is_some());
-    assert_eq!(oxygen.unwrap().aromatic(), true);
+    assert!(oxygen.unwrap().aromatic());
 }
 
 #[test]
@@ -140,7 +140,7 @@ fn parse_thiophene() {
         .iter()
         .find(|n| *n.atom().element() == AtomSymbol::Organic(OrganicAtom::S));
     assert!(sulfur.is_some());
-    assert_eq!(sulfur.unwrap().aromatic(), true);
+    assert!(sulfur.unwrap().aromatic());
 }
 
 #[test]
@@ -194,11 +194,11 @@ fn parse_mixed_aromatic_aliphatic() {
     assert_eq!(molecule.nodes().len(), 7);
 
     // The first carbon (methyl) is not aromatic
-    assert_eq!(molecule.nodes()[0].aromatic(), false);
+    assert!(!molecule.nodes()[0].aromatic());
 
     // The other 6 carbons are aromatic
     for i in 1..7 {
-        assert_eq!(molecule.nodes()[i].aromatic(), true);
+        assert!(molecule.nodes()[i].aromatic());
     }
 }
 
@@ -215,7 +215,7 @@ fn parse_biphenyl() {
 
     // All atoms are aromatic
     for node in molecule.nodes() {
-        assert_eq!(node.aromatic(), true);
+        assert!(node.aromatic());
     }
 
     // Count bond types

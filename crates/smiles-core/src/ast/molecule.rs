@@ -1,4 +1,11 @@
-use crate::{MoleculeError, NodeError, ast::{atom::AtomSymbol, bond::{Bond, BondType}, node::{Node, NodeBuilder}}};
+use crate::{
+    ast::{
+        atom::AtomSymbol,
+        bond::{Bond, BondType},
+        node::{Node, NodeBuilder},
+    },
+    MoleculeError, NodeError,
+};
 use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -21,7 +28,7 @@ impl Molecule {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct MoleculeBuilder {
     nodes: Vec<NodeBuilder>,
     bonds: Vec<Bond>,
@@ -29,10 +36,7 @@ pub struct MoleculeBuilder {
 
 impl MoleculeBuilder {
     pub fn new() -> Self {
-        Self {
-            nodes: Vec::new(),
-            bonds: Vec::new(),
-        }
+        Self::default()
     }
 
     pub fn nodes(&self) -> &[NodeBuilder] {
@@ -52,19 +56,29 @@ impl MoleculeBuilder {
         hydrogens: Option<u8>,
         class: Option<u16>,
     ) -> Result<usize, NodeError> {
-        self.nodes
-            .push(NodeBuilder::new(AtomSymbol::from_str(&element)?, charge, isotope, aromatic, hydrogens, class)?);
+        self.nodes.push(NodeBuilder::new(
+            AtomSymbol::from_str(&element)?,
+            charge,
+            isotope,
+            aromatic,
+            hydrogens,
+            class,
+        )?);
         Ok(self.nodes.len() - 1)
     }
 
     pub fn add_branch(&mut self, m: MoleculeBuilder, bond_type: BondType, source: Option<u16>) {
         let node_count = self.nodes.len() as u16;
         if let Some(src) = source {
-            self.add_bond( src, node_count, bond_type);
+            self.add_bond(src, node_count, bond_type);
         }
         self.nodes.extend(m.nodes);
         for bond in m.bonds {
-            self.add_bond(node_count + bond.source() + 1, node_count + bond.target() + 1, *bond.kind());
+            self.add_bond(
+                node_count + bond.source() + 1,
+                node_count + bond.target() + 1,
+                *bond.kind(),
+            );
         }
     }
 
@@ -74,14 +88,13 @@ impl MoleculeBuilder {
 
     // À la fin
     pub fn build(self) -> Result<Molecule, MoleculeError> {
-        let mut nodes: Vec<Node> = Vec::new(); 
+        let mut nodes: Vec<Node> = Vec::new();
         let mut bond_orders_x2 = vec![0u8; self.nodes.len()];
 
         for bond in &self.bonds {
             bond_orders_x2[bond.source() as usize] += bond.kind().electrons_involved();
             bond_orders_x2[bond.target() as usize] += bond.kind().electrons_involved();
         }
-        
 
         for (index, node) in self.nodes.into_iter().enumerate() {
             nodes.push(node.build(Some(bond_orders_x2[index] / 2))?);
@@ -89,7 +102,7 @@ impl MoleculeBuilder {
 
         Ok(Molecule {
             nodes,
-            bonds: self.bonds
+            bonds: self.bonds,
         })
     }
 }

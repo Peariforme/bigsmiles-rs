@@ -24,13 +24,13 @@
 //! throughout the hierarchy.
 
 mod atom;
+mod bond;
 mod molecule;
 mod node;
 mod parser;
-mod bond;
 
 pub use atom::AtomError;
+pub use bond::BondError;
 pub use molecule::MoleculeError;
 pub use node::NodeError;
 pub use parser::ParserError;
-pub use bond::BondError;

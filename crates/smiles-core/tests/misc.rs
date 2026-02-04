@@ -166,7 +166,6 @@ fn parse_unclosed_ring() {
 }
 
 #[test]
-#[ignore] // Not yet implemented - requires ring bond type validation
 fn parse_mismatched_ring_bonds() {
     // C=1CC1 vs C1CC=1 - bond types at closures must match
     // C1CC=1 is valid (simple then double = double)

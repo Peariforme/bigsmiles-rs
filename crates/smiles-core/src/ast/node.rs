@@ -1,4 +1,7 @@
-use crate::{NodeError, ast::atom::{Atom, AtomSymbol}};
+use crate::{
+    ast::atom::{Atom, AtomSymbol},
+    NodeError,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Node {
@@ -76,7 +79,6 @@ impl NodeBuilder {
         hydrogens: Option<u8>,
         class: Option<u16>,
     ) -> Result<NodeBuilder, NodeError> {
-        
         let atom = Atom::new(element, charge, isotope)?;
 
         Ok(NodeBuilder {
@@ -119,15 +121,15 @@ impl NodeBuilder {
     }
 
     pub fn build(mut self, bond_order_sum: Option<u8>) -> Result<Node, NodeError> {
-        if self.hydrogens == None {
+        if self.hydrogens.is_none() {
             self.set_hydrogens(self.atom.implicit_hydrogens(bond_order_sum)?);
         }
 
-        Ok(Node::new(
+        Node::new(
             self.atom,
             self.aromatic.ok_or(NodeError::UndefinedAromatic)?,
             self.hydrogens.ok_or(NodeError::UndefinedHydrogen)?,
             self.class,
-        )?)
+        )
     }
 }

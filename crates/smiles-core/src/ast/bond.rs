@@ -7,7 +7,7 @@ pub enum BondType {
     Triple,
     Quadruple,
     Aromatic,
-    Disconnected
+    Disconnected,
 }
 
 impl TryFrom<&char> for BondType {
@@ -34,7 +34,7 @@ impl BondType {
             BondType::Triple => 6,
             BondType::Quadruple => 8,
             BondType::Aromatic => 3,
-            BondType::Disconnected => 0
+            BondType::Disconnected => 0,
         }
     }
 }
