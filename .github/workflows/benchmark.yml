@@ -40,14 +40,59 @@ jobs:
 
       - name: Run benchmarks
         run: |
-          cargo bench -p smiles-core --features parallel -- --output-format bencher | tee benchmark_output.txt
+          cargo bench -p smiles-core --features parallel 2>&1 | tee benchmark_output.txt
+
+      - name: Extract benchmark results
+        run: |
+          # Extract results from Criterion's JSON files and convert to github-action-benchmark format
+          python3 << 'EOF'
+          import json
+          import os
+          from pathlib import Path
+
+          results = []
+          criterion_dir = Path("target/criterion")
+
+          if criterion_dir.exists():
+              for benchmark_dir in criterion_dir.iterdir():
+                  if benchmark_dir.is_dir() and benchmark_dir.name != "report":
+                      estimates_file = benchmark_dir / "new" / "estimates.json"
+                      if estimates_file.exists():
+                          with open(estimates_file) as f:
+                              data = json.load(f)
+                              # Get the mean estimate in nanoseconds
+                              mean_ns = data.get("mean", {}).get("point_estimate", 0)
+                              results.append({
+                                  "name": benchmark_dir.name,
+                                  "unit": "ns",
+                                  "value": mean_ns
+                              })
+                      # Also check for nested benchmarks (e.g., group/name)
+                      for sub_dir in benchmark_dir.iterdir():
+                          if sub_dir.is_dir():
+                              estimates_file = sub_dir / "new" / "estimates.json"
+                              if estimates_file.exists():
+                                  with open(estimates_file) as f:
+                                      data = json.load(f)
+                                      mean_ns = data.get("mean", {}).get("point_estimate", 0)
+                                      results.append({
+                                          "name": f"{benchmark_dir.name}/{sub_dir.name}",
+                                          "unit": "ns",
+                                          "value": mean_ns
+                                      })
+
+          with open("benchmark_results.json", "w") as f:
+              json.dump(results, f, indent=2)
+
+          print(f"Extracted {len(results)} benchmark results")
+          EOF
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: SMILES Parser Benchmarks
-          tool: 'cargo'
-          output-file-path: benchmark_output.txt
+          tool: 'customSmallerIsBetter'
+          output-file-path: benchmark_results.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           # On PR: compare with baseline and comment
           # On push to main: update baseline on gh-pages
@@ -67,4 +112,5 @@ jobs:
           path: |
             target/criterion
             benchmark_output.txt
+            benchmark_results.json
           retention-days: 30

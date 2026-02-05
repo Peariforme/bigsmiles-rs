@@ -413,7 +413,7 @@ fn bench_memory_usage(c: &mut Criterion) {
     }
 
     // Comb polymer memory test
-    for length in [50].iter() {
+    for length in [25, 50].iter() {
         let smiles = generate_comb_polymer(*length);
         if let Ok(mol) = parse(&smiles) {
             let mem_size = molecule_memory_size(&mol);
