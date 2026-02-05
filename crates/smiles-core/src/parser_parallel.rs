@@ -222,4 +222,74 @@ mod tests {
             assert!(result.is_ok(), "Failed to parse index {}: {:?}", i, result);
         }
     }
+
+    #[test]
+    fn test_parse_batch_indexed() {
+        let inputs = vec!["C", "bad[", "CC", "also-bad", "CCC"];
+        let results = parse_batch_indexed(&inputs);
+
+        assert_eq!(results.len(), 5);
+
+        // Check that indices are preserved
+        let (idx0, res0) = &results[0];
+        assert_eq!(*idx0, 0);
+        assert!(res0.is_ok());
+
+        let (idx1, res1) = &results[1];
+        assert_eq!(*idx1, 1);
+        assert!(res1.is_err());
+
+        let (idx2, res2) = &results[2];
+        assert_eq!(*idx2, 2);
+        assert!(res2.is_ok());
+
+        let (idx3, res3) = &results[3];
+        assert_eq!(*idx3, 3);
+        assert!(res3.is_err());
+
+        let (idx4, res4) = &results[4];
+        assert_eq!(*idx4, 4);
+        assert!(res4.is_ok());
+    }
+
+    #[test]
+    fn test_parse_batch_empty_input() {
+        let inputs: Vec<&str> = vec![];
+        let results = parse_batch(&inputs);
+        assert!(results.is_empty());
+
+        let molecules = parse_batch_ok(&inputs);
+        assert!(molecules.is_empty());
+
+        let (molecules, errors, stats) = parse_batch_with_stats(&inputs);
+        assert!(molecules.is_empty());
+        assert!(errors.is_empty());
+        assert_eq!(stats.total_count, 0);
+        assert_eq!(stats.success_rate(), 0.0);
+    }
+
+    #[test]
+    fn test_parse_batch_all_invalid() {
+        let inputs = vec!["bad[", "also-bad", "[invalid"];
+        let (molecules, errors, stats) = parse_batch_with_stats(&inputs);
+
+        assert!(molecules.is_empty());
+        assert_eq!(errors.len(), 3);
+        assert_eq!(stats.success_count, 0);
+        assert_eq!(stats.error_count, 3);
+        assert_eq!(stats.success_rate(), 0.0);
+    }
+
+    #[test]
+    fn test_batch_parse_stats_success_rate() {
+        let stats = BatchParseStats {
+            success_count: 3,
+            error_count: 1,
+            total_count: 4,
+        };
+        assert!((stats.success_rate() - 75.0).abs() < f64::EPSILON);
+
+        let empty_stats = BatchParseStats::default();
+        assert_eq!(empty_stats.success_rate(), 0.0);
+    }
 }

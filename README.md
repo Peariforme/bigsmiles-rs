@@ -18,6 +18,7 @@ A Rust library for parsing [SMILES](http://opensmiles.org/opensmiles.html) and [
 - 🔬 BigSMILES extensions for polymer chemistry
 - 🦀 Pure Rust, no dependencies on external chemistry libraries
 - 📝 Detailed error messages with position information
+- ⚡ Optional parallel batch parsing with Rayon (~4x speedup on large datasets)
 
 ## Installation
 
@@ -75,6 +76,41 @@ fn main() -> Result<(), bigsmiles_core::ParseError> {
     Ok(())
 }
 ```
+
+### Parallel Batch Parsing
+
+For processing large datasets, enable the `parallel` feature for multi-threaded parsing:
+
+```toml
+[dependencies]
+smiles-core = { version = "0.1", features = ["parallel"] }
+```
+
+```rust
+use smiles_core::parser_parallel::{parse_batch, parse_batch_with_stats};
+
+fn main() {
+    let smiles_dataset = vec!["CCO", "c1ccccc1", "CC(=O)O", /* ... thousands more */];
+
+    // Parse all molecules in parallel
+    let results = parse_batch(&smiles_dataset);
+
+    // Or get detailed statistics
+    let (molecules, errors, stats) = parse_batch_with_stats(&smiles_dataset);
+    println!("Parsed {}/{} molecules ({:.1}% success rate)",
+        stats.success_count, stats.total_count, stats.success_rate());
+}
+```
+
+**Performance** (benchmark results on 4-core CPU):
+
+| Batch Size | Sequential | Parallel | Speedup |
+|------------|-----------|----------|---------|
+| 100        | 76 µs     | 169 µs   | 0.45x   |
+| 1,000      | 877 µs    | 396 µs   | **2.2x**  |
+| 10,000     | 8.6 ms    | 2.2 ms   | **3.9x**  |
+
+> Note: For small batches (<500), sequential parsing is faster due to thread synchronization overhead.
 
 ## Public API
 
@@ -135,6 +171,28 @@ pub enum BondType {
 Supports all elements of the periodic table, plus:
 - `Organic(OrganicAtom)` - B, C, N, O, P, S, F, Cl, Br, I (implicit hydrogens)
 - `Wildcard` - `*` (matches any atom)
+
+### Parallel API (requires `parallel` feature)
+
+#### `parse_batch(inputs: &[&str]) -> Vec<Result<Molecule, ParserError>>`
+Parse multiple SMILES strings in parallel, preserving order.
+
+#### `parse_batch_ok(inputs: &[&str]) -> Vec<Molecule>`
+Parse multiple SMILES, returning only successful results (errors silently skipped).
+
+#### `parse_batch_indexed(inputs: &[&str]) -> Vec<(usize, Result<Molecule, ParserError>)>`
+Parse with index tracking, useful for identifying which inputs failed.
+
+#### `parse_batch_with_stats(inputs: &[&str]) -> (Vec<Molecule>, Vec<(usize, ParserError)>, BatchParseStats)`
+Parse with full error tracking and statistics.
+
+#### `BatchParseStats`
+| Field | Type | Description |
+|-------|------|-------------|
+| `success_count` | `usize` | Number of successfully parsed molecules |
+| `error_count` | `usize` | Number of failed parses |
+| `total_count` | `usize` | Total number of inputs |
+| `success_rate()` | `f64` | Success percentage (0.0 to 100.0) |
 
 ## Examples
 
@@ -203,6 +261,7 @@ bigsmiles-rs/
 - [x] Aromatic atoms (lowercase)
 - [x] Wildcard `*`
 - [x] Disconnected structures `.`
+- [x] Parallel batch parsing (optional `parallel` feature)
 - [ ] Stereochemistry
   - [ ] Tetrahedral chirality `@`, `@@`
   - [ ] Double bond geometry `/`, `\`
