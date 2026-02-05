@@ -1,8 +1,9 @@
 name: Benchmark
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
+  deployments: write
 
 on:
   push:
@@ -15,7 +16,7 @@ env:
 
 jobs:
   benchmark:
-    name: Performance Regression Check
+    name: Performance Benchmarks
     runs-on: ubuntu-latest
 
     steps:
@@ -31,81 +32,41 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
+            ~/.cargo/bin
             target
           key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-bench-
             ${{ runner.os }}-cargo-
 
+      - name: Install cargo-criterion
+        run: cargo install cargo-criterion --locked
+
       - name: Run benchmarks
         run: |
-          cargo bench -p smiles-core --features parallel 2>&1 | tee benchmark_output.txt
+          cargo criterion -p smiles-core --features parallel --message-format=json 2>/dev/null | \
+            jq -s '[.[] | select(.reason == "benchmark-complete") | {name: .id, unit: "ns", value: .report.mean.estimate}]' > benchmark_results.json
 
       - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: SMILES Parser Benchmarks
+          tool: 'customSmallerIsBetter'
+          output-file-path: benchmark_results.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+          comment-on-alert: true
+          alert-threshold: '150%'
+          fail-on-alert: false
+          comment-always: ${{ github.event_name == 'pull_request' }}
+          save-data-file: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+          alert-comment-cc-users: '@Peariforme'
+
+      - name: Upload benchmark artifacts
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: |
             target/criterion
-            benchmark_output.txt
-
-      - name: Download previous benchmark (if exists)
-        if: github.event_name == 'pull_request'
-        uses: dawidd6/action-download-artifact@v6
-        continue-on-error: true
-        with:
-          workflow: benchmark.yml
-          branch: ${{ github.base_ref }}
-          name: benchmark-results
-          path: previous-benchmark
-
-      - name: Compare benchmarks
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Extract key metrics from benchmark output
-          echo "### Sequential vs Parallel (10000 molecules)" >> $GITHUB_STEP_SUMMARY
-          grep -A2 "seq_vs_parallel" benchmark_output.txt | head -20 >> $GITHUB_STEP_SUMMARY || true
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Large Molecules" >> $GITHUB_STEP_SUMMARY
-          grep -A2 "large_molecules" benchmark_output.txt | head -20 >> $GITHUB_STEP_SUMMARY || true
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Memory Usage" >> $GITHUB_STEP_SUMMARY
-          grep -A2 "memory_usage" benchmark_output.txt | head -20 >> $GITHUB_STEP_SUMMARY || true
-
-  # Separate job for baseline benchmarks on main branch
-  save-baseline:
-    name: Save Baseline Benchmarks
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Run baseline benchmarks
-        run: |
-          cargo bench -p smiles-core --features parallel
-
-      - name: Store baseline
-        uses: actions/upload-artifact@v4
-        with:
-          name: benchmark-baseline
-          path: target/criterion
-          retention-days: 90
+            benchmark_results.json
+          retention-days: 30

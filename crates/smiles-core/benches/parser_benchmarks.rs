@@ -274,10 +274,10 @@ fn bench_parallel_scaling(c: &mut Criterion) {
     use std::time::Duration;
 
     let mut group = c.benchmark_group("parallel_scaling");
-    group.measurement_time(Duration::from_secs(10));
+    group.measurement_time(Duration::from_secs(3));
 
-    // Test how parallelism scales with batch size
-    for size in [10, 50, 100, 500, 1000, 5000, 10000].iter() {
+    // Test how parallelism scales with batch size (reduced set for CI speed)
+    for size in [100, 1000, 10000].iter() {
         let dataset = generate_batch_dataset(*size);
 
         group.throughput(Throughput::Elements(*size as u64));
@@ -290,12 +290,13 @@ fn bench_parallel_scaling(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark very large molecules
+/// Benchmark very large molecules (polymer-realistic sizes)
 fn bench_large_molecules(c: &mut Criterion) {
     let mut group = c.benchmark_group("large_molecules");
 
-    // Very long linear chains (up to 50000 to test u16 limits)
-    for size in [100, 500, 1000, 5000, 10000, 50000].iter() {
+    // Linear chains - typical polymer chain lengths (100-2000 monomers)
+    // Plus 50000 to observe performance degradation at scale
+    for size in [100, 1000, 2000, 50000].iter() {
         let smiles = generate_linear_alkane(*size);
         group.throughput(Throughput::Elements(*size as u64));
         group.bench_with_input(BenchmarkId::new("linear_chain", size), &smiles, |b, s| {
@@ -304,7 +305,7 @@ fn bench_large_molecules(c: &mut Criterion) {
     }
 
     // Heavily branched molecules
-    for branches in [10, 20, 50].iter() {
+    for branches in [10, 50].iter() {
         let smiles = generate_branched_chain(*branches);
         group.bench_with_input(BenchmarkId::new("branched", branches), &smiles, |b, s| {
             b.iter(|| parse(black_box(s)))
@@ -312,7 +313,7 @@ fn bench_large_molecules(c: &mut Criterion) {
     }
 
     // Star molecules (many branches from central atom)
-    for branches in [5, 10, 20, 50].iter() {
+    for branches in [10, 50].iter() {
         let smiles = generate_star_molecule(*branches);
         let atom_count = branches + 1; // central + branches
         group.throughput(Throughput::Elements(atom_count as u64));
@@ -323,8 +324,8 @@ fn bench_large_molecules(c: &mut Criterion) {
         );
     }
 
-    // Comb polymers (main chain with pendant groups)
-    for length in [10, 25, 50, 100].iter() {
+    // Comb polymers - realistic polymer lengths with pendant groups
+    for length in [100, 500, 1000].iter() {
         let smiles = generate_comb_polymer(*length);
         let atom_count = length * 2 + 1; // main chain + pendants
         group.throughput(Throughput::Elements(atom_count as u64));
@@ -365,8 +366,8 @@ fn bench_memory_usage(c: &mut Criterion) {
         });
     }
 
-    // Large molecule memory test (up to 50000 atoms)
-    for size in [100, 1000, 5000, 10000, 50000].iter() {
+    // Large molecule memory test (polymer-realistic sizes)
+    for size in [100, 1000, 2000].iter() {
         let smiles = generate_linear_alkane(*size);
         let mol = parse(&smiles).expect("Should parse");
         let mem_size = molecule_memory_size(&mol);
@@ -388,7 +389,7 @@ fn bench_memory_usage(c: &mut Criterion) {
     }
 
     // Star molecule memory test
-    for branches in [10, 50, 100].iter() {
+    for branches in [10, 50].iter() {
         let smiles = generate_star_molecule(*branches);
         if let Ok(mol) = parse(&smiles) {
             let mem_size = molecule_memory_size(&mol);
@@ -412,8 +413,8 @@ fn bench_memory_usage(c: &mut Criterion) {
         }
     }
 
-    // Comb polymer memory test
-    for length in [50, 100].iter() {
+    // Comb polymer memory test (polymer-realistic sizes)
+    for length in [100, 500].iter() {
         let smiles = generate_comb_polymer(*length);
         if let Ok(mol) = parse(&smiles) {
             let mem_size = molecule_memory_size(&mol);

@@ -4,6 +4,7 @@ A Rust library for parsing [SMILES](http://opensmiles.org/opensmiles.html) and [
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/Peariforme/bigsmiles-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Peariforme/bigsmiles-rs/actions/workflows/ci.yml)
+[![Benchmark](https://github.com/Peariforme/bigsmiles-rs/actions/workflows/benchmark.yml/badge.svg)](https://peariforme.github.io/bigsmiles-rs/dev/bench/)
 
 ## Overview
 
