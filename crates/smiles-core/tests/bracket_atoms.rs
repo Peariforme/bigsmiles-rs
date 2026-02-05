@@ -7,7 +7,7 @@
 //! - Classes/atom mapping (`[C:1]`, `[N:2]`, etc.)
 //! - All possible combinations of these attributes
 
-use smiles_core::{AtomSymbol, MoleculeError, NodeError, OrganicAtom, ParserError, parse};
+use smiles_core::{parse, AtomSymbol, MoleculeError, NodeError, OrganicAtom, ParserError};
 
 // ============================================================================
 // Explicit hydrogens
@@ -62,7 +62,7 @@ fn parse_bracket_hydrogen_variations() {
     ];
 
     for (smiles, expected_h) in test_cases {
-        let molecule = parse(smiles).expect(&format!("Failed to parse {}", smiles));
+        let molecule = parse(smiles).unwrap_or_else(|_| panic!("Failed to parse {}", smiles));
         assert_eq!(
             molecule.nodes()[0].hydrogens(),
             expected_h,
@@ -199,7 +199,7 @@ fn parse_bracket_atom_class_variations() {
     let test_cases = [("[C:0]", 0), ("[C:1]", 1), ("[C:42]", 42), ("[C:999]", 999)];
 
     for (smiles, expected_class) in test_cases {
-        let molecule = parse(smiles).expect(&format!("Failed to parse {}", smiles));
+        let molecule = parse(smiles).unwrap_or_else(|_| panic!("Failed to parse {}", smiles));
         assert_eq!(
             molecule.nodes()[0].class(),
             Some(expected_class),
@@ -264,7 +264,12 @@ fn parse_bracket_atom_out_of_range_hydrogen() {
 fn parse_bracket_atom_too_much_hydrogen() {
     let result = parse("[CH10]");
     dbg!(&result);
-    assert!(matches!(&result, Err(ParserError::MoleculeError(MoleculeError::NodeError(NodeError::InvalidHydrogen(10))))));
+    assert!(matches!(
+        &result,
+        Err(ParserError::MoleculeError(MoleculeError::NodeError(
+            NodeError::InvalidHydrogen(10)
+        )))
+    ));
 }
 
 #[test]
@@ -402,10 +407,10 @@ fn parse_bracket_lanthanide() {
 fn parse_bracket_unexpected_char() {
     // [Fe] = iron
     match parse("[C+X]") {
-        Err(ParserError::UnexpectedCharacter(c, pos, )) => {
+        Err(ParserError::UnexpectedCharacter(c, pos)) => {
             assert_eq!(c, 'X');
             assert_eq!(pos, 4);
-        },
-        other => panic!("Expected UnexpectedCharacter, got {:?}", other)
+        }
+        other => panic!("Expected UnexpectedCharacter, got {:?}", other),
     }
 }

@@ -12,7 +12,9 @@ struct Parser<'a> {
     next_bond_type: Option<BondType>,
     next_bond_source: Option<u16>,
     branch_bond_type: Option<BondType>,
-    cycles_target: HashMap<u8, u16>,
+    cycles_target: HashMap<u8, (u16, Option<BondType>)>, // (node_index, bond_type_at_open)
+    node_offset: u16, // Offset for global node indexing (used in branches)
+    deferred_ring_bonds: Vec<(u16, u16, BondType)>, // (main_target, local_source, bond_type)
 }
 
 impl<'a> Parser<'a> {
@@ -25,18 +27,27 @@ impl<'a> Parser<'a> {
             next_bond_source: None,
             branch_bond_type: None,
             cycles_target: HashMap::new(),
+            node_offset: 0,
+            deferred_ring_bonds: Vec::new(),
         }
     }
 
-    fn new_with_offset(input: &'a str, offset: usize) -> Self {
+    fn new_with_offset(
+        input: &'a str,
+        position_offset: usize,
+        node_offset: u16,
+        cycles_target: HashMap<u8, (u16, Option<BondType>)>,
+    ) -> Self {
         Parser {
             chars: input.chars().peekable(),
-            position: offset,
+            position: position_offset,
             builder: MoleculeBuilder::new(),
             next_bond_type: None,
             next_bond_source: None,
             branch_bond_type: None,
-            cycles_target: HashMap::new(),
+            cycles_target,
+            node_offset,
+            deferred_ring_bonds: Vec::new(),
         }
     }
 
@@ -49,12 +60,26 @@ impl<'a> Parser<'a> {
         self.chars.peek()
     }
 
-    fn parse(mut self) -> Result<(MoleculeBuilder, Option<BondType>), ParserError> {
+    #[allow(clippy::type_complexity)]
+    fn parse(
+        mut self,
+    ) -> Result<
+        (
+            MoleculeBuilder,
+            Option<BondType>,                     // branch_bond_type
+            Option<BondType>,                     // next_bond_type (for dangling bond detection)
+            HashMap<u8, (u16, Option<BondType>)>, // cycles_target
+            Vec<(u16, u16, BondType)>,            // deferred_ring_bonds
+        ),
+        ParserError,
+    > {
         while let Some(c) = self.next() {
             // Atom
-            if c.is_ascii_alphabetic() {
-                let elem = self.parse_element_symbol(c);
-                let aromatic = Some(elem.to_lowercase() == elem);
+            if c.is_ascii_alphabetic() || c == '*' {
+                let elem = self.parse_element_symbol(c, false);
+                // Aromaticity is indicated by lowercase letters (c, n, o, etc.)
+                // Wildcard '*' outside brackets is non-aromatic by default
+                let aromatic = Some(c.is_ascii_lowercase());
                 self.builder.add_atom(elem, 0, None, aromatic, None, None)?;
                 self.connect_current_atom()?;
             // Brackets Atom
@@ -68,7 +93,7 @@ impl<'a> Parser<'a> {
             // Explicit bond
             } else if c == '-' || c == '=' || c == '#' || c == '$' || c == '.' || c == ':' {
                 self.next_bond_type = Some(BondType::try_from(&c)?);
-                if self.builder.nodes().len() == 0 {
+                if self.builder.nodes().is_empty() {
                     self.branch_bond_type = self.next_bond_type;
                 }
 
@@ -77,8 +102,7 @@ impl<'a> Parser<'a> {
                 self.parse_branch()?;
             // cycles
             } else if c == '%' || c.is_ascii_digit() {
-                let cycle_number: u8;
-                if c == '%' {
+                let cycle_number: u8 = if c == '%' {
                     let first = self.next().ok_or(ParserError::UnexpectedEndOfInput(
                         "cycle number".to_string(),
                     ))?;
@@ -93,36 +117,78 @@ impl<'a> Parser<'a> {
                         .to_digit(10)
                         .ok_or(ParserError::UnexpectedCharacter(second, self.position))?
                         as u8;
-                    cycle_number = first_u8 * 10 + second_u8;
+                    first_u8 * 10 + second_u8
                 } else {
-                    cycle_number = c.to_digit(10).expect("Unreachable error") as u8;
-                }
+                    c.to_digit(10).expect("Unreachable error") as u8
+                };
 
                 // If the key already exists, close the ring
-                if let Some(n) = self.cycles_target.get(&cycle_number) {
-                    self.connect_ring_closure(*n)?;
+                if let Some((target, bond_type_at_open)) =
+                    self.cycles_target.get(&cycle_number).copied()
+                {
+                    let local_index = self.get_current_atom_index()?;
+                    let bond_type_at_close = self.next_bond_type.take();
+
+                    // Validate ring bond types match if both are explicitly specified
+                    if let (Some(open), Some(close)) = (bond_type_at_open, bond_type_at_close) {
+                        if open != close {
+                            return Err(ParserError::MismatchedRingBond(cycle_number));
+                        }
+                    }
+
+                    // Check if the target is from a parent parser (before our node_offset)
+                    if target < self.node_offset {
+                        // Defer this bond - it connects to a node in the parent
+                        // Use explicit bond type if specified, otherwise Simple
+                        // (aromaticity will be determined by parent when creating the bond)
+                        let ring_bond_type = bond_type_at_open
+                            .or(bond_type_at_close)
+                            .unwrap_or(BondType::Simple);
+                        self.deferred_ring_bonds
+                            .push((target, local_index, ring_bond_type));
+                    } else {
+                        // Target is within this parser's nodes
+                        // Determine bond type from explicit specification or aromaticity
+                        let ring_bond_type =
+                            bond_type_at_open.or(bond_type_at_close).unwrap_or_else(|| {
+                                // Adjust target index for local builder space
+                                let local_target = target - self.node_offset;
+                                let source_aromatic =
+                                    self.builder.nodes()[local_index as usize].aromatic();
+                                let target_aromatic =
+                                    self.builder.nodes()[local_target as usize].aromatic();
+                                if source_aromatic == Some(true) && target_aromatic == Some(true) {
+                                    BondType::Aromatic
+                                } else {
+                                    BondType::Simple
+                                }
+                            });
+                        self.connect_ring_closure(target, ring_bond_type)?;
+                    }
                     // Remove the key so it can be reused
                     self.cycles_target.remove(&cycle_number);
                 // Otherwise, this is the start of a new ring
                 } else {
-                    self.cycles_target.insert(
-                        cycle_number,
-                        self.next_bond_source
-                            .ok_or(ParserError::UnexpectedCharacter(c, self.position))?,
-                    );
+                    let local_index = self
+                        .next_bond_source
+                        .ok_or(ParserError::UnexpectedCharacter(c, self.position))?;
+                    let global_index = self.node_offset + local_index;
+                    let bond_type_at_open = self.next_bond_type.take();
+                    self.cycles_target
+                        .insert(cycle_number, (global_index, bond_type_at_open));
                 }
             } else {
                 return Err(ParserError::NotYetImplemented);
             }
         }
 
-        if !self.cycles_target.is_empty() {
-            return Err(ParserError::UnclosedRing(
-                self.cycles_target.into_keys().collect(),
-            ));
-        }
-
-        Ok((self.builder, self.branch_bond_type))
+        Ok((
+            self.builder,
+            self.branch_bond_type,
+            self.next_bond_type,
+            self.cycles_target,
+            self.deferred_ring_bonds,
+        ))
     }
 
     fn parse_branch(&mut self) -> Result<(), ParserError> {
@@ -149,28 +215,64 @@ impl<'a> Parser<'a> {
         if parenthesis_count < 0 {
             return Err(ParserError::UnopenedParenthesis);
         }
-        if s == "" {
+        if s.is_empty() {
             return Err(ParserError::EmptyBranch);
         }
-        let branch_parser = Parser::new_with_offset(&s, position);
-        let (branch_builder, branch_bond_type) = branch_parser.parse()?;
+
+        // Calculate the global node offset for the branch
+        let branch_node_offset = self.node_offset + self.builder.nodes().len() as u16;
+
+        // Pass cycles_target to branch so rings can span branch boundaries
+        let branch_parser = Parser::new_with_offset(
+            &s,
+            position,
+            branch_node_offset,
+            std::mem::take(&mut self.cycles_target),
+        );
+        let (branch_builder, branch_bond_type, _, updated_cycles, deferred_bonds) =
+            branch_parser.parse()?;
+
+        // Restore the updated cycles_target
+        self.cycles_target = updated_cycles;
+
+        // Add the branch to the main builder
         let bond_type = branch_bond_type.unwrap_or(BondType::Simple);
         self.builder
             .add_branch(branch_builder, bond_type, self.next_bond_source);
+
+        // Create deferred ring bonds (rings opened in parent, closed in branch)
+        for (main_target, branch_local_source, ring_bond_type) in deferred_bonds {
+            // branch_local_source needs to be adjusted to main molecule space
+            let main_source = branch_node_offset + branch_local_source;
+            self.builder
+                .add_bond(main_target, main_source, ring_bond_type);
+        }
+
         if self.next_bond_source.is_none() {
             self.next_bond_source = Some(0);
         }
         Ok(())
     }
 
-    fn parse_element_symbol(&mut self, c: char) -> String {
+    /// Parse element symbol. `in_bracket` controls whether all two-letter elements
+    /// are allowed (true) or only organic subset Cl/Br (false).
+    fn parse_element_symbol(&mut self, c: char, in_bracket: bool) -> String {
         if c.is_ascii_uppercase() {
             if let Some(&next_c) = self.peek() {
                 if next_c.is_ascii_lowercase() {
                     let two_letter = format!("{}{}", c, next_c);
-                    if AtomSymbol::from_str(&two_letter).is_ok() {
-                        self.next();
-                        return two_letter;
+                    if in_bracket {
+                        // In brackets, all valid two-letter elements are allowed
+                        if AtomSymbol::from_str(&two_letter).is_ok() {
+                            self.next();
+                            return two_letter;
+                        }
+                    } else {
+                        // Outside brackets, only Cl and Br are valid two-letter elements
+                        if two_letter == "Cl" || two_letter == "Br" {
+                            self.next();
+                            return two_letter;
+                        }
                     }
                 }
             }
@@ -179,6 +281,7 @@ impl<'a> Parser<'a> {
         c.to_string()
     }
 
+    #[allow(clippy::type_complexity)]
     fn parse_bracket_atom(
         &mut self,
     ) -> Result<
@@ -192,36 +295,27 @@ impl<'a> Parser<'a> {
         ),
         ParserError,
     > {
-        let isotope: Option<u16>;
-        let hydrogen: Option<u8>;
-        let elem: String;
-        let charge: i8;
-        let class: Option<u16>;
-        let aromatic: Option<bool>;
-
-        isotope = self.parse_isotope();
+        let isotope = self.parse_isotope();
 
         let first_char = self.next().ok_or(ParserError::UnexpectedEndOfInput(
             "Element identifier".to_string(),
         ))?;
-        if !first_char.is_alphabetic() {
+        if !first_char.is_alphabetic() && first_char != '*' {
             return Err(ParserError::MissingElementInBracketAtom);
         }
-        elem = self.parse_element_symbol(first_char);
+        let elem = self.parse_element_symbol(first_char, true);
 
-        hydrogen = self.parse_hydrogen()?;
-
-        charge = self.parse_charge()?;
-
-        class = self.parse_class();
+        let hydrogen = self.parse_hydrogen()?;
+        let charge = self.parse_charge()?;
+        let class = self.parse_class();
 
         match self.next() {
             Some(']') => (),
-            None => return Err(ParserError::UnexpectedEndOfInput("]".to_string())),
-            Some(c) => return Err(ParserError::UnexpectedCharacter(c, self.position)),
+            None => Err(ParserError::UnexpectedEndOfInput("]".to_string()))?,
+            Some(c) => Err(ParserError::UnexpectedCharacter(c, self.position))?,
         }
 
-        aromatic = Some(elem.to_lowercase() == elem);
+        let aromatic = Some(elem.to_lowercase() == elem);
 
         Ok((elem, charge, isotope, aromatic, hydrogen, class))
     }
@@ -249,7 +343,7 @@ impl<'a> Parser<'a> {
 
     fn parse_hydrogen(&mut self) -> Result<Option<u8>, ParserError> {
         match self.peek() {
-            None => return Err(ParserError::UnexpectedEndOfInput("]".to_string())),
+            None => Err(ParserError::UnexpectedEndOfInput("]".to_string())),
             Some(&'H') => {
                 self.next();
                 let mut builder = String::new();
@@ -293,24 +387,22 @@ impl<'a> Parser<'a> {
         if self.peek().is_some_and(|c| *c == ':' || *c == ']') {
             if builder.is_empty() {
                 return Ok(charge);
+            } else if charge > 0 {
+                return builder
+                    .parse::<i8>()
+                    .map_err(|_| ParserError::ChargeOutOfRange(builder));
+            } else if charge < 0 {
+                return Ok(0 - builder
+                    .parse::<i8>()
+                    .map_err(|_| ParserError::ChargeOutOfRange(builder))?);
             } else {
-                if charge > 0 {
-                    return Ok(builder
-                        .parse::<i8>()
-                        .map_err(|_| ParserError::ChargeOutOfRange(builder))?);
-                } else if charge < 0 {
-                    return Ok(0 - builder
-                        .parse::<i8>()
-                        .map_err(|_| ParserError::ChargeOutOfRange(builder))?);
-                } else {
-                    return Err(ParserError::ChargeWithoutSign);
-                }
+                return Err(ParserError::ChargeWithoutSign);
             }
         }
 
         match self.next() {
-            Some(c) => return Err(ParserError::UnexpectedCharacter(c, self.position)),
-            None => return Err(ParserError::UnexpectedEndOfInput("]".to_string())),
+            Some(c) => Err(ParserError::UnexpectedCharacter(c, self.position)),
+            None => Err(ParserError::UnexpectedEndOfInput("]".to_string())),
         }
     }
 
@@ -327,12 +419,16 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn connect_ring_closure(&mut self, target: u16) -> Result<(), ParserError> {
+    fn connect_ring_closure(
+        &mut self,
+        target: u16,
+        bond_type: BondType,
+    ) -> Result<(), ParserError> {
         if self.builder.nodes().is_empty() {
             return Err(ParserError::NoAtomToBond);
         }
         let current_atom = self.get_current_atom_index()?;
-        self.add_bond_between(current_atom, target);
+        self.builder.add_bond(current_atom, target, bond_type);
         Ok(())
     }
 
@@ -361,6 +457,25 @@ impl<'a> Parser<'a> {
 
 pub fn parse(input: &str) -> Result<Molecule, ParserError> {
     let parser = Parser::new(input);
-    let (builder, _) = parser.parse()?;
+    let (builder, branch_bond_type, next_bond_type, cycles_target, _) = parser.parse()?;
+
+    // Check for unclosed rings at the top level
+    if !cycles_target.is_empty() {
+        return Err(ParserError::UnclosedRing(
+            cycles_target.into_keys().collect(),
+        ));
+    }
+
+    // Check for bond at start (e.g., "-C") - only invalid at top level
+    if branch_bond_type.is_some() {
+        return Err(ParserError::BondWithoutPrecedingAtom);
+    }
+
+    // Check for dangling bond at end (e.g., "C=")
+    // Note: if branch_bond_type was Some, we already returned above
+    if next_bond_type.is_some() {
+        return Err(ParserError::BondWithoutFollowingAtom);
+    }
+
     Ok(builder.build()?)
 }

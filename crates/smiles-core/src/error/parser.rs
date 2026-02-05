@@ -2,7 +2,7 @@
 
 use thiserror::Error;
 
-use super::{MoleculeError, NodeError, BondError};
+use super::{BondError, MoleculeError, NodeError};
 
 /// Errors that can occur when parsing a SMILES string.
 #[derive(Debug, Clone, PartialEq, Error)]

@@ -140,6 +140,6 @@ fn parse_aromatic_bond() {
     assert_eq!(*bond.kind(), BondType::Aromatic);
 
     // Both atoms must be aromatic
-    assert_eq!(molecule.nodes()[0].aromatic(), true);
-    assert_eq!(molecule.nodes()[1].aromatic(), true);
+    assert!(molecule.nodes()[0].aromatic());
+    assert!(molecule.nodes()[1].aromatic());
 }

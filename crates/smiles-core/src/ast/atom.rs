@@ -31,6 +31,8 @@ impl AtomSymbol {
             AtomSymbol::As => true,
             AtomSymbol::Organic(OrganicAtom::B) => true,
             AtomSymbol::Te => true,
+            // Wildcard can be part of an aromatic ring per OpenSMILES spec
+            AtomSymbol::Wildcard => true,
             _ => false,
         }
     }
@@ -350,16 +352,13 @@ pub struct Atom {
 
 impl Atom {
     pub fn new(element: AtomSymbol, charge: i8, isotope: Option<u16>) -> Result<Atom, AtomError> {
-        if charge < -15 || charge > 15 {
+        if !(-15..=15).contains(&charge) {
             return Err(AtomError::InvalidCharge(charge));
         }
 
-        match isotope {
-            None => (),
-            Some(value) => {
-                if value > 999 {
-                    return Err(AtomError::InvalidIsotope(value));
-                }
+        if let Some(value) = isotope {
+            if value > 999 {
+                return Err(AtomError::InvalidIsotope(value));
             }
         }
 

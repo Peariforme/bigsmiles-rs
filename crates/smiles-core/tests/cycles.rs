@@ -83,7 +83,7 @@ fn parse_benzene() {
 
     // All atoms must be aromatic
     for node in molecule.nodes() {
-        assert_eq!(node.aromatic(), true);
+        assert!(node.aromatic());
     }
 
     // All bonds must be aromatic
@@ -152,7 +152,7 @@ fn parse_naphthalene() {
 
     // All atoms must be aromatic
     for node in molecule.nodes() {
-        assert_eq!(node.aromatic(), true);
+        assert!(node.aromatic());
     }
 }
 

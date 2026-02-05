@@ -21,7 +21,7 @@ fn parse_methane() {
     assert_eq!(*node.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node.atom().charge(), 0);
     assert_eq!(node.atom().isotope(), None);
-    assert_eq!(node.aromatic(), false);
+    assert!(!node.aromatic());
     assert_eq!(node.class(), None);
     assert_eq!(node.hydrogens(), 4);
 }
@@ -40,7 +40,7 @@ fn parse_ethane() {
     assert_eq!(*node0.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node0.atom().charge(), 0);
     assert_eq!(node0.atom().isotope(), None);
-    assert_eq!(node0.aromatic(), false);
+    assert!(!node0.aromatic());
     assert_eq!(node0.class(), None);
     assert_eq!(node0.hydrogens(), 3);
 
@@ -49,7 +49,7 @@ fn parse_ethane() {
     assert_eq!(*node1.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node1.atom().charge(), 0);
     assert_eq!(node1.atom().isotope(), None);
-    assert_eq!(node1.aromatic(), false);
+    assert!(!node1.aromatic());
     assert_eq!(node1.class(), None);
     assert_eq!(node1.hydrogens(), 3);
 
@@ -74,7 +74,7 @@ fn parse_ethanol() {
     assert_eq!(*node0.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node0.atom().charge(), 0);
     assert_eq!(node0.atom().isotope(), None);
-    assert_eq!(node0.aromatic(), false);
+    assert!(!node0.aromatic());
     assert_eq!(node0.class(), None);
     assert_eq!(node0.hydrogens(), 3);
 
@@ -83,7 +83,7 @@ fn parse_ethanol() {
     assert_eq!(*node1.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node1.atom().charge(), 0);
     assert_eq!(node1.atom().isotope(), None);
-    assert_eq!(node1.aromatic(), false);
+    assert!(!node1.aromatic());
     assert_eq!(node1.class(), None);
     assert_eq!(node1.hydrogens(), 2);
 
@@ -92,7 +92,7 @@ fn parse_ethanol() {
     assert_eq!(*node2.atom().element(), AtomSymbol::Organic(OrganicAtom::O));
     assert_eq!(node2.atom().charge(), 0);
     assert_eq!(node2.atom().isotope(), None);
-    assert_eq!(node2.aromatic(), false);
+    assert!(!node2.aromatic());
     assert_eq!(node2.class(), None);
     assert_eq!(node2.hydrogens(), 1);
 
@@ -122,16 +122,19 @@ fn parse_chloromethane() {
     assert_eq!(*node0.atom().element(), AtomSymbol::Organic(OrganicAtom::C));
     assert_eq!(node0.atom().charge(), 0);
     assert_eq!(node0.atom().isotope(), None);
-    assert_eq!(node0.aromatic(), false);
+    assert!(!node0.aromatic());
     assert_eq!(node0.class(), None);
     assert_eq!(node0.hydrogens(), 3);
 
     // Check the chlorine (-Cl)
     let node1 = &molecule.nodes()[1];
-    assert_eq!(*node1.atom().element(), AtomSymbol::Organic(OrganicAtom::Cl));
+    assert_eq!(
+        *node1.atom().element(),
+        AtomSymbol::Organic(OrganicAtom::Cl)
+    );
     assert_eq!(node1.atom().charge(), 0);
     assert_eq!(node1.atom().isotope(), None);
-    assert_eq!(node1.aromatic(), false);
+    assert!(!node1.aromatic());
     assert_eq!(node1.class(), None);
     assert_eq!(node1.hydrogens(), 0);
 

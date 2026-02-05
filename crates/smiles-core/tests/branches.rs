@@ -77,8 +77,7 @@ fn parse_branch_with_double_bond() {
 #[test]
 fn parse_branch_with_triple_bond() {
     // CC(C#N)C = isobutyronitrile
-    let molecule =
-        parse("CC(C#N)C").expect("Failed to parse molecule with triple bond in branch");
+    let molecule = parse("CC(C#N)C").expect("Failed to parse molecule with triple bond in branch");
 
     // Check that there is a triple bond
     let triple_bond = molecule
@@ -122,7 +121,10 @@ fn error_position_in_branch() {
     match parse("C([C+X])C") {
         Err(ParserError::UnexpectedCharacter(c, pos)) => {
             assert_eq!(c, 'X', "Expected unexpected character 'X'");
-            assert_eq!(pos, 6, "Position should be absolute (6), not relative to branch");
+            assert_eq!(
+                pos, 6,
+                "Position should be absolute (6), not relative to branch"
+            );
         }
         Ok(_) => panic!("Expected error, but parsing succeeded"),
         Err(other) => panic!("Expected UnexpectedCharacter, got {:?}", other),

@@ -12,7 +12,6 @@ use smiles_core::{parse, AtomSymbol};
 // ============================================================================
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_wildcard_atom() {
     // * = wildcard atom (any atom)
     let molecule = parse("*").expect("Failed to parse wildcard");
@@ -22,7 +21,6 @@ fn parse_wildcard_atom() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_wildcard_in_chain() {
     // C*C = chain with wildcard in the middle
     let molecule = parse("C*C").expect("Failed to parse C*C");
@@ -34,7 +32,6 @@ fn parse_wildcard_in_chain() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_wildcard_in_ring() {
     // C1*CC1 = ring with wildcard
     let molecule = parse("C1*CC1").expect("Failed to parse ring with wildcard");
@@ -48,7 +45,6 @@ fn parse_wildcard_in_ring() {
 // ============================================================================
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_aspirin() {
     // CC(=O)Oc1ccccc1C(=O)O = aspirin
     let molecule = parse("CC(=O)Oc1ccccc1C(=O)O").expect("Failed to parse aspirin");
@@ -57,7 +53,6 @@ fn parse_aspirin() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_caffeine() {
     // Cn1cnc2c1c(=O)n(c(=O)n2C)C = caffeine
     let molecule = parse("Cn1cnc2c1c(=O)n(c(=O)n2C)C").expect("Failed to parse caffeine");
@@ -67,7 +62,6 @@ fn parse_caffeine() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_glucose() {
     // Simplified version without stereochemistry: OCC1OC(O)C(O)C(O)C1O
     let molecule = parse("OCC1OC(O)C(O)C(O)C1O").expect("Failed to parse glucose");
@@ -76,7 +70,6 @@ fn parse_glucose() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_ethanol_explicit() {
     // [CH3][CH2][OH] = ethanol with everything explicit
     let molecule = parse("[CH3][CH2][OH]").expect("Failed to parse explicit ethanol");
@@ -90,7 +83,6 @@ fn parse_ethanol_explicit() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_acetone() {
     // CC(=O)C = acetone
     let molecule = parse("CC(=O)C").expect("Failed to parse acetone");
@@ -100,7 +92,6 @@ fn parse_acetone() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_acetic_acid() {
     // CC(=O)O = acetic acid
     let molecule = parse("CC(=O)O").expect("Failed to parse acetic acid");
@@ -109,7 +100,6 @@ fn parse_acetic_acid() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_benzaldehyde() {
     // c1ccccc1C=O = benzaldehyde
     let molecule = parse("c1ccccc1C=O").expect("Failed to parse benzaldehyde");
@@ -118,7 +108,6 @@ fn parse_benzaldehyde() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_aniline() {
     // Nc1ccccc1 = aniline
     let molecule = parse("Nc1ccccc1").expect("Failed to parse aniline");
@@ -127,7 +116,6 @@ fn parse_aniline() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_phenol() {
     // Oc1ccccc1 = phenol
     let molecule = parse("Oc1ccccc1").expect("Failed to parse phenol");
@@ -150,7 +138,6 @@ fn parse_empty_string() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_single_bond_at_start() {
     // -C should be invalid (bond without preceding atom)
     let result = parse("-C");
@@ -158,7 +145,6 @@ fn parse_single_bond_at_start() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_double_bond_at_end() {
     // C= should be invalid (bond without following atom)
     let result = parse("C=");
@@ -166,7 +152,6 @@ fn parse_double_bond_at_end() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_unclosed_bracket() {
     // [C should be invalid
     let result = parse("[C");
@@ -174,7 +159,6 @@ fn parse_unclosed_bracket() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_unclosed_ring() {
     // C1CC should be invalid (unclosed ring)
     let result = parse("C1CC");
@@ -182,7 +166,6 @@ fn parse_unclosed_ring() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_mismatched_ring_bonds() {
     // C=1CC1 vs C1CC=1 - bond types at closures must match
     // C1CC=1 is valid (simple then double = double)
