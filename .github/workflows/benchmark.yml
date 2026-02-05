@@ -67,8 +67,8 @@ jobs:
           # Copy custom pages
           cp bench-pages/compare.html /tmp/gh-pages/dev/bench/compare.html
           cp bench-pages/nav.js /tmp/gh-pages/dev/bench/nav.js
-          # Inject shared nav into benchmark-action's index.html
-          if [ -f /tmp/gh-pages/dev/bench/index.html ]; then
+          # Inject shared nav into benchmark-action's index.html (only if not already present)
+          if [ -f /tmp/gh-pages/dev/bench/index.html ] && ! grep -q 'nav\.js' /tmp/gh-pages/dev/bench/index.html; then
             sed -i 's|</body>|<script src="./nav.js"></script></body>|' /tmp/gh-pages/dev/bench/index.html
           fi
           cd /tmp/gh-pages
