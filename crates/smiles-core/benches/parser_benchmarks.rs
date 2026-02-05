@@ -294,8 +294,8 @@ fn bench_parallel_scaling(c: &mut Criterion) {
 fn bench_large_molecules(c: &mut Criterion) {
     let mut group = c.benchmark_group("large_molecules");
 
-    // Linear chains (reduced set for CI speed)
-    for size in [100, 1000, 10000].iter() {
+    // Linear chains (includes 50000 to observe performance degradation)
+    for size in [100, 1000, 10000, 50000].iter() {
         let smiles = generate_linear_alkane(*size);
         group.throughput(Throughput::Elements(*size as u64));
         group.bench_with_input(BenchmarkId::new("linear_chain", size), &smiles, |b, s| {
