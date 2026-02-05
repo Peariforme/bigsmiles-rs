@@ -111,7 +111,7 @@ fn bench_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("scaling");
 
     // PEG chains: detect O(n^2) algorithmic regressions (n = repeat units)
-    for n in [100, 1000, 5000] {
+    for n in [100, 500, 1000, 5000] {
         let smiles = generate_peg(n);
         let mol = parse(&smiles).expect("should parse");
         let heap_bytes = estimate_heap_bytes(&mol);
@@ -123,7 +123,7 @@ fn bench_scaling(c: &mut Criterion) {
     }
 
     // Teflon (PTFE): 2 branches per carbon, tests branch parsing with fluorine
-    for n in [100, 500, 1000] {
+    for n in [100, 500, 1000, 5000] {
         let smiles = generate_teflon(n);
         let mol = parse(&smiles).expect("should parse");
         let heap_bytes = estimate_heap_bytes(&mol);
