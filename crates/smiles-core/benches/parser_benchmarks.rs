@@ -15,6 +15,7 @@ use smiles_core::{parse, Molecule};
 #[cfg(feature = "parallel")]
 use smiles_core::parser_parallel::parse_batch;
 
+#[cfg(feature = "parallel")]
 /// Diverse set of molecules for batch benchmarks.
 const BATCH_MOLECULES: &[&str] = &[
     "C",                            // methane
@@ -39,6 +40,7 @@ fn generate_teflon(n: usize) -> String {
     "C(F)(F)".repeat(n)
 }
 
+#[cfg(feature = "parallel")]
 fn generate_batch_dataset(size: usize) -> Vec<&'static str> {
     (0..size)
         .map(|i| BATCH_MOLECULES[i % BATCH_MOLECULES.len()])
