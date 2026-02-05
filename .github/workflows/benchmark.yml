@@ -51,7 +51,7 @@ jobs:
 
       - name: Download previous benchmark (if exists)
         if: github.event_name == 'pull_request'
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v6
         continue-on-error: true
         with:
           workflow: benchmark.yml
