@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770328192518,
+  "lastUpdate": 1770330368736,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -323,6 +323,180 @@ window.BENCHMARK_DATA = {
             "name": "scaling/teflon/1000",
             "value": 269100,
             "range": "± 508",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9286e5a6a81f7e38610123a05af42b552b4760c6",
+          "message": "fix: fix comparison charts x-axis labels, align benchmark sizes, remove empty graph (#14)\n\n- Fix Chart.js bar charts showing tick indices (0,1,2…) instead of\n  actual batch size / repeat unit labels on the x-axis. The root cause\n  was setting `callback: undefined` on category axis ticks, which\n  overrides Chart.js's default label renderer. Conditionally set the\n  callback property only when a real function is needed.\n- Align PEG and Teflon benchmark repeat unit sizes to [100, 500, 1000,\n  5000] so the scaling comparison is meaningful (previously PEG used\n  [100, 1000, 5000] and Teflon used [100, 500, 1000]).\n- Remove the empty \"Single Molecule Parse Time\" horizontal bar chart\n  from the Reference Molecules section (table is kept).\n\nhttps://claude.ai/code/session_01LEufEiHBZPJmyiA7d5o66x\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2026-02-05T23:21:04+01:00",
+          "tree_id": "b33133f86da9678695750ae6896d71210aef52a3",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/9286e5a6a81f7e38610123a05af42b552b4760c6"
+        },
+        "date": 1770330368232,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "reference/ethanol",
+            "value": 222,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/cyclohexane",
+            "value": 579,
+            "range": "± 7",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/benzene",
+            "value": 580,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/ibuprofen",
+            "value": 1620,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/caffeine",
+            "value": 1450,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10",
+            "value": 7047,
+            "range": "± 23",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10",
+            "value": 15300,
+            "range": "± 295",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/100",
+            "value": 71982,
+            "range": "± 181",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/100",
+            "value": 74902,
+            "range": "± 5662",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/1000",
+            "value": 746961,
+            "range": "± 3184",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/1000",
+            "value": 487611,
+            "range": "± 8693",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/5000",
+            "value": 3669509,
+            "range": "± 8599",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/5000",
+            "value": 2228214,
+            "range": "± 31035",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10000",
+            "value": 7402637,
+            "range": "± 16401",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10000",
+            "value": 4425517,
+            "range": "± 41003",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/50000",
+            "value": 37422848,
+            "range": "± 544024",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/50000",
+            "value": 22052376,
+            "range": "± 290663",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/100",
+            "value": 16763,
+            "range": "± 118",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/500",
+            "value": 77638,
+            "range": "± 521",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/1000",
+            "value": 154553,
+            "range": "± 2271",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/5000",
+            "value": 760327,
+            "range": "± 5959",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/100",
+            "value": 25698,
+            "range": "± 84",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/500",
+            "value": 120695,
+            "range": "± 1022",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/1000",
+            "value": 236170,
+            "range": "± 560",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/5000",
+            "value": 1171755,
+            "range": "± 25986",
             "unit": "ns/iter"
           }
         ]
