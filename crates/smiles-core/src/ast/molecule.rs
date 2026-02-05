@@ -74,9 +74,12 @@ impl MoleculeBuilder {
         }
         self.nodes.extend(m.nodes);
         for bond in m.bonds {
+            // Translate branch-local indices to main molecule indices
+            // bond.source() and bond.target() are relative to the branch (0, 1, 2...)
+            // After extend, they start at node_count in the main molecule
             self.add_bond(
-                node_count + bond.source() + 1,
-                node_count + bond.target() + 1,
+                node_count + bond.source(),
+                node_count + bond.target(),
                 *bond.kind(),
             );
         }

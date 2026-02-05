@@ -320,8 +320,8 @@ fn bench_parallel_scaling(c: &mut Criterion) {
 fn bench_large_molecules(c: &mut Criterion) {
     let mut group = c.benchmark_group("large_molecules");
 
-    // Very long linear chains
-    for size in [50, 100, 200, 500].iter() {
+    // Very long linear chains (up to 50000 to test u16 limits)
+    for size in [100, 500, 1000, 5000, 10000, 50000].iter() {
         let smiles = generate_linear_alkane(*size);
         group.throughput(Throughput::Elements(*size as u64));
         group.bench_with_input(
@@ -397,11 +397,21 @@ fn bench_memory_usage(c: &mut Criterion) {
         });
     }
 
-    // Large molecule memory test
-    for size in [100, 500, 1000].iter() {
+    // Large molecule memory test (up to 50000 atoms)
+    for size in [100, 1000, 5000, 10000, 50000].iter() {
         let smiles = generate_linear_alkane(*size);
         let mol = parse(&smiles).expect("Should parse");
         let mem_size = molecule_memory_size(&mol);
+
+        println!(
+            "linear_chain_{}: {} atoms, {} bonds, ~{} bytes ({} bytes/atom, {:.2} MB total)",
+            size,
+            mol.nodes().len(),
+            mol.bonds().len(),
+            mem_size,
+            mem_size / mol.nodes().len().max(1),
+            mem_size as f64 / (1024.0 * 1024.0)
+        );
 
         group.throughput(Throughput::Bytes(mem_size as u64));
         group.bench_with_input(
