@@ -56,7 +56,7 @@ jobs:
           save-data-file: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           alert-comment-cc-users: '@Peariforme'
 
-      - name: Deploy comparison page to GitHub Pages
+      - name: Deploy custom pages to GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           git config user.name "github-actions[bot]"
@@ -64,7 +64,13 @@ jobs:
           git fetch origin gh-pages:gh-pages
           git worktree add /tmp/gh-pages gh-pages
           mkdir -p /tmp/gh-pages/dev/bench
+          # Copy custom pages
           cp bench-pages/compare.html /tmp/gh-pages/dev/bench/compare.html
+          cp bench-pages/nav.js /tmp/gh-pages/dev/bench/nav.js
+          # Inject shared nav into benchmark-action's index.html
+          if [ -f /tmp/gh-pages/dev/bench/index.html ]; then
+            sed -i 's|</body>|<script src="./nav.js"></script></body>|' /tmp/gh-pages/dev/bench/index.html
+          fi
           cd /tmp/gh-pages
-          git add dev/bench/compare.html
-          git diff --cached --quiet || (git commit -m "Update benchmark comparison page" && git push origin gh-pages)
+          git add dev/bench/compare.html dev/bench/nav.js dev/bench/index.html
+          git diff --cached --quiet || (git commit -m "Update benchmark pages (comparison + navigation)" && git push origin gh-pages)
