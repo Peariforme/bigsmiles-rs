@@ -10,6 +10,17 @@
 //! let molecule = parse("CCO")?; // ethanol
 //! ```
 //!
+//! ## Parallel Parsing
+//!
+//! Enable the `parallel` feature for multi-threaded batch parsing:
+//!
+//! ```rust,ignore
+//! use smiles_core::parser_parallel::parse_batch;
+//!
+//! let smiles = vec!["CCO", "c1ccccc1", "CC(=O)O"];
+//! let results = parse_batch(&smiles); // parsed in parallel
+//! ```
+//!
 //! ## Grammar
 //!
 //! This parser implements an LL(1) grammar based on the formal grammar
@@ -19,9 +30,13 @@ pub mod ast;
 // pub mod element;
 mod error;
 pub mod parser;
+#[cfg(feature = "parallel")]
+pub mod parser_parallel;
 // mod display;
 
 // Re-export public API
 pub use ast::*;
 pub use error::*;
 pub use parser::*;
+#[cfg(feature = "parallel")]
+pub use parser_parallel::*;

@@ -10,8 +10,18 @@ description = "A SMILES parser following the OpenSMILES specification"
 keywords = ["chemistry", "smiles", "parser", "molecules", "cheminformatics"]
 categories = ["parser-implementations", "science"]
 
+[features]
+default = []
+parallel = ["rayon"]
+
 [dependencies]
 thiserror.workspace = true
+rayon = { version = "1.10", optional = true }
 
 [dev-dependencies]
 pretty_assertions.workspace = true
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "parser_benchmarks"
+harness = false
