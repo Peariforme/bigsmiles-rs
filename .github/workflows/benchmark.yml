@@ -7,9 +7,9 @@ permissions:
 
 on:
   push:
-    branches: [main, master]
+    branches: [master]
   pull_request:
-    branches: [main, master]
+    branches: [master]
 
 env:
   CARGO_TERM_COLOR: always
@@ -32,41 +32,26 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            ~/.cargo/bin
             target
           key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-bench-
             ${{ runner.os }}-cargo-
 
-      - name: Install cargo-criterion
-        run: cargo install cargo-criterion --locked
-
       - name: Run benchmarks
-        run: |
-          cargo criterion -p smiles-core --features parallel --message-format=json 2>/dev/null | \
-            jq -s '[.[] | select(.reason == "benchmark-complete") | {name: .id, unit: "ns", value: .report.mean.estimate}]' > benchmark_results.json
+        run: cargo bench -p smiles-core --features parallel --bench parser_benchmarks -- --output-format bencher 2>&1 | tee benchmark_output.txt
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: SMILES Parser Benchmarks
-          tool: 'customSmallerIsBetter'
-          output-file-path: benchmark_results.json
+          tool: 'cargo'
+          output-file-path: benchmark_output.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           comment-on-alert: true
           alert-threshold: '150%'
           fail-on-alert: false
           comment-always: ${{ github.event_name == 'pull_request' }}
-          save-data-file: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+          save-data-file: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           alert-comment-cc-users: '@Peariforme'
-
-      - name: Upload benchmark artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: benchmark-results
-          path: |
-            target/criterion
-            benchmark_results.json
-          retention-days: 30

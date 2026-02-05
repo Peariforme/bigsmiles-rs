@@ -1,466 +1,149 @@
 //! Benchmarks for SMILES parsing performance.
 //!
-//! Run with: cargo bench -p smiles-core --features parallel
+//! Run with:
+//!   cargo bench -p smiles-core                     # without parallel
+//!   cargo bench -p smiles-core --features parallel  # with parallel
 //!
-//! This compares sequential vs parallel parsing and measures
-//! performance across different molecule sizes and complexities.
+//! Benchmark groups:
+//! - `reference`: 5 representative molecules for cross-language comparison
+//! - `seq_vs_parallel`: find the batch size where parallelism pays off (parallel feature only)
+//! - `scaling`: parser performance vs molecule size, tracks memory footprint
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use smiles_core::{parse, Molecule};
 
 #[cfg(feature = "parallel")]
-use smiles_core::parser_parallel::{parse_batch, parse_batch_ok};
+use smiles_core::parser_parallel::parse_batch;
 
-// Sample SMILES strings for benchmarking
-const SIMPLE_MOLECULES: &[&str] = &[
-    "C",        // methane
-    "CC",       // ethane
-    "CCC",      // propane
-    "CCCC",     // butane
-    "CCCCC",    // pentane
-    "CCCCCC",   // hexane
-    "CCCCCCC",  // heptane
-    "CCCCCCCC", // octane
-];
-
-const BRANCHED_MOLECULES: &[&str] = &[
-    "CC(C)C",                  // isobutane
-    "CC(C)(C)C",               // neopentane
-    "CC(C)CC(C)C",             // 2,4-dimethylpentane
-    "CC(C)(C)CC(C)(C)C",       // 2,2,4,4-tetramethylpentane
-    "CC(C)C(C)C(C)C",          // multiple branches
-    "C(C(C(C(C)C)C)C)C",       // nested branches
-    "CC(C)(C)C(C)(C)C(C)(C)C", // heavy branching
-];
-
-const CYCLIC_MOLECULES: &[&str] = &[
-    "C1CC1",      // cyclopropane
-    "C1CCC1",     // cyclobutane
-    "C1CCCC1",    // cyclopentane
-    "C1CCCCC1",   // cyclohexane
-    "C1CCCCCC1",  // cycloheptane
-    "C1CCCCCCC1", // cyclooctane
-];
-
-const AROMATIC_MOLECULES: &[&str] = &[
-    "c1ccccc1",                  // benzene
-    "c1ccc2ccccc2c1",            // naphthalene
-    "c1cc2cccc3cccc4cccc1c4c32", // pyrene
-    "c1ccccc1c2ccccc2",          // biphenyl
-    "c1ccc(c2ccccc2)cc1",        // another biphenyl notation
-];
-
-const COMPLEX_MOLECULES: &[&str] = &[
-    "CC(=O)O",                      // acetic acid
+/// Diverse set of molecules for batch benchmarks.
+const BATCH_MOLECULES: &[&str] = &[
+    "C",                            // methane
     "CCO",                          // ethanol
-    "CC(=O)OC",                     // methyl acetate
-    "c1ccc(O)cc1",                  // phenol
+    "C=O",                          // formaldehyde
+    "C1CCCCC1",                     // cyclohexane
+    "c1ccccc1",                     // benzene
+    "CC(C)C",                       // isobutane
+    "CC(=O)O",                      // acetic acid
+    "c1ccc2ccccc2c1",               // naphthalene
     "CC(C)Cc1ccc(C(C)C(=O)O)cc1",   // ibuprofen-like
-    "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", // caffeine-like
+    "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", // caffeine
 ];
 
-/// Generate a linear alkane chain of n carbons: C, CC, CCC, ...
-fn generate_linear_alkane(n: usize) -> String {
-    "C".repeat(n)
+/// PEG (polyethylene glycol): OCCOCCOCC...O — linear chain with O and C
+fn generate_peg(n: usize) -> String {
+    "OCC".repeat(n) + "O"
 }
 
-/// Generate a branched molecule with multiple methyl branches
-/// Pattern: C(C)(C)C(C)(C)C(C)(C)...
-fn generate_branched_chain(branch_count: usize) -> String {
-    if branch_count == 0 {
-        return "C".to_string();
-    }
-    let mut s = String::with_capacity(branch_count * 8);
-    for i in 0..branch_count {
-        if i > 0 {
-            s.push_str("C(C)(C)");
-        } else {
-            s.push_str("CC(C)(C)");
-        }
-    }
-    s.push('C');
-    s
+/// Teflon (PTFE): C(F)(F)C(F)(F)... — branching stress test with fluorine
+fn generate_teflon(n: usize) -> String {
+    "C(F)(F)".repeat(n)
 }
 
-/// Generate a star-shaped molecule with n branches from a central carbon
-/// Pattern: C(C)(C)(C)... - simpler than dendrimers, works with current parser
-fn generate_star_molecule(branches: usize) -> String {
-    if branches == 0 {
-        return "C".to_string();
-    }
-    let mut s = String::from("C");
-    for _ in 0..branches {
-        s.push_str("(C)");
-    }
-    s
-}
-
-/// Generate a comb polymer structure
-/// Pattern: C(C)C(C)C(C)C... - main chain with pendant groups
-fn generate_comb_polymer(length: usize) -> String {
-    if length == 0 {
-        return "C".to_string();
-    }
-    let mut s = String::new();
-    for i in 0..length {
-        if i > 0 {
-            s.push_str("C(C)");
-        } else {
-            s.push_str("CC(C)");
-        }
-    }
-    s
-}
-
-/// Calculate approximate memory size of a molecule
-fn molecule_memory_size(mol: &Molecule) -> usize {
-    use std::mem::{size_of, size_of_val};
-
-    // Base struct size
-    let base_size = size_of::<Molecule>();
-
-    // Nodes and bonds slices
-    let nodes_size = size_of_val(mol.nodes());
-    let bonds_size = size_of_val(mol.bonds());
-
-    base_size + nodes_size + bonds_size
-}
-
-// Generate a large dataset for batch testing
 fn generate_batch_dataset(size: usize) -> Vec<&'static str> {
-    let all_molecules: Vec<&str> = SIMPLE_MOLECULES
-        .iter()
-        .chain(BRANCHED_MOLECULES.iter())
-        .chain(CYCLIC_MOLECULES.iter())
-        .chain(AROMATIC_MOLECULES.iter())
-        .chain(COMPLEX_MOLECULES.iter())
-        .copied()
-        .collect();
-
     (0..size)
-        .map(|i| all_molecules[i % all_molecules.len()])
+        .map(|i| BATCH_MOLECULES[i % BATCH_MOLECULES.len()])
         .collect()
 }
 
-fn bench_single_parse(c: &mut Criterion) {
-    let mut group = c.benchmark_group("single_parse");
-
-    // Benchmark simple molecules
-    for smiles in SIMPLE_MOLECULES.iter().take(4) {
-        group.bench_with_input(BenchmarkId::new("simple", smiles), smiles, |b, s| {
-            b.iter(|| parse(black_box(s)))
-        });
-    }
-
-    // Benchmark branched molecules
-    for smiles in BRANCHED_MOLECULES.iter().take(4) {
-        group.bench_with_input(BenchmarkId::new("branched", smiles), smiles, |b, s| {
-            b.iter(|| parse(black_box(s)))
-        });
-    }
-
-    // Benchmark cyclic molecules
-    for smiles in CYCLIC_MOLECULES.iter().take(4) {
-        group.bench_with_input(BenchmarkId::new("cyclic", smiles), smiles, |b, s| {
-            b.iter(|| parse(black_box(s)))
-        });
-    }
-
-    // Benchmark aromatic molecules
-    for smiles in AROMATIC_MOLECULES.iter().take(4) {
-        group.bench_with_input(BenchmarkId::new("aromatic", smiles), smiles, |b, s| {
-            b.iter(|| parse(black_box(s)))
-        });
-    }
-
-    group.finish();
+/// Estimate heap memory used by a Molecule (nodes + bonds vectors).
+fn estimate_heap_bytes(mol: &Molecule) -> usize {
+    std::mem::size_of_val(mol.nodes()) + std::mem::size_of_val(mol.bonds())
 }
 
-fn bench_sequential_batch(c: &mut Criterion) {
-    let mut group = c.benchmark_group("sequential_batch");
+/// Reference benchmarks: 5 representative molecules for cross-language comparison.
+///
+/// Covers: simple chain, ring closure, aromaticity, branching, complex real molecule.
+/// Use these to compare against other SMILES parsers (RDKit, OpenBabel, etc.).
+fn bench_reference(c: &mut Criterion) {
+    let mut group = c.benchmark_group("reference");
 
-    for size in [10, 100, 1000, 10000].iter() {
-        let dataset = generate_batch_dataset(*size);
-        group.throughput(Throughput::Elements(*size as u64));
-        group.bench_with_input(BenchmarkId::new("sequential", size), &dataset, |b, data| {
-            b.iter(|| {
-                let results: Vec<_> = data.iter().map(|s| parse(black_box(s))).collect();
-                black_box(results)
-            })
-        });
-    }
-
-    group.finish();
-}
-
-#[cfg(feature = "parallel")]
-fn bench_parallel_batch(c: &mut Criterion) {
-    let mut group = c.benchmark_group("parallel_batch");
-
-    for size in [10, 100, 1000, 10000].iter() {
-        let dataset = generate_batch_dataset(*size);
-        group.throughput(Throughput::Elements(*size as u64));
-        group.bench_with_input(BenchmarkId::new("parallel", size), &dataset, |b, data| {
-            b.iter(|| black_box(parse_batch(black_box(data))))
-        });
-    }
-
-    group.finish();
-}
-
-#[cfg(feature = "parallel")]
-fn bench_sequential_vs_parallel(c: &mut Criterion) {
-    let mut group = c.benchmark_group("seq_vs_parallel");
-
-    for size in [100, 1000, 10000].iter() {
-        let dataset = generate_batch_dataset(*size);
-        group.throughput(Throughput::Elements(*size as u64));
-
-        group.bench_with_input(BenchmarkId::new("sequential", size), &dataset, |b, data| {
-            b.iter(|| {
-                let results: Vec<_> = data.iter().map(|s| parse(black_box(s))).collect();
-                black_box(results)
-            })
-        });
-
-        group.bench_with_input(BenchmarkId::new("parallel", size), &dataset, |b, data| {
-            b.iter(|| black_box(parse_batch(black_box(data))))
-        });
-    }
-
-    group.finish();
-}
-
-fn bench_molecule_complexity(c: &mut Criterion) {
-    let mut group = c.benchmark_group("complexity");
-
-    // Linear alkanes of increasing length
-    let linear_alkanes = [
-        "C",
-        "CCCCCCCCCC",                     // 10 carbons
-        "CCCCCCCCCCCCCCCCCCCC",           // 20 carbons
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC", // 30 carbons
-    ];
-
-    for smiles in linear_alkanes.iter() {
-        group.bench_with_input(BenchmarkId::new("linear", smiles.len()), smiles, |b, s| {
-            b.iter(|| parse(black_box(s)))
-        });
-    }
-
-    // Branching complexity
-    let branching = [
-        "CC",
-        "CC(C)C",
-        "CC(C)(C)C",
-        "CC(C)(C)C(C)(C)C",
-        "CC(C)(C)C(C)(C)C(C)(C)C",
-    ];
-
-    for smiles in branching.iter() {
-        let branch_count = smiles.matches('(').count();
-        group.bench_with_input(
-            BenchmarkId::new("branches", branch_count),
-            smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
-    }
-
-    group.finish();
-}
-
-#[cfg(feature = "parallel")]
-fn bench_parallel_scaling(c: &mut Criterion) {
-    use std::time::Duration;
-
-    let mut group = c.benchmark_group("parallel_scaling");
-    group.measurement_time(Duration::from_secs(3));
-
-    // Test how parallelism scales with batch size (reduced set for CI speed)
-    for size in [100, 1000, 10000].iter() {
-        let dataset = generate_batch_dataset(*size);
-
-        group.throughput(Throughput::Elements(*size as u64));
-
-        group.bench_with_input(BenchmarkId::new("parallel", size), &dataset, |b, data| {
-            b.iter(|| black_box(parse_batch_ok(black_box(data))))
-        });
-    }
-
-    group.finish();
-}
-
-/// Benchmark very large molecules (polymer-realistic sizes)
-fn bench_large_molecules(c: &mut Criterion) {
-    let mut group = c.benchmark_group("large_molecules");
-
-    // Linear chains - typical polymer chain lengths (100-2000 monomers)
-    // Plus 50000 to observe performance degradation at scale
-    for size in [100, 1000, 2000, 50000].iter() {
-        let smiles = generate_linear_alkane(*size);
-        group.throughput(Throughput::Elements(*size as u64));
-        group.bench_with_input(BenchmarkId::new("linear_chain", size), &smiles, |b, s| {
-            b.iter(|| parse(black_box(s)))
-        });
-    }
-
-    // Heavily branched molecules
-    for branches in [10, 50].iter() {
-        let smiles = generate_branched_chain(*branches);
-        group.bench_with_input(BenchmarkId::new("branched", branches), &smiles, |b, s| {
-            b.iter(|| parse(black_box(s)))
-        });
-    }
-
-    // Star molecules (many branches from central atom)
-    for branches in [10, 50].iter() {
-        let smiles = generate_star_molecule(*branches);
-        let atom_count = branches + 1; // central + branches
-        group.throughput(Throughput::Elements(atom_count as u64));
-        group.bench_with_input(
-            BenchmarkId::new("star_branches", branches),
-            &smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
-    }
-
-    // Comb polymers - realistic polymer lengths with pendant groups
-    for length in [100, 500, 1000].iter() {
-        let smiles = generate_comb_polymer(*length);
-        let atom_count = length * 2 + 1; // main chain + pendants
-        group.throughput(Throughput::Elements(atom_count as u64));
-        group.bench_with_input(BenchmarkId::new("comb_polymer", length), &smiles, |b, s| {
-            b.iter(|| parse(black_box(s)))
-        });
-    }
-
-    group.finish();
-}
-
-/// Benchmark memory usage of parsed molecules
-fn bench_memory_usage(c: &mut Criterion) {
-    let mut group = c.benchmark_group("memory_usage");
-
-    // Test memory for different molecule sizes
-    let test_cases = [
-        ("methane", "C"),
-        ("decane", "CCCCCCCCCC"),
+    let molecules = [
+        ("ethanol", "CCO"),
+        ("cyclohexane", "C1CCCCC1"),
         ("benzene", "c1ccccc1"),
+        ("ibuprofen", "CC(C)Cc1ccc(C(C)C(=O)O)cc1"),
         ("caffeine", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"),
     ];
 
-    for (name, smiles) in test_cases.iter() {
-        let mol = parse(smiles).expect("Should parse");
-        let mem_size = molecule_memory_size(&mol);
-        println!(
-            "{}: {} nodes, {} bonds, ~{} bytes",
-            name,
-            mol.nodes().len(),
-            mol.bonds().len(),
-            mem_size
-        );
-
-        group.throughput(Throughput::Bytes(mem_size as u64));
-        group.bench_with_input(BenchmarkId::new("parse", name), smiles, |b, s| {
+    for (name, smiles) in &molecules {
+        group.bench_with_input(BenchmarkId::from_parameter(name), smiles, |b, s| {
             b.iter(|| parse(black_box(s)))
         });
-    }
-
-    // Large molecule memory test (polymer-realistic sizes)
-    for size in [100, 1000, 2000].iter() {
-        let smiles = generate_linear_alkane(*size);
-        let mol = parse(&smiles).expect("Should parse");
-        let mem_size = molecule_memory_size(&mol);
-
-        println!(
-            "linear_chain_{}: {} atoms, {} bonds, ~{} bytes ({} bytes/atom, {:.2} MB total)",
-            size,
-            mol.nodes().len(),
-            mol.bonds().len(),
-            mem_size,
-            mem_size / mol.nodes().len().max(1),
-            mem_size as f64 / (1024.0 * 1024.0)
-        );
-
-        group.throughput(Throughput::Bytes(mem_size as u64));
-        group.bench_with_input(BenchmarkId::new("linear_chain", size), &smiles, |b, s| {
-            b.iter(|| parse(black_box(s)))
-        });
-    }
-
-    // Star molecule memory test
-    for branches in [10, 50].iter() {
-        let smiles = generate_star_molecule(*branches);
-        if let Ok(mol) = parse(&smiles) {
-            let mem_size = molecule_memory_size(&mol);
-            let atom_count = mol.nodes().len();
-
-            println!(
-                "star_{}_branches: {} atoms, {} bonds, ~{} bytes ({} bytes/atom)",
-                branches,
-                atom_count,
-                mol.bonds().len(),
-                mem_size,
-                mem_size / atom_count.max(1)
-            );
-
-            group.throughput(Throughput::Bytes(mem_size as u64));
-            group.bench_with_input(
-                BenchmarkId::new("star_branches", branches),
-                &smiles,
-                |b, s| b.iter(|| parse(black_box(s))),
-            );
-        }
-    }
-
-    // Comb polymer memory test (polymer-realistic sizes)
-    for length in [100, 500].iter() {
-        let smiles = generate_comb_polymer(*length);
-        if let Ok(mol) = parse(&smiles) {
-            let mem_size = molecule_memory_size(&mol);
-            let atom_count = mol.nodes().len();
-
-            println!(
-                "comb_polymer_{}: {} atoms, {} bonds, ~{} bytes ({} bytes/atom)",
-                length,
-                atom_count,
-                mol.bonds().len(),
-                mem_size,
-                mem_size / atom_count.max(1)
-            );
-
-            group.throughput(Throughput::Bytes(mem_size as u64));
-            group.bench_with_input(BenchmarkId::new("comb_polymer", length), &smiles, |b, s| {
-                b.iter(|| parse(black_box(s)))
-            });
-        }
     }
 
     group.finish();
 }
 
-// Conditional criterion groups based on features
+/// Sequential vs parallel crossover: find the batch size where parallelism pays off.
+///
+/// Tests 5 batch sizes from 10 to 10000. Look for the crossover point
+/// where parallel throughput (elements/sec) exceeds sequential.
+#[cfg(feature = "parallel")]
+fn bench_seq_vs_parallel(c: &mut Criterion) {
+    let mut group = c.benchmark_group("seq_vs_parallel");
+
+    for size in [10, 100, 1000, 5000, 10000, 50000] {
+        let dataset = generate_batch_dataset(size);
+        group.throughput(Throughput::Elements(size as u64));
+
+        group.bench_with_input(BenchmarkId::new("sequential", size), &dataset, |b, data| {
+            b.iter(|| {
+                let results: Vec<_> = data.iter().map(|s| parse(black_box(s))).collect();
+                black_box(results)
+            })
+        });
+
+        group.bench_with_input(BenchmarkId::new("parallel", size), &dataset, |b, data| {
+            b.iter(|| black_box(parse_batch(black_box(data))))
+        });
+    }
+
+    group.finish();
+}
+
+/// Parser scaling: performance vs molecule size, with memory footprint tracking.
+///
+/// Uses Throughput::Bytes so Criterion reports bytes/sec — if structs grow bigger
+/// after a refactor, the throughput numbers will shift and Criterion will flag it.
+fn bench_scaling(c: &mut Criterion) {
+    let mut group = c.benchmark_group("scaling");
+
+    // PEG chains: detect O(n^2) algorithmic regressions (n = repeat units)
+    for n in [100, 1000, 5000] {
+        let smiles = generate_peg(n);
+        let mol = parse(&smiles).expect("should parse");
+        let heap_bytes = estimate_heap_bytes(&mol);
+
+        group.throughput(Throughput::Bytes(heap_bytes as u64));
+        group.bench_with_input(BenchmarkId::new("peg", n), &smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
+    }
+
+    // Teflon (PTFE): 2 branches per carbon, tests branch parsing with fluorine
+    for n in [100, 500, 1000] {
+        let smiles = generate_teflon(n);
+        let mol = parse(&smiles).expect("should parse");
+        let heap_bytes = estimate_heap_bytes(&mol);
+
+        group.throughput(Throughput::Bytes(heap_bytes as u64));
+        group.bench_with_input(BenchmarkId::new("teflon", n), &smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
+    }
+
+    group.finish();
+}
+
 #[cfg(feature = "parallel")]
 criterion_group!(
     benches,
-    bench_single_parse,
-    bench_sequential_batch,
-    bench_parallel_batch,
-    bench_sequential_vs_parallel,
-    bench_molecule_complexity,
-    bench_parallel_scaling,
-    bench_large_molecules,
-    bench_memory_usage,
+    bench_reference,
+    bench_seq_vs_parallel,
+    bench_scaling,
 );
 
 #[cfg(not(feature = "parallel"))]
-criterion_group!(
-    benches,
-    bench_single_parse,
-    bench_sequential_batch,
-    bench_molecule_complexity,
-    bench_large_molecules,
-    bench_memory_usage,
-);
+criterion_group!(benches, bench_reference, bench_scaling,);
 
 criterion_main!(benches);
