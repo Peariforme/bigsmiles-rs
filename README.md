@@ -5,6 +5,7 @@ A Rust library for parsing [SMILES](http://opensmiles.org/opensmiles.html) and [
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/Peariforme/bigsmiles-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/Peariforme/bigsmiles-rs/actions/workflows/ci.yml)
 [![Benchmark](https://github.com/Peariforme/bigsmiles-rs/actions/workflows/benchmark.yml/badge.svg)](https://peariforme.github.io/bigsmiles-rs/dev/bench/)
+[![Benchmark Comparison](https://img.shields.io/badge/benchmarks-comparison-blue)](https://peariforme.github.io/bigsmiles-rs/dev/bench/compare.html)
 
 ## Overview
 
@@ -112,6 +113,8 @@ fn main() {
 | 10,000     | 8.6 ms    | 2.2 ms   | **3.9x**  |
 
 > Note: For small batches (<500), sequential parsing is faster due to thread synchronization overhead.
+
+See the full [benchmark comparison dashboard](https://peariforme.github.io/bigsmiles-rs/dev/bench/compare.html) for interactive charts including sequential vs parallel crossover, linear vs branched chain scaling, and reference molecule comparisons.
 
 ## Public API
 

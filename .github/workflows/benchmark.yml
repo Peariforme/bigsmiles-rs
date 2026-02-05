@@ -55,3 +55,16 @@ jobs:
           comment-always: ${{ github.event_name == 'pull_request' }}
           save-data-file: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           alert-comment-cc-users: '@Peariforme'
+
+      - name: Deploy comparison page to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages:gh-pages
+          git worktree add /tmp/gh-pages gh-pages
+          mkdir -p /tmp/gh-pages/dev/bench
+          cp bench-pages/compare.html /tmp/gh-pages/dev/bench/compare.html
+          cd /tmp/gh-pages
+          git add dev/bench/compare.html
+          git diff --cached --quiet || (git commit -m "Update benchmark comparison page" && git push origin gh-pages)
