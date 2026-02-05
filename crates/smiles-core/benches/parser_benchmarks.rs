@@ -24,38 +24,38 @@ const SIMPLE_MOLECULES: &[&str] = &[
 ];
 
 const BRANCHED_MOLECULES: &[&str] = &[
-    "CC(C)C",              // isobutane
-    "CC(C)(C)C",           // neopentane
-    "CC(C)CC(C)C",         // 2,4-dimethylpentane
-    "CC(C)(C)CC(C)(C)C",   // 2,2,4,4-tetramethylpentane
-    "CC(C)C(C)C(C)C",      // multiple branches
-    "C(C(C(C(C)C)C)C)C",   // nested branches
+    "CC(C)C",                  // isobutane
+    "CC(C)(C)C",               // neopentane
+    "CC(C)CC(C)C",             // 2,4-dimethylpentane
+    "CC(C)(C)CC(C)(C)C",       // 2,2,4,4-tetramethylpentane
+    "CC(C)C(C)C(C)C",          // multiple branches
+    "C(C(C(C(C)C)C)C)C",       // nested branches
     "CC(C)(C)C(C)(C)C(C)(C)C", // heavy branching
 ];
 
 const CYCLIC_MOLECULES: &[&str] = &[
-    "C1CC1",              // cyclopropane
-    "C1CCC1",             // cyclobutane
-    "C1CCCC1",            // cyclopentane
-    "C1CCCCC1",           // cyclohexane
-    "C1CCCCCC1",          // cycloheptane
-    "C1CCCCCCC1",         // cyclooctane
+    "C1CC1",      // cyclopropane
+    "C1CCC1",     // cyclobutane
+    "C1CCCC1",    // cyclopentane
+    "C1CCCCC1",   // cyclohexane
+    "C1CCCCCC1",  // cycloheptane
+    "C1CCCCCCC1", // cyclooctane
 ];
 
 const AROMATIC_MOLECULES: &[&str] = &[
-    "c1ccccc1",           // benzene
-    "c1ccc2ccccc2c1",     // naphthalene
+    "c1ccccc1",                  // benzene
+    "c1ccc2ccccc2c1",            // naphthalene
     "c1cc2cccc3cccc4cccc1c4c32", // pyrene
-    "c1ccccc1c2ccccc2",   // biphenyl
-    "c1ccc(c2ccccc2)cc1", // another biphenyl notation
+    "c1ccccc1c2ccccc2",          // biphenyl
+    "c1ccc(c2ccccc2)cc1",        // another biphenyl notation
 ];
 
 const COMPLEX_MOLECULES: &[&str] = &[
-    "CC(=O)O",                    // acetic acid
-    "CCO",                        // ethanol
-    "CC(=O)OC",                   // methyl acetate
-    "c1ccc(O)cc1",                // phenol
-    "CC(C)Cc1ccc(C(C)C(=O)O)cc1", // ibuprofen-like
+    "CC(=O)O",                      // acetic acid
+    "CCO",                          // ethanol
+    "CC(=O)OC",                     // methyl acetate
+    "c1ccc(O)cc1",                  // phenol
+    "CC(C)Cc1ccc(C(C)C(=O)O)cc1",   // ibuprofen-like
     "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", // caffeine-like
 ];
 
@@ -149,38 +149,30 @@ fn bench_single_parse(c: &mut Criterion) {
 
     // Benchmark simple molecules
     for smiles in SIMPLE_MOLECULES.iter().take(4) {
-        group.bench_with_input(
-            BenchmarkId::new("simple", smiles),
-            smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
+        group.bench_with_input(BenchmarkId::new("simple", smiles), smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
     }
 
     // Benchmark branched molecules
     for smiles in BRANCHED_MOLECULES.iter().take(4) {
-        group.bench_with_input(
-            BenchmarkId::new("branched", smiles),
-            smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
+        group.bench_with_input(BenchmarkId::new("branched", smiles), smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
     }
 
     // Benchmark cyclic molecules
     for smiles in CYCLIC_MOLECULES.iter().take(4) {
-        group.bench_with_input(
-            BenchmarkId::new("cyclic", smiles),
-            smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
+        group.bench_with_input(BenchmarkId::new("cyclic", smiles), smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
     }
 
     // Benchmark aromatic molecules
     for smiles in AROMATIC_MOLECULES.iter().take(4) {
-        group.bench_with_input(
-            BenchmarkId::new("aromatic", smiles),
-            smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
+        group.bench_with_input(BenchmarkId::new("aromatic", smiles), smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
     }
 
     group.finish();
@@ -192,16 +184,12 @@ fn bench_sequential_batch(c: &mut Criterion) {
     for size in [10, 100, 1000, 10000].iter() {
         let dataset = generate_batch_dataset(*size);
         group.throughput(Throughput::Elements(*size as u64));
-        group.bench_with_input(
-            BenchmarkId::new("sequential", size),
-            &dataset,
-            |b, data| {
-                b.iter(|| {
-                    let results: Vec<_> = data.iter().map(|s| parse(black_box(s))).collect();
-                    black_box(results)
-                })
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("sequential", size), &dataset, |b, data| {
+            b.iter(|| {
+                let results: Vec<_> = data.iter().map(|s| parse(black_box(s))).collect();
+                black_box(results)
+            })
+        });
     }
 
     group.finish();
@@ -214,11 +202,9 @@ fn bench_parallel_batch(c: &mut Criterion) {
     for size in [10, 100, 1000, 10000].iter() {
         let dataset = generate_batch_dataset(*size);
         group.throughput(Throughput::Elements(*size as u64));
-        group.bench_with_input(
-            BenchmarkId::new("parallel", size),
-            &dataset,
-            |b, data| b.iter(|| black_box(parse_batch(black_box(data)))),
-        );
+        group.bench_with_input(BenchmarkId::new("parallel", size), &dataset, |b, data| {
+            b.iter(|| black_box(parse_batch(black_box(data))))
+        });
     }
 
     group.finish();
@@ -232,22 +218,16 @@ fn bench_sequential_vs_parallel(c: &mut Criterion) {
         let dataset = generate_batch_dataset(*size);
         group.throughput(Throughput::Elements(*size as u64));
 
-        group.bench_with_input(
-            BenchmarkId::new("sequential", size),
-            &dataset,
-            |b, data| {
-                b.iter(|| {
-                    let results: Vec<_> = data.iter().map(|s| parse(black_box(s))).collect();
-                    black_box(results)
-                })
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("sequential", size), &dataset, |b, data| {
+            b.iter(|| {
+                let results: Vec<_> = data.iter().map(|s| parse(black_box(s))).collect();
+                black_box(results)
+            })
+        });
 
-        group.bench_with_input(
-            BenchmarkId::new("parallel", size),
-            &dataset,
-            |b, data| b.iter(|| black_box(parse_batch(black_box(data)))),
-        );
+        group.bench_with_input(BenchmarkId::new("parallel", size), &dataset, |b, data| {
+            b.iter(|| black_box(parse_batch(black_box(data))))
+        });
     }
 
     group.finish();
@@ -259,17 +239,15 @@ fn bench_molecule_complexity(c: &mut Criterion) {
     // Linear alkanes of increasing length
     let linear_alkanes = [
         "C",
-        "CCCCCCCCCC",                    // 10 carbons
-        "CCCCCCCCCCCCCCCCCCCC",          // 20 carbons
+        "CCCCCCCCCC",                     // 10 carbons
+        "CCCCCCCCCCCCCCCCCCCC",           // 20 carbons
         "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC", // 30 carbons
     ];
 
     for smiles in linear_alkanes.iter() {
-        group.bench_with_input(
-            BenchmarkId::new("linear", smiles.len()),
-            smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
+        group.bench_with_input(BenchmarkId::new("linear", smiles.len()), smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
     }
 
     // Branching complexity
@@ -306,11 +284,9 @@ fn bench_parallel_scaling(c: &mut Criterion) {
 
         group.throughput(Throughput::Elements(*size as u64));
 
-        group.bench_with_input(
-            BenchmarkId::new("parallel", size),
-            &dataset,
-            |b, data| b.iter(|| black_box(parse_batch_ok(black_box(data)))),
-        );
+        group.bench_with_input(BenchmarkId::new("parallel", size), &dataset, |b, data| {
+            b.iter(|| black_box(parse_batch_ok(black_box(data))))
+        });
     }
 
     group.finish();
@@ -324,21 +300,17 @@ fn bench_large_molecules(c: &mut Criterion) {
     for size in [100, 500, 1000, 5000, 10000, 50000].iter() {
         let smiles = generate_linear_alkane(*size);
         group.throughput(Throughput::Elements(*size as u64));
-        group.bench_with_input(
-            BenchmarkId::new("linear_chain", size),
-            &smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
+        group.bench_with_input(BenchmarkId::new("linear_chain", size), &smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
     }
 
     // Heavily branched molecules
     for branches in [10, 20, 50].iter() {
         let smiles = generate_branched_chain(*branches);
-        group.bench_with_input(
-            BenchmarkId::new("branched", branches),
-            &smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
+        group.bench_with_input(BenchmarkId::new("branched", branches), &smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
     }
 
     // Star molecules (many branches from central atom)
@@ -358,11 +330,9 @@ fn bench_large_molecules(c: &mut Criterion) {
         let smiles = generate_comb_polymer(*length);
         let atom_count = length * 2 + 1; // main chain + pendants
         group.throughput(Throughput::Elements(atom_count as u64));
-        group.bench_with_input(
-            BenchmarkId::new("comb_polymer", length),
-            &smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
+        group.bench_with_input(BenchmarkId::new("comb_polymer", length), &smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
     }
 
     group.finish();
@@ -414,11 +384,9 @@ fn bench_memory_usage(c: &mut Criterion) {
         );
 
         group.throughput(Throughput::Bytes(mem_size as u64));
-        group.bench_with_input(
-            BenchmarkId::new("linear_chain", size),
-            &smiles,
-            |b, s| b.iter(|| parse(black_box(s))),
-        );
+        group.bench_with_input(BenchmarkId::new("linear_chain", size), &smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
     }
 
     // Star molecule memory test
@@ -463,11 +431,9 @@ fn bench_memory_usage(c: &mut Criterion) {
             );
 
             group.throughput(Throughput::Bytes(mem_size as u64));
-            group.bench_with_input(
-                BenchmarkId::new("comb_polymer", length),
-                &smiles,
-                |b, s| b.iter(|| parse(black_box(s))),
-            );
+            group.bench_with_input(BenchmarkId::new("comb_polymer", length), &smiles, |b, s| {
+                b.iter(|| parse(black_box(s)))
+            });
         }
     }
 

@@ -71,10 +71,7 @@ pub fn parse_batch(inputs: &[&str]) -> Vec<Result<Molecule, ParserError>> {
 /// assert_eq!(molecules.len(), 2); // only valid ones
 /// ```
 pub fn parse_batch_ok(inputs: &[&str]) -> Vec<Molecule> {
-    inputs
-        .par_iter()
-        .filter_map(|s| parse(s).ok())
-        .collect()
+    inputs.par_iter().filter_map(|s| parse(s).ok()).collect()
 }
 
 /// Parse multiple SMILES strings in parallel with their indices.
@@ -208,13 +205,13 @@ mod tests {
     fn test_parse_complex_molecules() {
         // Test with more complex real-world SMILES
         let inputs = vec![
-            "c1ccccc1",                           // benzene
-            "CC(=O)O",                            // acetic acid
-            "CCO",                                // ethanol
-            "C1CC1",                              // cyclopropane
-            "CC(C)(C)C",                          // neopentane
-            "c1ccc2ccccc2c1",                     // naphthalene
-            "CC(C)CC(C)(C)C",                     // 2,2,4-trimethylpentane
+            "c1ccccc1",       // benzene
+            "CC(=O)O",        // acetic acid
+            "CCO",            // ethanol
+            "C1CC1",          // cyclopropane
+            "CC(C)(C)C",      // neopentane
+            "c1ccc2ccccc2c1", // naphthalene
+            "CC(C)CC(C)(C)C", // 2,2,4-trimethylpentane
         ];
 
         let results = parse_batch(&inputs);
