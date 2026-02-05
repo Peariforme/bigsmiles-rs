@@ -114,16 +114,14 @@ fn generate_comb_polymer(length: usize) -> String {
 
 /// Calculate approximate memory size of a molecule
 fn molecule_memory_size(mol: &Molecule) -> usize {
-    use std::mem::size_of;
+    use std::mem::{size_of, size_of_val};
 
     // Base struct size
     let base_size = size_of::<Molecule>();
 
-    // Nodes vector: capacity * size of each node
-    let nodes_size = mol.nodes().len() * size_of::<smiles_core::Node>();
-
-    // Bonds vector: capacity * size of each bond
-    let bonds_size = mol.bonds().len() * size_of::<smiles_core::Bond>();
+    // Nodes and bonds slices
+    let nodes_size = size_of_val(mol.nodes());
+    let bonds_size = size_of_val(mol.bonds());
 
     base_size + nodes_size + bonds_size
 }
