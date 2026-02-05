@@ -249,9 +249,6 @@
                 Parse time for 5 representative molecules of increasing complexity,
                 useful for cross-language parser comparison (RDKit, OpenBabel, etc.).
             </p>
-            <div class="chart-container">
-                <canvas id="referenceChart"></canvas>
-            </div>
             <table id="referenceTable"></table>
         </section>
 
@@ -326,6 +323,29 @@
 
         function barChart(canvasId, cfg) {
             var tc = textColor(), mc = mutedColor();
+
+            // Build tick configs — only set callback when a real function is
+            // needed.  Setting `callback: undefined` on a Chart.js category
+            // axis overrides the default label renderer and causes raw tick
+            // indices (0, 1, 2 …) to be shown instead of the label strings.
+            var xTicks = { color: mc };
+            if (cfg.horizontal) {
+                xTicks.callback = cfg.xTick || function (v) { return formatNs(v); };
+            }
+
+            var yTicks = { color: mc };
+            if (!cfg.horizontal) {
+                yTicks.callback = cfg.yTick || function (v) { return formatNs(v); };
+            }
+
+            var xScale = { ticks: xTicks, grid: { color: 'rgba(148,163,184,0.1)' } };
+            if (cfg.xTitle) xScale.title = { display: true, text: cfg.xTitle, color: mc };
+            if (cfg.horizontal && cfg.logScale) xScale.type = 'logarithmic';
+
+            var yScale = { ticks: yTicks, grid: { color: 'rgba(148,163,184,0.1)' } };
+            if (cfg.yTitle) yScale.title = { display: true, text: cfg.yTitle, color: mc };
+            if (!cfg.horizontal && cfg.logScale) yScale.type = 'logarithmic';
+
             return new Chart(document.getElementById(canvasId), {
                 type: 'bar',
                 data: cfg.data,
@@ -351,34 +371,7 @@
                             }
                         }
                     },
-                    scales: {
-                        x: {
-                            ticks: {
-                                color: mc,
-                                callback: cfg.horizontal
-                                    ? (cfg.xTick || function (v) { return formatNs(v); })
-                                    : undefined
-                            },
-                            grid:  { color: 'rgba(148,163,184,0.1)' },
-                            title: cfg.xTitle
-                                ? { display: true, text: cfg.xTitle, color: mc }
-                                : undefined,
-                            type: cfg.horizontal && cfg.logScale ? 'logarithmic' : undefined
-                        },
-                        y: {
-                            ticks: {
-                                color: mc,
-                                callback: !cfg.horizontal
-                                    ? (cfg.yTick || function (v) { return formatNs(v); })
-                                    : undefined
-                            },
-                            grid:  { color: 'rgba(148,163,184,0.1)' },
-                            title: cfg.yTitle
-                                ? { display: true, text: cfg.yTitle, color: mc }
-                                : undefined,
-                            type: !cfg.horizontal && cfg.logScale ? 'logarithmic' : undefined
-                        }
-                    }
+                    scales: { x: xScale, y: yScale }
                 }
             });
         }
@@ -552,25 +545,6 @@
 
             molecules.sort(function (a, b) { return g.reference[a] - g.reference[b]; });
             var values = molecules.map(function (m) { return g.reference[m]; });
-
-            // Horizontal bar chart
-            barChart('referenceChart', {
-                title: 'Single Molecule Parse Time',
-                horizontal: true,
-                xTitle: 'Parse Time',
-                showLegend: false,
-                xTick: function (v) { return formatNs(v); },
-                data: {
-                    labels: molecules,
-                    datasets: [{
-                        label: 'Parse Time',
-                        data: values,
-                        backgroundColor: COLORS.slateBg,
-                        borderColor: COLORS.slate,
-                        borderWidth: 1
-                    }]
-                }
-            });
 
             // Table
             var baseline = values[0];
