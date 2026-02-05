@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770330368736,
+  "lastUpdate": 1770331739240,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -497,6 +497,180 @@ window.BENCHMARK_DATA = {
             "name": "scaling/teflon/5000",
             "value": 1171755,
             "range": "± 25986",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "26059f6791e359a0b4cd832ee5bff9f38e8c08ae",
+          "message": "Fix nav.js duplicate injection in benchmark workflow (#15)\n\nAdd grep guard to check if nav.js is already present in index.html\nbefore injecting the script tag, preventing duplication on repeated runs.\n\nhttps://claude.ai/code/session_01Y4XK6sxqwtP5JXeScH9Bi5\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2026-02-05T23:43:38+01:00",
+          "tree_id": "ed3c32daeec818d01395b3536e94ef61fbeb58ab",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/26059f6791e359a0b4cd832ee5bff9f38e8c08ae"
+        },
+        "date": 1770331738233,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "reference/ethanol",
+            "value": 249,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/cyclohexane",
+            "value": 588,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/benzene",
+            "value": 568,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/ibuprofen",
+            "value": 1579,
+            "range": "± 9",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/caffeine",
+            "value": 1394,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10",
+            "value": 6855,
+            "range": "± 14",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10",
+            "value": 16001,
+            "range": "± 354",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/100",
+            "value": 72921,
+            "range": "± 184",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/100",
+            "value": 57809,
+            "range": "± 2324",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/1000",
+            "value": 761662,
+            "range": "± 4859",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/1000",
+            "value": 410551,
+            "range": "± 25745",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/5000",
+            "value": 3742751,
+            "range": "± 61198",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/5000",
+            "value": 1911921,
+            "range": "± 85550",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10000",
+            "value": 7479706,
+            "range": "± 47022",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10000",
+            "value": 3718875,
+            "range": "± 48005",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/50000",
+            "value": 36765858,
+            "range": "± 725523",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/50000",
+            "value": 17895953,
+            "range": "± 192444",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/100",
+            "value": 18609,
+            "range": "± 113",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/500",
+            "value": 89445,
+            "range": "± 1017",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/1000",
+            "value": 176699,
+            "range": "± 508",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/5000",
+            "value": 876325,
+            "range": "± 1468",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/100",
+            "value": 28297,
+            "range": "± 184",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/500",
+            "value": 136496,
+            "range": "± 577",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/1000",
+            "value": 269953,
+            "range": "± 2262",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/5000",
+            "value": 1342726,
+            "range": "± 18297",
             "unit": "ns/iter"
           }
         ]
