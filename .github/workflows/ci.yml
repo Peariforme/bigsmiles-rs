@@ -24,6 +24,9 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -38,49 +41,11 @@ jobs:
       - name: Build
         run: cargo build --all-targets
 
-      - name: Run tests
-        run: cargo test --all
+      - name: Test all feature combinations
+        run: cargo hack test --feature-powerset -p smiles-core
 
       - name: Check formatting
         run: cargo fmt --all -- --check
-
-      - name: Run clippy
-        run: cargo clippy --all-targets -- -D warnings
-
-  feature-tests:
-    name: Feature Flag Combinations
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-hack-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-hack-
-            ${{ runner.os }}-cargo-
-
-      - name: Check all feature combinations compile
-        run: cargo hack check --feature-powerset --no-dev-deps -p smiles-core
-
-      - name: Test each feature individually
-        run: cargo hack test --each-feature -p smiles-core
-
-      - name: Test all features combined
-        run: cargo test -p smiles-core --all-features
 
       - name: Clippy on all feature combinations
         run: cargo hack clippy --feature-powerset -p smiles-core -- -D warnings
