@@ -48,6 +48,7 @@ impl MoleculeBuilder {
         &self.bonds
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add_atom(
         &mut self,
         element: String,

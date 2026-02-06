@@ -92,8 +92,15 @@ impl<'a> Parser<'a> {
                 self.connect_current_atom()?;
 
             // Explicit bond
-            } else if c == '-' || c == '=' || c == '#' || c == '$' || c == '.' || c == ':'
-                || c == '/' || c == '\\' {
+            } else if c == '-'
+                || c == '='
+                || c == '#'
+                || c == '$'
+                || c == '.'
+                || c == ':'
+                || c == '/'
+                || c == '\\'
+            {
                 self.next_bond_type = Some(BondType::try_from(&c)?);
                 if self.builder.nodes().is_empty() {
                     self.branch_bond_type = self.next_bond_type;
@@ -444,7 +451,8 @@ impl<'a> Parser<'a> {
             return Err(ParserError::InvalidChiralityClass(n.to_string()));
         }
 
-        f(n).map(Some).ok_or_else(|| ParserError::InvalidChiralityClass(n.to_string()))
+        f(n).map(Some)
+            .ok_or_else(|| ParserError::InvalidChiralityClass(n.to_string()))
     }
 
     fn parse_hydrogen(&mut self) -> Result<Option<u8>, ParserError> {

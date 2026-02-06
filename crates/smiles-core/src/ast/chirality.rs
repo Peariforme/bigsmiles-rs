@@ -25,7 +25,7 @@ impl Chirality {
     /// Construct a trigonal-bipyramidal variant from an index (1–20).
     pub fn tb(n: u8) -> Option<Self> {
         // TB1 is the 8th variant (discriminant = 8)
-        if n >= 1 && n <= 20 {
+        if (1..=20).contains(&n) {
             // SAFETY: TB1..TB20 are contiguous variants 8..27
             Some(unsafe { std::mem::transmute::<u8, Chirality>(7 + n) })
         } else {
@@ -36,7 +36,7 @@ impl Chirality {
     /// Construct an octahedral variant from an index (1–30).
     pub fn oh(n: u8) -> Option<Self> {
         // OH1 is the 28th variant (discriminant = 28)
-        if n >= 1 && n <= 30 {
+        if (1..=30).contains(&n) {
             // SAFETY: OH1..OH30 are contiguous variants 28..57
             Some(unsafe { std::mem::transmute::<u8, Chirality>(27 + n) })
         } else {

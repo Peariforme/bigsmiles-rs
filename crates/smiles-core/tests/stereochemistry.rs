@@ -204,7 +204,7 @@ fn directional_bonds_contribute_single_bond_order() {
     // F atoms should have 0 implicit H
     assert_eq!(mol.nodes()[0].hydrogens(), 0); // F
     assert_eq!(mol.nodes()[3].hydrogens(), 0); // F
-    // C atoms each have 1 double + 1 single (directional) = bond order 3 → 1 implicit H
+                                               // C atoms each have 1 double + 1 single (directional) = bond order 3 → 1 implicit H
     assert_eq!(mol.nodes()[1].hydrogens(), 1); // C
     assert_eq!(mol.nodes()[2].hydrogens(), 1); // C
 }
