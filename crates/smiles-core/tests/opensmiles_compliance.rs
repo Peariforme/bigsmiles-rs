@@ -26,7 +26,10 @@ fn parse_aromatic_selenium_bracket() {
     }
     #[cfg(feature = "huckel-validation")]
     {
-        assert!(result.is_err(), "c1cc[se]cc1 should fail Hückel validation (7 pi electrons)");
+        assert!(
+            result.is_err(),
+            "c1cc[se]cc1 should fail Hückel validation (7 pi electrons)"
+        );
     }
 }
 
