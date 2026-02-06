@@ -2,6 +2,7 @@ use crate::{
     ast::{
         atom::AtomSymbol,
         bond::{Bond, BondType},
+        chirality::Chirality,
         node::{Node, NodeBuilder},
     },
     MoleculeError, NodeError,
@@ -47,6 +48,7 @@ impl MoleculeBuilder {
         &self.bonds
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add_atom(
         &mut self,
         element: String,
@@ -55,6 +57,7 @@ impl MoleculeBuilder {
         aromatic: Option<bool>,
         hydrogens: Option<u8>,
         class: Option<u16>,
+        chirality: Option<Chirality>,
     ) -> Result<usize, NodeError> {
         self.nodes.push(NodeBuilder::new(
             AtomSymbol::from_str(&element)?,
@@ -63,6 +66,7 @@ impl MoleculeBuilder {
             aromatic,
             hydrogens,
             class,
+            chirality,
         )?);
         Ok(self.nodes.len() - 1)
     }

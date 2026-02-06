@@ -8,6 +8,8 @@ pub enum BondType {
     Quadruple,
     Aromatic,
     Disconnected,
+    Up,
+    Down,
 }
 
 impl TryFrom<&char> for BondType {
@@ -21,6 +23,8 @@ impl TryFrom<&char> for BondType {
             '$' => Ok(BondType::Quadruple),
             '.' => Ok(BondType::Disconnected),
             ':' => Ok(BondType::Aromatic),
+            '/' => Ok(BondType::Up),
+            '\\' => Ok(BondType::Down),
             _ => Err(BondError::UnknownBond(*c)),
         }
     }
@@ -35,6 +39,8 @@ impl BondType {
             BondType::Quadruple => 8,
             BondType::Aromatic => 3,
             BondType::Disconnected => 0,
+            BondType::Up => 2,
+            BondType::Down => 2,
         }
     }
 }
