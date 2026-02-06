@@ -1,5 +1,6 @@
 use crate::{
     ast::atom::{Atom, AtomSymbol},
+    ast::chirality::Chirality,
     NodeError,
 };
 
@@ -8,8 +9,8 @@ pub struct Node {
     atom: Atom,
     aromatic: bool,
     hydrogens: u8,
-    class: Option<u16>, // arbitrary number to label the atom ([CH2:5])
-                        // TODO later  chirality: Chirality
+    class: Option<u16>,
+    chirality: Option<Chirality>,
 }
 
 impl Node {
@@ -18,6 +19,7 @@ impl Node {
         aromatic: bool,
         hydrogens: u8,
         class: Option<u16>,
+        chirality: Option<Chirality>,
     ) -> Result<Node, NodeError> {
         if hydrogens > 9 {
             return Err(NodeError::InvalidHydrogen(hydrogens));
@@ -41,6 +43,7 @@ impl Node {
             aromatic,
             hydrogens,
             class,
+            chirality,
         })
     }
 
@@ -59,6 +62,10 @@ impl Node {
     pub fn class(&self) -> Option<u16> {
         self.class
     }
+
+    pub fn chirality(&self) -> Option<Chirality> {
+        self.chirality
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -66,8 +73,8 @@ pub struct NodeBuilder {
     atom: Atom,
     aromatic: Option<bool>,
     hydrogens: Option<u8>,
-    class: Option<u16>, // arbitrary number to label the atom ([CH2:5])
-                        // TODO later  chirality: Chirality
+    class: Option<u16>,
+    chirality: Option<Chirality>,
 }
 
 impl NodeBuilder {
@@ -78,6 +85,7 @@ impl NodeBuilder {
         aromatic: Option<bool>,
         hydrogens: Option<u8>,
         class: Option<u16>,
+        chirality: Option<Chirality>,
     ) -> Result<NodeBuilder, NodeError> {
         let atom = Atom::new(element, charge, isotope)?;
 
@@ -86,6 +94,7 @@ impl NodeBuilder {
             aromatic,
             hydrogens,
             class,
+            chirality,
         })
     }
 
@@ -120,6 +129,10 @@ impl NodeBuilder {
         self
     }
 
+    pub fn chirality(&self) -> Option<Chirality> {
+        self.chirality
+    }
+
     pub fn build(mut self, bond_order_sum: Option<u8>) -> Result<Node, NodeError> {
         if self.hydrogens.is_none() {
             self.set_hydrogens(self.atom.implicit_hydrogens(bond_order_sum)?);
@@ -130,6 +143,7 @@ impl NodeBuilder {
             self.aromatic.ok_or(NodeError::UndefinedAromatic)?,
             self.hydrogens.ok_or(NodeError::UndefinedHydrogen)?,
             self.class,
+            self.chirality,
         )
     }
 }

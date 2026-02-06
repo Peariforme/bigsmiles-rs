@@ -3,7 +3,7 @@ use std::iter::Peekable;
 use std::str::{Chars, FromStr};
 
 use crate::error::ParserError;
-use crate::{AtomSymbol, BondType, Molecule, MoleculeBuilder};
+use crate::{AtomSymbol, BondType, Chirality, Molecule, MoleculeBuilder};
 
 struct Parser<'a> {
     chars: Peekable<Chars<'a>>,
@@ -80,18 +80,20 @@ impl<'a> Parser<'a> {
                 // Aromaticity is indicated by lowercase letters (c, n, o, etc.)
                 // Wildcard '*' outside brackets is non-aromatic by default
                 let aromatic = Some(c.is_ascii_lowercase());
-                self.builder.add_atom(elem, 0, None, aromatic, None, None)?;
+                self.builder
+                    .add_atom(elem, 0, None, aromatic, None, None, None)?;
                 self.connect_current_atom()?;
             // Brackets Atom
             } else if c == '[' {
-                let (elem, charge, isotope, aromatic, hydrogen, class) =
+                let (elem, charge, isotope, aromatic, hydrogen, class, chirality) =
                     self.parse_bracket_atom()?;
                 self.builder
-                    .add_atom(elem, charge, isotope, aromatic, hydrogen, class)?;
+                    .add_atom(elem, charge, isotope, aromatic, hydrogen, class, chirality)?;
                 self.connect_current_atom()?;
 
             // Explicit bond
-            } else if c == '-' || c == '=' || c == '#' || c == '$' || c == '.' || c == ':' {
+            } else if c == '-' || c == '=' || c == '#' || c == '$' || c == '.' || c == ':'
+                || c == '/' || c == '\\' {
                 self.next_bond_type = Some(BondType::try_from(&c)?);
                 if self.builder.nodes().is_empty() {
                     self.branch_bond_type = self.next_bond_type;
@@ -292,6 +294,7 @@ impl<'a> Parser<'a> {
             Option<bool>,
             Option<u8>,
             Option<u16>,
+            Option<Chirality>,
         ),
         ParserError,
     > {
@@ -305,6 +308,7 @@ impl<'a> Parser<'a> {
         }
         let elem = self.parse_element_symbol(first_char, true);
 
+        let chirality = self.parse_chirality()?;
         let hydrogen = self.parse_hydrogen()?;
         let charge = self.parse_charge()?;
         let class = self.parse_class();
@@ -317,7 +321,7 @@ impl<'a> Parser<'a> {
 
         let aromatic = Some(elem.to_lowercase() == elem);
 
-        Ok((elem, charge, isotope, aromatic, hydrogen, class))
+        Ok((elem, charge, isotope, aromatic, hydrogen, class, chirality))
     }
 
     fn parse_isotope(&mut self) -> Option<u16> {
@@ -339,6 +343,108 @@ impl<'a> Parser<'a> {
         } else {
             None
         }
+    }
+
+    fn parse_chirality(&mut self) -> Result<Option<Chirality>, ParserError> {
+        if self.peek() != Some(&'@') {
+            return Ok(None);
+        }
+        self.next(); // consume first '@'
+
+        match self.peek() {
+            Some(&'@') => {
+                self.next();
+                Ok(Some(Chirality::TH2))
+            }
+            Some(&'T') => {
+                self.next();
+                match self.next() {
+                    Some('H') => self.parse_chirality_index(1, 2, |n| match n {
+                        1 => Some(Chirality::TH1),
+                        2 => Some(Chirality::TH2),
+                        _ => None,
+                    }),
+                    Some('B') => self.parse_chirality_index(1, 20, |n| Chirality::tb(n as u8)),
+                    Some(c) => Err(ParserError::InvalidChiralitySpec(format!("@T{}", c))),
+                    None => Err(ParserError::UnexpectedEndOfInput(
+                        "chirality class".to_string(),
+                    )),
+                }
+            }
+            Some(&'A') => {
+                self.next();
+                match self.next() {
+                    Some('L') => self.parse_chirality_index(1, 2, |n| match n {
+                        1 => Some(Chirality::AL1),
+                        2 => Some(Chirality::AL2),
+                        _ => None,
+                    }),
+                    Some(c) => Err(ParserError::InvalidChiralitySpec(format!("@A{}", c))),
+                    None => Err(ParserError::UnexpectedEndOfInput(
+                        "chirality class".to_string(),
+                    )),
+                }
+            }
+            Some(&'S') => {
+                self.next();
+                match self.next() {
+                    Some('P') => self.parse_chirality_index(1, 3, |n| match n {
+                        1 => Some(Chirality::SP1),
+                        2 => Some(Chirality::SP2),
+                        3 => Some(Chirality::SP3),
+                        _ => None,
+                    }),
+                    Some(c) => Err(ParserError::InvalidChiralitySpec(format!("@S{}", c))),
+                    None => Err(ParserError::UnexpectedEndOfInput(
+                        "chirality class".to_string(),
+                    )),
+                }
+            }
+            Some(&'O') => {
+                self.next();
+                match self.next() {
+                    Some('H') => self.parse_chirality_index(1, 30, |n| Chirality::oh(n as u8)),
+                    Some(c) => Err(ParserError::InvalidChiralitySpec(format!("@O{}", c))),
+                    None => Err(ParserError::UnexpectedEndOfInput(
+                        "chirality class".to_string(),
+                    )),
+                }
+            }
+            _ => Ok(Some(Chirality::TH1)),
+        }
+    }
+
+    /// Parse a chirality index (1 or 2 digit number) and map it via `f`.
+    /// Returns an error if the number is outside `[min, max]` or if `f` returns None.
+    fn parse_chirality_index(
+        &mut self,
+        min: u32,
+        max: u32,
+        f: impl FnOnce(u32) -> Option<Chirality>,
+    ) -> Result<Option<Chirality>, ParserError> {
+        let first = self.next().ok_or(ParserError::UnexpectedEndOfInput(
+            "chirality index".to_string(),
+        ))?;
+        let first_digit = first
+            .to_digit(10)
+            .ok_or(ParserError::InvalidChiralityClass(first.to_string()))?;
+
+        let n = if let Some(&next_c) = self.peek() {
+            if let Some(second_digit) = next_c.to_digit(10) {
+                self.next();
+                first_digit * 10 + second_digit
+            } else {
+                first_digit
+            }
+        } else {
+            first_digit
+        };
+
+        if n < min || n > max {
+            return Err(ParserError::InvalidChiralityClass(n.to_string()));
+        }
+
+        f(n).map(Some).ok_or_else(|| ParserError::InvalidChiralityClass(n.to_string()))
     }
 
     fn parse_hydrogen(&mut self) -> Result<Option<u8>, ParserError> {

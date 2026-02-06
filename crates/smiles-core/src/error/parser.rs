@@ -75,6 +75,12 @@ pub enum ParserError {
     #[error("hydrogen cannot be greater than 9 {0}")]
     HydrogenOutOfRange(String),
 
+    #[error("invalid chirality class: {0}")]
+    InvalidChiralityClass(String),
+
+    #[error("invalid chirality specification: {0}")]
+    InvalidChiralitySpec(String),
+
     /// Error from molecule construction.
     #[error(transparent)]
     MoleculeError(#[from] MoleculeError),
