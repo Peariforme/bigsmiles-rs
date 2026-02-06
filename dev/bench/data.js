@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770366251830,
+  "lastUpdate": 1770378316714,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -845,6 +845,180 @@ window.BENCHMARK_DATA = {
             "name": "scaling/teflon/5000",
             "value": 1652685,
             "range": "± 15052",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3e0130e2e102c80002f49cafc34b513dbcedfe7e",
+          "message": "feat: OpenSMILES compliance audit and fixes (#17)\n\n* feat: OpenSMILES compliance audit and fixes\n\nAudit the parser against the OpenSMILES specification and fix all\nremaining non-compliance issues (6 fixes, 48/49 spec features now pass):\n\n- Parse aromatic two-letter bracket symbols [se], [as], [te]\n- Reject [HH1] — hydrogen atom cannot have a hydrogen count\n- Reject self-bonds (C11) — atom cannot be bonded to itself\n- Reject duplicate bonds (C12CCCCC12) — no two bonds between same pair\n- Whitespace terminator — SPACE/TAB/LF/CR stops parsing per spec\n- Fix disconnected structures — dot no longer creates a bond in the graph\n\nAlso un-ignores all 8 stoichiometry tests (now passing), adds 32 new\ncompliance tests, and updates README with detailed compliance tables.\n\nThe only remaining gap is Hückel's rule aromaticity validation.\n\nhttps://claude.ai/code/session_01A5NN91Pu2YdBZdb7EmeNS4\n\n* style: apply cargo fmt formatting\n\nhttps://claude.ai/code/session_01A5NN91Pu2YdBZdb7EmeNS4\n\n* refactor: remove redundant uppercase conversions in parser\n\nAtomSymbol::from_str already normalizes to uppercase internally, so\nthe manual capitalization before calling it was unnecessary.\n\nhttps://claude.ai/code/session_01A5NN91Pu2YdBZdb7EmeNS4\n\n---------\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2026-02-06T12:39:31+01:00",
+          "tree_id": "a0740ad938868373110936c052db239cc7289c80",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/3e0130e2e102c80002f49cafc34b513dbcedfe7e"
+        },
+        "date": 1770378316103,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "reference/ethanol",
+            "value": 253,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/cyclohexane",
+            "value": 595,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/benzene",
+            "value": 580,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/ibuprofen",
+            "value": 1751,
+            "range": "± 10",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/caffeine",
+            "value": 1590,
+            "range": "± 9",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10",
+            "value": 7208,
+            "range": "± 25",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10",
+            "value": 16124,
+            "range": "± 324",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/100",
+            "value": 76069,
+            "range": "± 8498",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/100",
+            "value": 59032,
+            "range": "± 637",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/1000",
+            "value": 789087,
+            "range": "± 14394",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/1000",
+            "value": 428228,
+            "range": "± 16639",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/5000",
+            "value": 3874692,
+            "range": "± 14999",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/5000",
+            "value": 1919002,
+            "range": "± 37439",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10000",
+            "value": 7713919,
+            "range": "± 65907",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10000",
+            "value": 3731310,
+            "range": "± 52031",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/50000",
+            "value": 39516787,
+            "range": "± 1340924",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/50000",
+            "value": 19537973,
+            "range": "± 900762",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/100",
+            "value": 18868,
+            "range": "± 74",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/500",
+            "value": 89829,
+            "range": "± 268",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/1000",
+            "value": 176832,
+            "range": "± 3017",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/5000",
+            "value": 902858,
+            "range": "± 17996",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/100",
+            "value": 32453,
+            "range": "± 125",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/500",
+            "value": 155811,
+            "range": "± 845",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/1000",
+            "value": 309210,
+            "range": "± 6966",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/5000",
+            "value": 1540139,
+            "range": "± 17290",
             "unit": "ns/iter"
           }
         ]
