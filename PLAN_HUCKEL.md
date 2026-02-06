@@ -104,6 +104,27 @@ et actinides. On les ajoutera au fur et a mesure si necessaire, mais pour
 les elements aromatiques courants B, C, N, O, P, S, Se, As, Te, l'Aufbau
 standard suffit.)
 
+### Table const pre-calculee
+
+Pour eviter de recalculer la configuration electronique a chaque appel,
+les resultats sont stockes dans un `const` array indexe par Z (0..=118).
+Le calcul se fait a la compilation, pas au runtime :
+
+```rust
+/// Donnees pre-calculees pour chaque element.
+/// Index 0 = Wildcard, index 1..=118 = elements.
+struct ElementElectronData {
+    outermost_shell: u8,      // n max
+    outermost_electrons: u8,  // e- sur la couche n max
+    outermost_p_electrons: u8, // e- p sur la couche n max
+}
+
+const ELECTRON_DATA: [ElementElectronData; 119] = precompute_all();
+```
+
+Cela donne un acces O(1) par `ELECTRON_DATA[z as usize]` sans aucune
+allocation ni cache runtime.
+
 ### Methodes
 
 ```rust
@@ -135,9 +156,11 @@ impl AtomSymbol {
     pub fn atomic_number(&self) -> u8;
 
     /// Configuration electronique de l'element neutre.
+    /// Pour la config complete (utile pour debug/inspection).
     pub fn electron_configuration(&self) -> ElectronConfiguration;
 
     /// Nombre d'electrons sur la couche la plus eloignee.
+    /// Lecture directe dans ELECTRON_DATA — O(1), pas de calcul.
     pub fn outermost_electrons(&self) -> u8;
 
     /// Masse atomique standard en Da.
