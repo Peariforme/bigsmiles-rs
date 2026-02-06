@@ -81,6 +81,14 @@ pub enum ParserError {
     #[error("invalid chirality specification: {0} at position {1}")]
     InvalidChiralitySpec(String, usize),
 
+    /// Atom bonded to itself (e.g., C11).
+    #[error("atom cannot be bonded to itself (ring {0})")]
+    SelfBond(u8),
+
+    /// Duplicate bond between the same pair of atoms (e.g., C12CCCCC12).
+    #[error("duplicate bond between atoms {0} and {1}")]
+    DuplicateBond(u16, u16),
+
     /// Error from molecule construction.
     #[error(transparent)]
     MoleculeError(#[from] MoleculeError),

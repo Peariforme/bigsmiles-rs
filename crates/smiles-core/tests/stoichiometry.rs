@@ -8,7 +8,6 @@
 use smiles_core::{parse, AtomSymbol, OrganicAtom};
 
 #[test]
-#[ignore] // Not yet implemented
 fn parse_disconnected_simple() {
     // C.C = two separate methane molecules
     let molecule = parse("C.C").expect("Failed to parse C.C");
@@ -18,7 +17,7 @@ fn parse_disconnected_simple() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
+
 fn parse_disconnected_ionic() {
     // [Na+].[Cl-] = sodium chloride (salt)
     let molecule = parse("[Na+].[Cl-]").expect("Failed to parse NaCl");
@@ -37,7 +36,7 @@ fn parse_disconnected_ionic() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
+
 fn parse_disconnected_multiple() {
     // C.C.C = three methane molecules
     let molecule = parse("C.C.C").expect("Failed to parse C.C.C");
@@ -47,7 +46,7 @@ fn parse_disconnected_multiple() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
+
 fn parse_disconnected_complex() {
     // CC.CC = two ethane molecules
     let molecule = parse("CC.CC").expect("Failed to parse CC.CC");
@@ -69,7 +68,7 @@ fn parse_disconnected_complex() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
+
 fn parse_disconnected_with_branches() {
     // CC(C)C.CC = isobutane + ethane
     let molecule = parse("CC(C)C.CC").expect("Failed to parse CC(C)C.CC");
@@ -79,7 +78,7 @@ fn parse_disconnected_with_branches() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
+
 fn parse_water_hydronium() {
     // [OH2].[H+] = water + proton (acid)
     let molecule = parse("[OH2].[H+]").expect("Failed to parse water + hydronium");
@@ -100,7 +99,7 @@ fn parse_water_hydronium() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
+
 fn parse_hydrate() {
     // CCO.[OH2] = ethanol + water (representation of a hydrate)
     let molecule = parse("CCO.[OH2]").expect("Failed to parse ethanol hydrate");
@@ -110,7 +109,7 @@ fn parse_hydrate() {
 }
 
 #[test]
-#[ignore] // Not yet implemented
+
 fn parse_metal_complex() {
     // [Cu+2].[O-].[O-] = copper(II) oxide
     let molecule = parse("[Cu+2].[O-].[O-]").expect("Failed to parse copper oxide");
