@@ -318,11 +318,7 @@ impl<'a> Parser<'a> {
                 if next_c.is_ascii_lowercase() {
                     let two_letter = format!("{}{}", c, next_c);
                     // Check if the capitalized form is a valid element that can be aromatic
-                    let capitalized = format!(
-                        "{}{}",
-                        c.to_ascii_uppercase(),
-                        next_c
-                    );
+                    let capitalized = format!("{}{}", c.to_ascii_uppercase(), next_c);
                     if AtomSymbol::from_str(&capitalized).is_ok() {
                         self.next();
                         return two_letter;
@@ -642,7 +638,10 @@ impl<'a> Parser<'a> {
     fn has_bond_between(&self, a: u16, b: u16) -> bool {
         // Check local bonds
         for bond in self.builder.bonds() {
-            let (s, t) = (self.node_offset + bond.source(), self.node_offset + bond.target());
+            let (s, t) = (
+                self.node_offset + bond.source(),
+                self.node_offset + bond.target(),
+            );
             if (s == a && t == b) || (s == b && t == a) {
                 return true;
             }

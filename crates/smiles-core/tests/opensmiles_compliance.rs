@@ -280,9 +280,10 @@ fn bond_at_ring_open() {
     let mol = parse("C=1CCCCC1").expect("Failed to parse C=1CCCCC1");
     assert_eq!(mol.nodes().len(), 6);
     // Should have a double bond for the ring closure
-    let ring_bond = mol.bonds().iter().find(|b| {
-        (b.source() == 0 && b.target() == 5) || (b.source() == 5 && b.target() == 0)
-    });
+    let ring_bond = mol
+        .bonds()
+        .iter()
+        .find(|b| (b.source() == 0 && b.target() == 5) || (b.source() == 5 && b.target() == 0));
     assert!(ring_bond.is_some());
     assert_eq!(*ring_bond.unwrap().kind(), BondType::Double);
 }
@@ -291,9 +292,10 @@ fn bond_at_ring_open() {
 fn bond_at_ring_close() {
     let mol = parse("C1CCCCC=1").expect("Failed to parse C1CCCCC=1");
     assert_eq!(mol.nodes().len(), 6);
-    let ring_bond = mol.bonds().iter().find(|b| {
-        (b.source() == 0 && b.target() == 5) || (b.source() == 5 && b.target() == 0)
-    });
+    let ring_bond = mol
+        .bonds()
+        .iter()
+        .find(|b| (b.source() == 0 && b.target() == 5) || (b.source() == 5 && b.target() == 0));
     assert!(ring_bond.is_some());
     assert_eq!(*ring_bond.unwrap().kind(), BondType::Double);
 }
