@@ -16,7 +16,7 @@ A Rust library for parsing [SMILES](http://opensmiles.org/opensmiles.html) and [
 
 ## Features
 
-- 🧪 OpenSMILES specification support (stereochemistry in progress)
+- 🧪 OpenSMILES specification support (see [compliance status](#opensmiles-compliance) below)
 - 🔬 BigSMILES extensions for polymer chemistry
 - 🦀 Pure Rust, no dependencies on external chemistry libraries
 - 📝 Detailed error messages with position information
@@ -162,12 +162,14 @@ Represents a bond between two atoms.
 #### `BondType`
 ```rust
 pub enum BondType {
-    Simple,      // -  (single bond)
-    Double,      // =  (double bond)
-    Triple,      // #  (triple bond)
-    Quadruple,   // $  (quadruple bond)
-    Aromatic,    // :  (aromatic bond)
-    Disconnected // .  (no bond, separate fragments)
+    Simple,       // -  (single bond)
+    Double,       // =  (double bond)
+    Triple,       // #  (triple bond)
+    Quadruple,    // $  (quadruple bond)
+    Aromatic,     // :  (aromatic bond)
+    Disconnected, // .  (no bond, separate fragments)
+    Up,           // /  (directional bond, cis/trans)
+    Down,         // \  (directional bond, cis/trans)
 }
 ```
 
@@ -244,32 +246,123 @@ bigsmiles-rs/
 └── tests/                # Integration tests
 ```
 
+## OpenSMILES Compliance
+
+Detailed compliance status against the [OpenSMILES specification](http://opensmiles.org/opensmiles.html) v1.0.
+
+### Section 3.1 — Atoms
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Atomic symbols (114 elements) | ✅ Done | All IUPAC elements supported in bracket notation |
+| Organic subset (B, C, N, O, P, S, F, Cl, Br, I) | ✅ Done | Implicit hydrogens computed from valence rules |
+| Wildcard `*` | ✅ Done | Bare and bracketed `[*]`, can be aromatic |
+| Bracket atom syntax `[...]` | ✅ Done | Full `[isotope? symbol chiral? hcount? charge? class?]` |
+| Isotopes `[13C]`, `[2H]` | ✅ Done | Range 0-999, leading zeros handled, `[0S] != [S]` |
+| Charges `[NH4+]`, `[O-2]` | ✅ Done | Range -15 to +15 |
+| Deprecated charges `[Cu++]`, `[O--]` | ✅ Done | Accepted for backwards compatibility |
+| Explicit hydrogens `[CH4]` | ✅ Done | Range H0-H9 |
+| Atom classes `[CH3:1]` | ✅ Done | Range 0-999 |
+| Implicit hydrogen calculation | ✅ Done | Correct valence tables for organic subset |
+| `[HH1]` rejection | ✅ Done | Hydrogen atom with hydrogen count is rejected |
+| Aromatic two-letter symbols `[se]`, `[as]` | ✅ Done | Lowercase two-letter aromatic symbols parsed in brackets |
+
+### Section 3.2 — Bonds
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Single `-` | ✅ Done | Explicit and implicit |
+| Double `=` | ✅ Done | |
+| Triple `#` | ✅ Done | |
+| Quadruple `$` | ✅ Done | |
+| Aromatic `:` | ✅ Done | Auto-detected between aromatic atoms |
+| Directional `/` and `\` | ✅ Done | For cis/trans double bond geometry |
+| Implicit bond (adjacency) | ✅ Done | Single between aliphatic, aromatic between aromatic atoms |
+
+### Section 3.3 — Branches
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Branch syntax `()` | ✅ Done | Unlimited nesting depth |
+| Nested/stacked branches | ✅ Done | |
+| Bond type in branch `(=O)` | ✅ Done | |
+| Dot in branch `(.C)` | ✅ Done | |
+
+### Section 3.4 — Rings
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Single-digit ring closures (0-9) | ✅ Done | Including ring number 0 |
+| Two-digit ring closures `%nn` (10-99) | ✅ Done | |
+| `%01` matches `1` (number-based matching) | ✅ Done | Ring digits interpreted as numbers |
+| Bond at ring open `C=1CCCCC1` | ✅ Done | |
+| Bond at ring close `C1CCCCC=1` | ✅ Done | |
+| Bond on both sides (must match) | ✅ Done | Mismatched ring bonds rejected |
+| Ring number reuse | ✅ Done | Numbers freed after pairing |
+| Spiro atoms (multiple rnums) | ✅ Done | |
+| Unclosed ring detection | ✅ Done | |
+| Self-bond rejection `C11` | ✅ Done | Atom cannot be bonded to itself |
+| Duplicate bond rejection `C12CCCCC12` | ✅ Done | Two atoms cannot be joined by more than one bond |
+
+### Section 3.5 — Aromaticity
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Lowercase aromatic atoms `c`, `n`, `o`, `s`, `p`, `b` | ✅ Done | |
+| Aromatic bond detection | ✅ Done | Implicit between adjacent aromatic atoms |
+| Kekule form acceptance | ✅ Done | Uppercase + explicit double bonds |
+| Elements that can be aromatic | ✅ Done | C, N, O, S, P, B, Se, As, Te, `*` |
+| Aromatic `[se]`, `[as]` bracket notation | ✅ Done | Two-letter lowercase aromatic symbols parsed |
+| **Hückel's rule validation** | ❌ Missing | Parser trusts input aromaticity, no 4N+2 π-electron verification |
+
+### Stereochemistry (Section not yet in final spec)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Tetrahedral `@`, `@@` | ✅ Done | `@TH1`, `@TH2` explicit forms too |
+| Allenal `@AL1`, `@AL2` | ✅ Done | |
+| Square planar `@SP1`-`@SP3` | ✅ Done | |
+| Trigonal bipyramidal `@TB1`-`@TB20` | ✅ Done | |
+| Octahedral `@OH1`-`@OH30` | ✅ Done | |
+| Double bond geometry `/`, `\` | ✅ Done | Cis/trans encoding |
+
+### General Grammar / Parsing
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Empty SMILES string | ✅ Done | Returns empty molecule |
+| Whitespace terminator | ✅ Done | SPACE/TAB/LF/CR terminates parsing; trailing content ignored |
+| Disconnected structures `.` | ✅ Done | Dot resets chain without creating a bond (per spec, `dot` is not a `bond`) |
+
+### Summary
+
+| Category | Compliant | Missing |
+|----------|-----------|---------|
+| Atoms | 12 | 0 |
+| Bonds | 7 | 0 |
+| Branches | 4 | 0 |
+| Rings | 11 | 0 |
+| Aromaticity | 5 | 1 |
+| Stereochemistry | 6 | 0 |
+| Grammar | 3 | 0 |
+| **Total** | **48** | **1** |
+
 ## Roadmap
 
-### SMILES Parser
-- [x] Organic atoms (B, C, N, O, P, S, F, Cl, Br, I)
-- [x] Bracket atoms `[...]`
-  - [x] All periodic table elements
-  - [x] Isotopes `[13C]`, `[2H]`
-  - [x] Charges `[NH4+]`, `[O-2]`
-  - [x] Explicit hydrogens `[CH4]`
-  - [x] Atom classes `[CH3:1]`
-- [x] Bonds
-  - [x] Single `-`
-  - [x] Double `=`
-  - [x] Triple `#`
-  - [x] Quadruple `$`
-  - [x] Aromatic `:`
-- [x] Branches `()`
-- [x] Ring closures (single digit and `%nn`)
-- [x] Aromatic atoms (lowercase)
-- [x] Wildcard `*`
-- [x] Disconnected structures `.`
+### SMILES Parser — Remaining OpenSMILES Issues
+- [x] Parse aromatic two-letter bracket symbols `[se]`, `[as]`, `[te]`
+- [x] Reject `[HH1]` — hydrogen atom with hydrogen count
+- [x] Reject self-bonds `C11` — atom bonded to itself
+- [x] Reject duplicate bonds `C12CCCCC12` — two bonds between same atom pair
+- [x] Whitespace terminator — stop parsing at SPACE/TAB/LF/CR
+- [x] Fix disconnected structures — `.` no longer creates a bond in the graph
+- [ ] Hückel's rule aromaticity validation (4N+2 π-electron check)
+
+### SMILES Parser — Beyond OpenSMILES
 - [x] Parallel batch parsing (optional `parallel` feature)
-- [ ] Stereochemistry
-  - [ ] Tetrahedral chirality `@`, `@@`
-  - [ ] Double bond geometry `/`, `\`
-- [ ] `to_smiles()` - Convert molecule back to SMILES string
+- [ ] `to_smiles()` — convert molecule back to SMILES string
+- [ ] Canonical SMILES output
+- [ ] SMILES normalization
 
 ### BigSMILES Parser
 - [ ] Stochastic objects `{...}`

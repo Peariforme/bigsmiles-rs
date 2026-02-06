@@ -91,12 +91,19 @@ impl<'a> Parser<'a> {
                     .add_atom(elem, charge, isotope, aromatic, hydrogen, class, chirality)?;
                 self.connect_current_atom()?;
 
+            // Dot separator (disconnected fragments) — resets the chain
+            } else if c == '.' {
+                self.next_bond_type = None;
+                self.next_bond_source = None;
+                if self.builder.nodes().is_empty() {
+                    self.branch_bond_type = Some(BondType::Disconnected);
+                }
+
             // Explicit bond
             } else if c == '-'
                 || c == '='
                 || c == '#'
                 || c == '$'
-                || c == '.'
                 || c == ':'
                 || c == '/'
                 || c == '\\'
@@ -136,7 +143,18 @@ impl<'a> Parser<'a> {
                     self.cycles_target.get(&cycle_number).copied()
                 {
                     let local_index = self.get_current_atom_index()?;
+                    let global_source = self.node_offset + local_index;
                     let bond_type_at_close = self.next_bond_type.take();
+
+                    // An atom cannot be bonded to itself (e.g., C11)
+                    if global_source == target {
+                        return Err(ParserError::SelfBond(cycle_number));
+                    }
+
+                    // Two atoms cannot be joined by more than one bond (e.g., C12CCCCC12)
+                    if self.has_bond_between(target, global_source) {
+                        return Err(ParserError::DuplicateBond(target, global_source));
+                    }
 
                     // Validate ring bond types match if both are explicitly specified
                     if let (Some(open), Some(close)) = (bond_type_at_open, bond_type_at_close) {
@@ -186,8 +204,11 @@ impl<'a> Parser<'a> {
                     self.cycles_target
                         .insert(cycle_number, (global_index, bond_type_at_open));
                 }
+            // Whitespace terminates the SMILES string (OpenSMILES spec)
+            } else if c == ' ' || c == '\t' || c == '\n' || c == '\r' {
+                break;
             } else {
-                return Err(ParserError::NotYetImplemented);
+                return Err(ParserError::UnexpectedCharacter(c, self.position));
             }
         }
 
@@ -245,9 +266,15 @@ impl<'a> Parser<'a> {
         self.cycles_target = updated_cycles;
 
         // Add the branch to the main builder
+        // A dot at the start of a branch means disconnected — no bond to parent
         let bond_type = branch_bond_type.unwrap_or(BondType::Simple);
+        let connect_source = if bond_type == BondType::Disconnected {
+            None
+        } else {
+            self.next_bond_source
+        };
         self.builder
-            .add_branch(branch_builder, bond_type, self.next_bond_source);
+            .add_branch(branch_builder, bond_type, connect_source);
 
         // Create deferred ring bonds (rings opened in parent, closed in branch)
         for (main_target, branch_local_source, ring_bond_type) in deferred_bonds {
@@ -282,6 +309,18 @@ impl<'a> Parser<'a> {
                             self.next();
                             return two_letter;
                         }
+                    }
+                }
+            }
+        } else if in_bracket && c.is_ascii_lowercase() {
+            // Aromatic two-letter symbols: se, as, te (OpenSMILES spec)
+            if let Some(&next_c) = self.peek() {
+                if next_c.is_ascii_lowercase() {
+                    let two_letter = format!("{}{}", c, next_c);
+                    // from_str already normalizes to uppercase internally
+                    if AtomSymbol::from_str(&two_letter).is_ok() {
+                        self.next();
+                        return two_letter;
                     }
                 }
             }
@@ -324,6 +363,15 @@ impl<'a> Parser<'a> {
             Some(']') => (),
             None => Err(ParserError::UnexpectedEndOfInput("]".to_string()))?,
             Some(c) => Err(ParserError::UnexpectedCharacter(c, self.position))?,
+        }
+
+        // A hydrogen atom cannot have a hydrogen count (e.g., [HH1] is illegal)
+        if elem.eq_ignore_ascii_case("H") {
+            if let Some(h) = hydrogen {
+                if h > 0 {
+                    return Err(ParserError::HydrogenWithHydrogenCount);
+                }
+            }
         }
 
         let aromatic = Some(elem.to_lowercase() == elem);
@@ -582,6 +630,28 @@ impl<'a> Parser<'a> {
         );
 
         self.builder.add_bond(source, target, bond_type);
+    }
+
+    /// Check if a bond already exists between two atoms (in either direction).
+    fn has_bond_between(&self, a: u16, b: u16) -> bool {
+        // Check local bonds
+        for bond in self.builder.bonds() {
+            let (s, t) = (
+                self.node_offset + bond.source(),
+                self.node_offset + bond.target(),
+            );
+            if (s == a && t == b) || (s == b && t == a) {
+                return true;
+            }
+        }
+        // Check deferred ring bonds
+        for &(target, source, _) in &self.deferred_ring_bonds {
+            let s = self.node_offset + source;
+            if (s == a && target == b) || (s == b && target == a) {
+                return true;
+            }
+        }
+        false
     }
 }
 
