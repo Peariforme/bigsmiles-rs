@@ -317,9 +317,8 @@ impl<'a> Parser<'a> {
             if let Some(&next_c) = self.peek() {
                 if next_c.is_ascii_lowercase() {
                     let two_letter = format!("{}{}", c, next_c);
-                    // Check if the capitalized form is a valid element that can be aromatic
-                    let capitalized = format!("{}{}", c.to_ascii_uppercase(), next_c);
-                    if AtomSymbol::from_str(&capitalized).is_ok() {
+                    // from_str already normalizes to uppercase internally
+                    if AtomSymbol::from_str(&two_letter).is_ok() {
                         self.next();
                         return two_letter;
                     }
@@ -367,8 +366,7 @@ impl<'a> Parser<'a> {
         }
 
         // A hydrogen atom cannot have a hydrogen count (e.g., [HH1] is illegal)
-        let normalized = elem.to_uppercase();
-        if normalized == "H" {
+        if elem.eq_ignore_ascii_case("H") {
             if let Some(h) = hydrogen {
                 if h > 0 {
                     return Err(ParserError::HydrogenWithHydrogenCount);
