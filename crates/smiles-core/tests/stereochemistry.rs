@@ -259,7 +259,7 @@ fn error_tb0_invalid() {
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
-        ParserError::InvalidChiralityClass(_)
+        ParserError::InvalidChiralityClass(..)
     ));
 }
 
@@ -269,7 +269,7 @@ fn error_tb21_out_of_range() {
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
-        ParserError::InvalidChiralityClass(_)
+        ParserError::InvalidChiralityClass(..)
     ));
 }
 

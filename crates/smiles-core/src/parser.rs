@@ -372,7 +372,10 @@ impl<'a> Parser<'a> {
                         _ => None,
                     }),
                     Some('B') => self.parse_chirality_index(1, 20, |n| Chirality::tb(n as u8)),
-                    Some(c) => Err(ParserError::InvalidChiralitySpec(format!("@T{}", c))),
+                    Some(c) => Err(ParserError::InvalidChiralitySpec(
+                        format!("@T{}", c),
+                        self.position,
+                    )),
                     None => Err(ParserError::UnexpectedEndOfInput(
                         "chirality class".to_string(),
                     )),
@@ -386,7 +389,10 @@ impl<'a> Parser<'a> {
                         2 => Some(Chirality::AL2),
                         _ => None,
                     }),
-                    Some(c) => Err(ParserError::InvalidChiralitySpec(format!("@A{}", c))),
+                    Some(c) => Err(ParserError::InvalidChiralitySpec(
+                        format!("@A{}", c),
+                        self.position,
+                    )),
                     None => Err(ParserError::UnexpectedEndOfInput(
                         "chirality class".to_string(),
                     )),
@@ -401,7 +407,10 @@ impl<'a> Parser<'a> {
                         3 => Some(Chirality::SP3),
                         _ => None,
                     }),
-                    Some(c) => Err(ParserError::InvalidChiralitySpec(format!("@S{}", c))),
+                    Some(c) => Err(ParserError::InvalidChiralitySpec(
+                        format!("@S{}", c),
+                        self.position,
+                    )),
                     None => Err(ParserError::UnexpectedEndOfInput(
                         "chirality class".to_string(),
                     )),
@@ -411,7 +420,10 @@ impl<'a> Parser<'a> {
                 self.next();
                 match self.next() {
                     Some('H') => self.parse_chirality_index(1, 30, |n| Chirality::oh(n as u8)),
-                    Some(c) => Err(ParserError::InvalidChiralitySpec(format!("@O{}", c))),
+                    Some(c) => Err(ParserError::InvalidChiralitySpec(
+                        format!("@O{}", c),
+                        self.position,
+                    )),
                     None => Err(ParserError::UnexpectedEndOfInput(
                         "chirality class".to_string(),
                     )),
@@ -432,9 +444,10 @@ impl<'a> Parser<'a> {
         let first = self.next().ok_or(ParserError::UnexpectedEndOfInput(
             "chirality index".to_string(),
         ))?;
+        let pos = self.position;
         let first_digit = first
             .to_digit(10)
-            .ok_or(ParserError::InvalidChiralityClass(first.to_string()))?;
+            .ok_or(ParserError::InvalidChiralityClass(first.to_string(), pos))?;
 
         let n = if let Some(&next_c) = self.peek() {
             if let Some(second_digit) = next_c.to_digit(10) {
@@ -448,11 +461,14 @@ impl<'a> Parser<'a> {
         };
 
         if n < min || n > max {
-            return Err(ParserError::InvalidChiralityClass(n.to_string()));
+            return Err(ParserError::InvalidChiralityClass(
+                n.to_string(),
+                self.position,
+            ));
         }
 
         f(n).map(Some)
-            .ok_or_else(|| ParserError::InvalidChiralityClass(n.to_string()))
+            .ok_or_else(|| ParserError::InvalidChiralityClass(n.to_string(), self.position))
     }
 
     fn parse_hydrogen(&mut self) -> Result<Option<u8>, ParserError> {
