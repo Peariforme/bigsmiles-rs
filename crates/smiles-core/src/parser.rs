@@ -677,5 +677,12 @@ pub fn parse(input: &str) -> Result<Molecule, ParserError> {
         return Err(ParserError::BondWithoutFollowingAtom);
     }
 
-    Ok(builder.build()?)
+    let molecule = builder.build()?;
+
+    #[cfg(feature = "huckel-validation")]
+    {
+        crate::ast::aromaticity::require_valid_aromaticity(&molecule)?;
+    }
+
+    Ok(molecule)
 }
