@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770331739240,
+  "lastUpdate": 1770366251830,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -671,6 +671,180 @@ window.BENCHMARK_DATA = {
             "name": "scaling/teflon/5000",
             "value": 1342726,
             "range": "± 18297",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7d861d4e89b2a552accd4216058f63ac82cef183",
+          "message": "feat: add stereochemistry parsing (chirality + directional bonds) (#16)\n\n* feat: add stereochemistry parsing (chirality + directional bonds)\n\nImplement full OpenSMILES stereochemistry support:\n\n- Chirality: @/@@ (tetrahedral), @TH, @AL, @SP, @TB1-20, @OH1-30\n- Directional bonds: / (Up) and \\ (Down) for cis/trans geometry\n- Chirality enum uses #[repr(u8)] for 1-byte Option<Chirality>\n- 39 new tests covering all chirality classes, bond geometry, and errors\n\nhttps://claude.ai/code/session_012vAwPmWEub96F9WWPhzFGb\n\n* fix: resolve fmt and clippy warnings\n\n- Use (1..=N).contains() instead of manual range checks (clippy)\n- Suppress too_many_arguments on add_atom (inherited pattern)\n- Apply rustfmt formatting fixes\n\nhttps://claude.ai/code/session_012vAwPmWEub96F9WWPhzFGb\n\n* fix: add position to chirality error messages\n\nInvalidChiralityClass and InvalidChiralitySpec now include the\ncharacter position where the error occurred, consistent with\nUnexpectedCharacter.\n\nhttps://claude.ai/code/session_012vAwPmWEub96F9WWPhzFGb\n\n---------\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2026-02-06T09:18:39+01:00",
+          "tree_id": "1da7621416b50663c20b08b6dbc5cebe15438eee",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/7d861d4e89b2a552accd4216058f63ac82cef183"
+        },
+        "date": 1770366250713,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "reference/ethanol",
+            "value": 281,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/cyclohexane",
+            "value": 600,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/benzene",
+            "value": 597,
+            "range": "± 9",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/ibuprofen",
+            "value": 1824,
+            "range": "± 9",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/caffeine",
+            "value": 1551,
+            "range": "± 61",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10",
+            "value": 7716,
+            "range": "± 100",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10",
+            "value": 16409,
+            "range": "± 251",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/100",
+            "value": 81677,
+            "range": "± 448",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/100",
+            "value": 60252,
+            "range": "± 1693",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/1000",
+            "value": 827118,
+            "range": "± 3413",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/1000",
+            "value": 440619,
+            "range": "± 19342",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/5000",
+            "value": 4053555,
+            "range": "± 21083",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/5000",
+            "value": 1971905,
+            "range": "± 28896",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10000",
+            "value": 8093848,
+            "range": "± 34172",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10000",
+            "value": 3824526,
+            "range": "± 31714",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/50000",
+            "value": 41028084,
+            "range": "± 380685",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/50000",
+            "value": 19452040,
+            "range": "± 401578",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/100",
+            "value": 20740,
+            "range": "± 195",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/500",
+            "value": 96016,
+            "range": "± 1466",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/1000",
+            "value": 197664,
+            "range": "± 2167",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/5000",
+            "value": 953742,
+            "range": "± 13580",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/100",
+            "value": 34277,
+            "range": "± 99",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/500",
+            "value": 167397,
+            "range": "± 13943",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/1000",
+            "value": 332856,
+            "range": "± 761",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/5000",
+            "value": 1652685,
+            "range": "± 15052",
             "unit": "ns/iter"
           }
         ]
