@@ -10,7 +10,8 @@ pub struct ElementData {
 
 impl AtomSymbol {
     /// Returns the static chemical data for this element.
-    pub fn element_data(&self) -> ElementData {
+    /// Evaluated at compile time when possible.
+    pub const fn element_data(&self) -> ElementData {
         match self {
             AtomSymbol::H => ElementData {
                 atomic_number: 1,
@@ -562,24 +563,25 @@ impl AtomSymbol {
     }
 
     /// Returns the atomic number (Z) of this element.
-    pub fn atomic_number(&self) -> u8 {
+    pub const fn atomic_number(&self) -> u8 {
         self.element_data().atomic_number
     }
 
     /// Returns the standard atomic mass in Daltons.
-    pub fn standard_mass(&self) -> f64 {
+    pub const fn standard_mass(&self) -> f64 {
         self.element_data().standard_mass
     }
 
     /// Returns the number of valence electrons for main-group elements.
-    pub fn valence_electrons(&self) -> u8 {
+    pub const fn valence_electrons(&self) -> u8 {
         self.element_data().valence_electrons
     }
 }
 
 impl OrganicAtom {
     /// Returns the static chemical data for this organic atom.
-    pub fn element_data(&self) -> ElementData {
+    /// Evaluated at compile time when possible.
+    pub const fn element_data(&self) -> ElementData {
         match self {
             OrganicAtom::B => ElementData {
                 atomic_number: 5,
@@ -637,7 +639,7 @@ impl OrganicAtom {
 
 /// Returns the mass of a specific isotope.
 /// For common isotopes, returns the known mass; otherwise, uses the mass number as approximation.
-pub fn isotope_mass(element: &AtomSymbol, mass_number: u16) -> f64 {
+pub const fn isotope_mass(element: &AtomSymbol, mass_number: u16) -> f64 {
     match (element.atomic_number(), mass_number) {
         // Hydrogen isotopes
         (1, 1) => 1.00783, // protium
