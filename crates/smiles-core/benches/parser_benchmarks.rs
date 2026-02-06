@@ -8,8 +8,10 @@
 //! - `reference`: 5 representative molecules for cross-language comparison
 //! - `seq_vs_parallel`: find the batch size where parallelism pays off (parallel feature only)
 //! - `scaling`: parser performance vs molecule size, tracks memory footprint
+//! - `huckel`: overhead of Hückel aromaticity validation on aromatic molecules
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use smiles_core::ast::aromaticity::validate_aromaticity;
 use smiles_core::{parse, Molecule};
 
 #[cfg(feature = "parallel")]
@@ -137,15 +139,54 @@ fn bench_scaling(c: &mut Criterion) {
     group.finish();
 }
 
+/// Hückel validation overhead: measures the cost of aromaticity checking
+/// after parsing, for molecules with different aromatic complexity.
+///
+/// Benchmarks `parse()` alone vs `parse() + validate_aromaticity()` to
+/// isolate the validation overhead. Useful for deciding whether to enable
+/// the `huckel-validation` feature flag.
+fn bench_huckel(c: &mut Criterion) {
+    let mut group = c.benchmark_group("huckel");
+
+    let molecules = [
+        ("ethanol", "CCO"),                           // no aromatic rings (baseline)
+        ("benzene", "c1ccccc1"),                      // 1 ring, 6 atoms
+        ("naphthalene", "c1ccc2ccccc2c1"),            // 2 fused rings
+        ("ibuprofen", "CC(C)Cc1ccc(C(C)C(=O)O)cc1"),  // 1 ring, complex
+        ("caffeine", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"), // Kekulé form
+    ];
+
+    for (name, smiles) in &molecules {
+        group.bench_with_input(BenchmarkId::new("parse_only", name), smiles, |b, s| {
+            b.iter(|| parse(black_box(s)))
+        });
+
+        group.bench_with_input(
+            BenchmarkId::new("parse_and_validate", name),
+            smiles,
+            |b, s| {
+                b.iter(|| {
+                    let mol = parse(black_box(s)).unwrap();
+                    validate_aromaticity(black_box(&mol));
+                    mol
+                })
+            },
+        );
+    }
+
+    group.finish();
+}
+
 #[cfg(feature = "parallel")]
 criterion_group!(
     benches,
     bench_reference,
     bench_seq_vs_parallel,
     bench_scaling,
+    bench_huckel,
 );
 
 #[cfg(not(feature = "parallel"))]
-criterion_group!(benches, bench_reference, bench_scaling,);
+criterion_group!(benches, bench_reference, bench_scaling, bench_huckel,);
 
 criterion_main!(benches);

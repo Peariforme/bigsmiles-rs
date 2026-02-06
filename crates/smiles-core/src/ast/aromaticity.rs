@@ -39,11 +39,19 @@ fn pi_electron_contribution(molecule: &Molecule, node_idx: u16) -> Option<u8> {
         AtomSymbol::Organic(OrganicAtom::S) => Some(2), // thiophene-type: lone pair donor
         AtomSymbol::Organic(OrganicAtom::B) => Some(0), // empty p orbital
         AtomSymbol::Organic(OrganicAtom::P) => {
-            if has_h { Some(2) } else { Some(1) }
+            if has_h {
+                Some(2)
+            } else {
+                Some(1)
+            }
         }
         AtomSymbol::Se => Some(2), // analogous to S
         AtomSymbol::As => {
-            if has_h { Some(2) } else { Some(1) }
+            if has_h {
+                Some(2)
+            } else {
+                Some(1)
+            }
         }
         AtomSymbol::Te => Some(2), // analogous to Se
         AtomSymbol::Wildcard => None,
