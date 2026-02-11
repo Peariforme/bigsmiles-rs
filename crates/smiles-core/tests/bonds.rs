@@ -18,7 +18,7 @@ fn parse_explicit_single_bond() {
     assert_eq!(molecule.bonds().len(), 1);
 
     let bond = &molecule.bonds()[0];
-    assert_eq!(*bond.kind(), BondType::Simple);
+    assert_eq!(bond.kind(), BondType::Simple);
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 
@@ -36,7 +36,7 @@ fn parse_double_bond() {
     assert_eq!(molecule.bonds().len(), 1);
 
     let bond = &molecule.bonds()[0];
-    assert_eq!(*bond.kind(), BondType::Double);
+    assert_eq!(bond.kind(), BondType::Double);
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 
@@ -54,7 +54,7 @@ fn parse_triple_bond() {
     assert_eq!(molecule.bonds().len(), 1);
 
     let bond = &molecule.bonds()[0];
-    assert_eq!(*bond.kind(), BondType::Triple);
+    assert_eq!(bond.kind(), BondType::Triple);
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 
@@ -72,7 +72,7 @@ fn parse_quadruple_bond() {
     assert_eq!(molecule.bonds().len(), 1);
 
     let bond = &molecule.bonds()[0];
-    assert_eq!(*bond.kind(), BondType::Quadruple);
+    assert_eq!(bond.kind(), BondType::Quadruple);
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 
@@ -90,17 +90,17 @@ fn parse_mixed_bonds() {
     assert_eq!(molecule.bonds().len(), 3);
 
     // Double bond C=C
-    assert_eq!(*molecule.bonds()[0].kind(), BondType::Double);
+    assert_eq!(molecule.bonds()[0].kind(), BondType::Double);
     assert_eq!(molecule.bonds()[0].source(), 0);
     assert_eq!(molecule.bonds()[0].target(), 1);
 
     // Single bond C-C
-    assert_eq!(*molecule.bonds()[1].kind(), BondType::Simple);
+    assert_eq!(molecule.bonds()[1].kind(), BondType::Simple);
     assert_eq!(molecule.bonds()[1].source(), 1);
     assert_eq!(molecule.bonds()[1].target(), 2);
 
     // Triple bond C#N
-    assert_eq!(*molecule.bonds()[2].kind(), BondType::Triple);
+    assert_eq!(molecule.bonds()[2].kind(), BondType::Triple);
     assert_eq!(molecule.bonds()[2].source(), 2);
     assert_eq!(molecule.bonds()[2].target(), 3);
 }
@@ -114,12 +114,12 @@ fn parse_explicit_then_implicit_bond() {
     assert_eq!(molecule.bonds().len(), 2);
 
     // Double bond C=C
-    assert_eq!(*molecule.bonds()[0].kind(), BondType::Double);
+    assert_eq!(molecule.bonds()[0].kind(), BondType::Double);
     assert_eq!(molecule.bonds()[0].source(), 0);
     assert_eq!(molecule.bonds()[0].target(), 1);
 
     // Single bond C-C
-    assert_eq!(*molecule.bonds()[1].kind(), BondType::Simple);
+    assert_eq!(molecule.bonds()[1].kind(), BondType::Simple);
     assert_eq!(molecule.bonds()[1].source(), 1);
     assert_eq!(molecule.bonds()[1].target(), 2);
 
@@ -137,7 +137,7 @@ fn parse_aromatic_bond() {
     assert_eq!(molecule.bonds().len(), 1);
 
     let bond = &molecule.bonds()[0];
-    assert_eq!(*bond.kind(), BondType::Aromatic);
+    assert_eq!(bond.kind(), BondType::Aromatic);
 
     // Both atoms must be aromatic
     assert!(molecule.nodes()[0].aromatic());

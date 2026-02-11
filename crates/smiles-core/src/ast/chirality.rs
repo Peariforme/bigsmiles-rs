@@ -24,23 +24,65 @@ pub enum Chirality {
 impl Chirality {
     /// Construct a trigonal-bipyramidal variant from an index (1–20).
     pub fn tb(n: u8) -> Option<Self> {
-        // TB1 is the 8th variant (discriminant = 8)
-        if (1..=20).contains(&n) {
-            // SAFETY: TB1..TB20 are contiguous variants 8..27
-            Some(unsafe { std::mem::transmute::<u8, Chirality>(7 + n) })
-        } else {
-            None
-        }
+        const TB: [Chirality; 20] = [
+            Chirality::TB1,
+            Chirality::TB2,
+            Chirality::TB3,
+            Chirality::TB4,
+            Chirality::TB5,
+            Chirality::TB6,
+            Chirality::TB7,
+            Chirality::TB8,
+            Chirality::TB9,
+            Chirality::TB10,
+            Chirality::TB11,
+            Chirality::TB12,
+            Chirality::TB13,
+            Chirality::TB14,
+            Chirality::TB15,
+            Chirality::TB16,
+            Chirality::TB17,
+            Chirality::TB18,
+            Chirality::TB19,
+            Chirality::TB20,
+        ];
+        TB.get((n as usize).wrapping_sub(1)).copied()
     }
 
     /// Construct an octahedral variant from an index (1–30).
     pub fn oh(n: u8) -> Option<Self> {
-        // OH1 is the 28th variant (discriminant = 28)
-        if (1..=30).contains(&n) {
-            // SAFETY: OH1..OH30 are contiguous variants 28..57
-            Some(unsafe { std::mem::transmute::<u8, Chirality>(27 + n) })
-        } else {
-            None
-        }
+        const OH: [Chirality; 30] = [
+            Chirality::OH1,
+            Chirality::OH2,
+            Chirality::OH3,
+            Chirality::OH4,
+            Chirality::OH5,
+            Chirality::OH6,
+            Chirality::OH7,
+            Chirality::OH8,
+            Chirality::OH9,
+            Chirality::OH10,
+            Chirality::OH11,
+            Chirality::OH12,
+            Chirality::OH13,
+            Chirality::OH14,
+            Chirality::OH15,
+            Chirality::OH16,
+            Chirality::OH17,
+            Chirality::OH18,
+            Chirality::OH19,
+            Chirality::OH20,
+            Chirality::OH21,
+            Chirality::OH22,
+            Chirality::OH23,
+            Chirality::OH24,
+            Chirality::OH25,
+            Chirality::OH26,
+            Chirality::OH27,
+            Chirality::OH28,
+            Chirality::OH29,
+            Chirality::OH30,
+        ];
+        OH.get((n as usize).wrapping_sub(1)).copied()
     }
 }

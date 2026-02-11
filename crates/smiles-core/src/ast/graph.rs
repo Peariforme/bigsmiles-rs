@@ -1,6 +1,6 @@
 use super::bond::BondType;
 use super::molecule::Molecule;
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 
 /// A ring represented by the ordered sequence of node indices.
 #[derive(Debug, Clone, PartialEq)]
@@ -30,7 +30,7 @@ pub fn find_aromatic_rings(molecule: &Molecule) -> Vec<Ring> {
     // Build aromatic subgraph adjacency list
     let mut adj: Vec<Vec<u16>> = vec![Vec::new(); n];
     let mut is_aromatic = vec![false; n];
-    let mut aromatic_edges: Vec<(u16, u16)> = Vec::new();
+    let mut aromatic_edges: HashSet<(u16, u16)> = HashSet::new();
 
     for (i, node) in molecule.nodes().iter().enumerate() {
         if node.aromatic() {
@@ -41,7 +41,7 @@ pub fn find_aromatic_rings(molecule: &Molecule) -> Vec<Ring> {
     for bond in molecule.bonds() {
         let s = bond.source() as usize;
         let t = bond.target() as usize;
-        if is_aromatic[s] && is_aromatic[t] && *bond.kind() == BondType::Aromatic {
+        if is_aromatic[s] && is_aromatic[t] && bond.kind() == BondType::Aromatic {
             adj[s].push(bond.target());
             adj[t].push(bond.source());
             let edge = if bond.source() < bond.target() {
@@ -49,9 +49,7 @@ pub fn find_aromatic_rings(molecule: &Molecule) -> Vec<Ring> {
             } else {
                 (bond.target(), bond.source())
             };
-            if !aromatic_edges.contains(&edge) {
-                aromatic_edges.push(edge);
-            }
+            aromatic_edges.insert(edge);
         }
     }
 

@@ -1,4 +1,3 @@
-use super::atom::{AtomSymbol, OrganicAtom};
 use super::graph::Ring;
 use super::molecule::Molecule;
 use crate::MoleculeError;
@@ -11,51 +10,79 @@ pub struct AromaticityCheck {
     pub is_valid: bool,
 }
 
+/// Counts the number of sigma bonds for a given atom.
+///
+/// For aromatic pi-electron calculation, we count:
+/// - Each bond in the molecule as 1 sigma bond (regardless of bond type)
+/// - All hydrogens (now correctly calculated by the fixed implicit H logic)
+fn count_sigma_bonds(molecule: &Molecule, node_idx: u16) -> u8 {
+    let node = &molecule.nodes()[node_idx as usize];
+
+    // Count bonds to other atoms (each bond = 1 sigma)
+    let bond_count = molecule
+        .bonds()
+        .iter()
+        .filter(|bond| bond.source() == node_idx || bond.target() == node_idx)
+        .count() as u8;
+
+    // Add hydrogens (now correctly calculated with aromatic subvalence rule)
+    bond_count + node.hydrogens()
+}
+
 /// Determines the pi electron contribution of an atom in an aromatic ring.
+///
+/// Calculates the contribution based on valence electrons, sigma bonds, and charge.
 ///
 /// Returns `None` if the contribution cannot be determined (e.g., Wildcard).
 fn pi_electron_contribution(molecule: &Molecule, node_idx: u16) -> Option<u8> {
     let node = &molecule.nodes()[node_idx as usize];
     let element = node.atom().element();
     let charge = node.atom().charge();
-    let has_h = node.hydrogens() > 0;
+    let valence_electrons = element.valence_electrons();
 
-    match element {
-        AtomSymbol::Organic(OrganicAtom::C) => match charge {
-            -1 => Some(2), // cyclopentadienyl anion
-            1 => Some(0),  // tropylium cation
-            _ => Some(1),  // standard aromatic carbon
-        },
-        AtomSymbol::Organic(OrganicAtom::N) => {
-            // Pyrrole-type N ([nH]): donates lone pair → 2 pi electrons
-            // Pyridine-type N (n): contributes 1 pi electron from p orbital
-            if has_h {
+    // Wildcard atoms have valence_electrons = 0, cannot be determined
+    if valence_electrons == 0 {
+        return None;
+    }
+
+    let sigma_bonds = count_sigma_bonds(molecule, node_idx);
+
+    // Calculate electrons remaining after forming sigma bonds, adjusted for charge
+    // Negative charge adds electrons, positive charge removes them
+    let electrons_after_sigma = (valence_electrons as i16) - (sigma_bonds as i16) - (charge as i16);
+
+    // Can't have negative electrons
+    if electrons_after_sigma < 0 {
+        return Some(0);
+    }
+
+    let electrons_after_sigma = electrons_after_sigma as u8;
+
+    // For aromatic atoms (sp2 hybridized), determine pi contribution:
+    // - 0 electrons: empty p orbital → 0 pi electrons (e.g., B, C+)
+    // - 1 electron: half-filled p orbital → 1 pi electron (e.g., C neutral)
+    // - 2 electrons: filled p orbital or lone pair → 2 pi electrons (e.g., [nH], O, C-)
+    // - 3 electrons: depends on element group
+    //   * Group 14 (C): 2 pi electrons (anion with lone pair)
+    //   * Group 15 (N, P, As): 1 pi electron (one in-plane lone pair + one p electron)
+    // - 4+ electrons: 2 pi electrons (one lone pair participates, rest stay in-plane)
+
+    let group_number = element.valence_electrons();
+
+    match electrons_after_sigma {
+        0 => Some(0),
+        1 => Some(1),
+        2 => Some(2),
+        3 => {
+            // For group 14 (C with 4 valence electrons), 3 electrons means anion → 2 pi
+            // For group 15 (N, P, As with 5 valence electrons), 3 electrons → 1 pi (pyridine-type)
+            if group_number == 4 {
                 Some(2)
             } else {
                 Some(1)
             }
         }
-        AtomSymbol::Organic(OrganicAtom::O) => Some(2), // furan-type: lone pair donor
-        AtomSymbol::Organic(OrganicAtom::S) => Some(2), // thiophene-type: lone pair donor
-        AtomSymbol::Organic(OrganicAtom::B) => Some(0), // empty p orbital
-        AtomSymbol::Organic(OrganicAtom::P) => {
-            if has_h {
-                Some(2)
-            } else {
-                Some(1)
-            }
-        }
-        AtomSymbol::Se => Some(2), // analogous to S
-        AtomSymbol::As => {
-            if has_h {
-                Some(2)
-            } else {
-                Some(1)
-            }
-        }
-        AtomSymbol::Te => Some(2), // analogous to Se
-        AtomSymbol::Wildcard => None,
-        _ => None,
+        _ => Some(2), // 4+ electrons: max 2 can participate in pi system
     }
 }
 

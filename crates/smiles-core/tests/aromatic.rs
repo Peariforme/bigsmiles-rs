@@ -77,7 +77,7 @@ fn parse_benzene() {
 
     // Check that all bonds are aromatic
     for bond in molecule.bonds() {
-        assert_eq!(*bond.kind(), BondType::Aromatic);
+        assert_eq!(bond.kind(), BondType::Aromatic);
     }
 }
 
@@ -222,12 +222,12 @@ fn parse_biphenyl() {
     let aromatic_bonds = molecule
         .bonds()
         .iter()
-        .filter(|b| *b.kind() == BondType::Aromatic)
+        .filter(|b| b.kind() == BondType::Aromatic)
         .count();
     let simple_bonds = molecule
         .bonds()
         .iter()
-        .filter(|b| *b.kind() == BondType::Simple)
+        .filter(|b| b.kind() == BondType::Simple)
         .count();
 
     // 12 aromatic bonds (6 per ring) + 1 simple bond (between rings)

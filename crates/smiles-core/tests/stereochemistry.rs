@@ -164,11 +164,11 @@ fn parse_trans_difluoroethylene() {
     let mol = parse("F/C=C/F").expect("Failed to parse");
     assert_eq!(mol.nodes().len(), 4);
     // Bond 0: F-C (Up)
-    assert_eq!(*mol.bonds()[0].kind(), BondType::Up);
+    assert_eq!(mol.bonds()[0].kind(), BondType::Up);
     // Bond 1: C=C (Double)
-    assert_eq!(*mol.bonds()[1].kind(), BondType::Double);
+    assert_eq!(mol.bonds()[1].kind(), BondType::Double);
     // Bond 2: C-F (Up)
-    assert_eq!(*mol.bonds()[2].kind(), BondType::Up);
+    assert_eq!(mol.bonds()[2].kind(), BondType::Up);
 }
 
 #[test]
@@ -176,25 +176,25 @@ fn parse_cis_difluoroethylene() {
     // F/C=C\F — cis
     let mol = parse(r"F/C=C\F").expect("Failed to parse");
     assert_eq!(mol.nodes().len(), 4);
-    assert_eq!(*mol.bonds()[0].kind(), BondType::Up);
-    assert_eq!(*mol.bonds()[1].kind(), BondType::Double);
-    assert_eq!(*mol.bonds()[2].kind(), BondType::Down);
+    assert_eq!(mol.bonds()[0].kind(), BondType::Up);
+    assert_eq!(mol.bonds()[1].kind(), BondType::Double);
+    assert_eq!(mol.bonds()[2].kind(), BondType::Down);
 }
 
 #[test]
 fn parse_backslash_backslash_trans() {
     let mol = parse(r"F\C=C\F").expect("Failed to parse");
-    assert_eq!(*mol.bonds()[0].kind(), BondType::Down);
-    assert_eq!(*mol.bonds()[1].kind(), BondType::Double);
-    assert_eq!(*mol.bonds()[2].kind(), BondType::Down);
+    assert_eq!(mol.bonds()[0].kind(), BondType::Down);
+    assert_eq!(mol.bonds()[1].kind(), BondType::Double);
+    assert_eq!(mol.bonds()[2].kind(), BondType::Down);
 }
 
 #[test]
 fn parse_backslash_slash_cis() {
     let mol = parse(r"F\C=C/F").expect("Failed to parse");
-    assert_eq!(*mol.bonds()[0].kind(), BondType::Down);
-    assert_eq!(*mol.bonds()[1].kind(), BondType::Double);
-    assert_eq!(*mol.bonds()[2].kind(), BondType::Up);
+    assert_eq!(mol.bonds()[0].kind(), BondType::Down);
+    assert_eq!(mol.bonds()[1].kind(), BondType::Double);
+    assert_eq!(mol.bonds()[2].kind(), BondType::Up);
 }
 
 #[test]

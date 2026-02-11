@@ -3,7 +3,7 @@ use std::iter::Peekable;
 use std::str::{Chars, FromStr};
 
 use crate::error::ParserError;
-use crate::{AtomSymbol, BondType, Chirality, Molecule, MoleculeBuilder};
+use crate::{AtomSymbol, BondType, Chirality, Molecule, MoleculeBuilder, NodeError, OrganicAtom};
 
 struct Parser<'a> {
     chars: Peekable<Chars<'a>>,
@@ -76,7 +76,7 @@ impl<'a> Parser<'a> {
         while let Some(c) = self.next() {
             // Atom
             if c.is_ascii_alphabetic() || c == '*' {
-                let elem = self.parse_element_symbol(c, false);
+                let elem = self.parse_element_symbol(c, false)?;
                 // Aromaticity is indicated by lowercase letters (c, n, o, etc.)
                 // Wildcard '*' outside brackets is non-aromatic by default
                 let aromatic = Some(c.is_ascii_lowercase());
@@ -223,7 +223,7 @@ impl<'a> Parser<'a> {
 
     fn parse_branch(&mut self) -> Result<(), ParserError> {
         let mut s = String::new();
-        let mut parenthesis_count: i8 = 1;
+        let mut parenthesis_count: i32 = 1;
         let position = self.position;
         while let Some(c) = self.next() {
             if c == '(' {
@@ -250,7 +250,10 @@ impl<'a> Parser<'a> {
         }
 
         // Calculate the global node offset for the branch
-        let branch_node_offset = self.node_offset + self.builder.nodes().len() as u16;
+        let branch_node_offset = self
+            .node_offset
+            .checked_add(self.builder.nodes().len() as u16)
+            .ok_or(ParserError::TooManyNodes)?;
 
         // Pass cycles_target to branch so rings can span branch boundaries
         let branch_parser = Parser::new_with_offset(
@@ -277,9 +280,20 @@ impl<'a> Parser<'a> {
             .add_branch(branch_builder, bond_type, connect_source);
 
         // Create deferred ring bonds (rings opened in parent, closed in branch)
-        for (main_target, branch_local_source, ring_bond_type) in deferred_bonds {
+        for (main_target, branch_local_source, mut ring_bond_type) in deferred_bonds {
             // branch_local_source needs to be adjusted to main molecule space
             let main_source = branch_node_offset + branch_local_source;
+
+            // Fix: if no explicit bond type was specified and both atoms are aromatic,
+            // the implicit bond should be Aromatic, not Simple
+            if ring_bond_type == BondType::Simple {
+                let target_aromatic = self.builder.nodes()[main_target as usize].aromatic();
+                let source_aromatic = self.builder.nodes()[main_source as usize].aromatic();
+                if target_aromatic == Some(true) && source_aromatic == Some(true) {
+                    ring_bond_type = BondType::Aromatic;
+                }
+            }
+
             self.builder
                 .add_bond(main_target, main_source, ring_bond_type);
         }
@@ -292,22 +306,40 @@ impl<'a> Parser<'a> {
 
     /// Parse element symbol. `in_bracket` controls whether all two-letter elements
     /// are allowed (true) or only organic subset Cl/Br (false).
-    fn parse_element_symbol(&mut self, c: char, in_bracket: bool) -> String {
+    ///
+    /// Returns the parsed `AtomSymbol` directly, avoiding intermediate String allocations.
+    fn parse_element_symbol(
+        &mut self,
+        c: char,
+        in_bracket: bool,
+    ) -> Result<AtomSymbol, ParserError> {
+        if c == '*' {
+            return Ok(AtomSymbol::Wildcard);
+        }
+
         if c.is_ascii_uppercase() {
             if let Some(&next_c) = self.peek() {
                 if next_c.is_ascii_lowercase() {
-                    let two_letter = format!("{}{}", c, next_c);
                     if in_bracket {
                         // In brackets, all valid two-letter elements are allowed
-                        if AtomSymbol::from_str(&two_letter).is_ok() {
+                        let buf = [c as u8, next_c as u8];
+                        let two_letter = std::str::from_utf8(&buf).unwrap();
+                        if let Ok(sym) = AtomSymbol::from_str(two_letter) {
                             self.next();
-                            return two_letter;
+                            return Ok(sym);
                         }
                     } else {
                         // Outside brackets, only Cl and Br are valid two-letter elements
-                        if two_letter == "Cl" || two_letter == "Br" {
-                            self.next();
-                            return two_letter;
+                        match (c, next_c) {
+                            ('C', 'l') => {
+                                self.next();
+                                return Ok(AtomSymbol::Organic(OrganicAtom::Cl));
+                            }
+                            ('B', 'r') => {
+                                self.next();
+                                return Ok(AtomSymbol::Organic(OrganicAtom::Br));
+                            }
+                            _ => {}
                         }
                     }
                 }
@@ -316,17 +348,20 @@ impl<'a> Parser<'a> {
             // Aromatic two-letter symbols: se, as, te (OpenSMILES spec)
             if let Some(&next_c) = self.peek() {
                 if next_c.is_ascii_lowercase() {
-                    let two_letter = format!("{}{}", c, next_c);
-                    // from_str already normalizes to uppercase internally
-                    if AtomSymbol::from_str(&two_letter).is_ok() {
+                    let buf = [c as u8, next_c as u8];
+                    let two_letter = std::str::from_utf8(&buf).unwrap();
+                    if let Ok(sym) = AtomSymbol::from_str(two_letter) {
                         self.next();
-                        return two_letter;
+                        return Ok(sym);
                     }
                 }
             }
         }
 
-        c.to_string()
+        // Single character element
+        let buf = [c.to_ascii_uppercase() as u8];
+        let s = std::str::from_utf8(&buf).unwrap();
+        AtomSymbol::from_str(s).map_err(|e| ParserError::NodeError(NodeError::AtomError(e)))
     }
 
     #[allow(clippy::type_complexity)]
@@ -334,7 +369,7 @@ impl<'a> Parser<'a> {
         &mut self,
     ) -> Result<
         (
-            String,
+            AtomSymbol,
             i8,
             Option<u16>,
             Option<bool>,
@@ -352,7 +387,7 @@ impl<'a> Parser<'a> {
         if !first_char.is_alphabetic() && first_char != '*' {
             return Err(ParserError::MissingElementInBracketAtom);
         }
-        let elem = self.parse_element_symbol(first_char, true);
+        let elem = self.parse_element_symbol(first_char, true)?;
 
         let chirality = self.parse_chirality()?;
         let hydrogen = self.parse_hydrogen()?;
@@ -366,7 +401,7 @@ impl<'a> Parser<'a> {
         }
 
         // A hydrogen atom cannot have a hydrogen count (e.g., [HH1] is illegal)
-        if elem.eq_ignore_ascii_case("H") {
+        if elem == AtomSymbol::H {
             if let Some(h) = hydrogen {
                 if h > 0 {
                     return Err(ParserError::HydrogenWithHydrogenCount);
@@ -374,7 +409,8 @@ impl<'a> Parser<'a> {
             }
         }
 
-        let aromatic = Some(elem.to_lowercase() == elem);
+        // Aromaticity is determined by whether the element was written in lowercase
+        let aromatic = Some(first_char.is_ascii_lowercase());
 
         Ok((elem, charge, isotope, aromatic, hydrogen, class, chirality))
     }

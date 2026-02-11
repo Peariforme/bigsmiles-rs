@@ -298,7 +298,7 @@ fn bond_at_ring_open() {
         .iter()
         .find(|b| (b.source() == 0 && b.target() == 5) || (b.source() == 5 && b.target() == 0));
     assert!(ring_bond.is_some());
-    assert_eq!(*ring_bond.unwrap().kind(), BondType::Double);
+    assert_eq!(ring_bond.unwrap().kind(), BondType::Double);
 }
 
 #[test]
@@ -310,7 +310,7 @@ fn bond_at_ring_close() {
         .iter()
         .find(|b| (b.source() == 0 && b.target() == 5) || (b.source() == 5 && b.target() == 0));
     assert!(ring_bond.is_some());
-    assert_eq!(*ring_bond.unwrap().kind(), BondType::Double);
+    assert_eq!(ring_bond.unwrap().kind(), BondType::Double);
 }
 
 #[test]
