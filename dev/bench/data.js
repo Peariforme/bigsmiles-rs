@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770378316714,
+  "lastUpdate": 1770820339861,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -1019,6 +1019,240 @@ window.BENCHMARK_DATA = {
             "name": "scaling/teflon/5000",
             "value": 1540139,
             "range": "± 17290",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "babebc6d9d0d5be46ff6037327e18b50c7a80b98",
+          "message": "fix: simplify CI by merging feature-powerset testing into single job\n\nRemove redundant feature-tests job — cargo hack --feature-powerset\nalready covers all individual and combined feature configurations.\nReplace cargo test and cargo clippy with their cargo hack equivalents\nin the existing build job. (#19)\n\n* docs: add implementation plan for Hückel's rule aromaticity validation\n\nFour-phase plan covering element data (Z, mass, valence electrons),\nring detection (SSSR algorithm), pi electron counting, and integration\ninto the parse pipeline via feature flag.\n\nhttps://claude.ai/code/session_01NkMRmpmH7HmsJHuViYWrXw\n\n* feat: implement Hückel's rule aromaticity validation\n\nFour-phase implementation following the plan in PLAN_HUCKEL.md:\n\n- Phase 1: Add element data (atomic number, standard mass, valence electrons)\n  for all 118 elements via AtomSymbol::element_data(), plus isotope mass lookup\n  and Atom::mass() convenience method.\n\n- Phase 2: Ring detection using shortest-cycle-per-edge algorithm. For each\n  aromatic bond, removes the edge and BFS-finds the shortest alternative path\n  to identify minimal rings. Handles fused systems (naphthalene, indole)\n  correctly via deduplication.\n\n- Phase 3: Pi electron counting and Hückel validation (4n+2 rule).\n  Determines pi contribution per atom based on element type, charge, and\n  hydrogen count (pyrrole-type N/P/As with H → 2e⁻, pyridine-type → 1e⁻,\n  O/S/Se/Te → 2e⁻, B → 0e⁻, C±charge variants).\n\n- Phase 4: Integration into parse() behind `huckel-validation` feature flag.\n  Public API (validate_aromaticity, require_valid_aromaticity) available\n  regardless of feature flag for explicit use.\n\nhttps://claude.ai/code/session_01Cf5QyYdYkk7jXNeZApkjDr\n\n* feat: add Hückel benchmarks, CI feature testing, and update docs\n\n- Benchmarks: add `huckel` benchmark group comparing parse-only vs\n  parse+validate for aromatic molecules (benzene, naphthalene, etc.)\n  to measure Hückel validation overhead.\n\n- CI: add `feature-tests` job using cargo-hack to test all feature flag\n  combinations (--feature-powerset for check/clippy, --each-feature\n  for tests, --all-features for full test run).\n\n- Compare page: add \"Hückel Validation Overhead\" section with side-by-side\n  time chart and overhead % chart, plus detailed results table.\n\n- README: mark Hückel compliance as done (49/49), add feature flags\n  table, document `huckel-validation` feature with usage example,\n  update aromaticity compliance row and roadmap.\n\n- Format: apply cargo fmt to new files.\n\nhttps://claude.ai/code/session_01Cf5QyYdYkk7jXNeZApkjDr\n\n* fix: simplify CI by merging feature-powerset testing into single job\n\nRemove redundant feature-tests job — cargo hack --feature-powerset\nalready covers all individual and combined feature configurations.\nReplace cargo test and cargo clippy with their cargo hack equivalents\nin the existing build job.\n\nhttps://claude.ai/code/session_01Cf5QyYdYkk7jXNeZApkjDr\n\n* fix: conditional assertion for selenium ring with huckel-validation\n\nc1cc[se]cc1 is a 6-membered ring with Se giving 7 pi electrons (not\n4n+2). Without huckel-validation, test asserts successful parse (valid\nsyntax). With huckel-validation, test asserts parse error (chemically\ninvalid aromaticity).\n\nhttps://claude.ai/code/session_01Cf5QyYdYkk7jXNeZApkjDr\n\n* style: fix rustfmt formatting in selenium test assertion\n\nhttps://claude.ai/code/session_01Cf5QyYdYkk7jXNeZApkjDr\n\n* Delete PLAN_HUCKEL.md\n\n* perf: make element_data() and related methods const fn\n\nAll element data (atomic number, mass, valence electrons) is purely\nstatic. Marking these functions as const fn allows the compiler to\nevaluate them at compile time when the element variant is known.\n\nhttps://claude.ai/code/session_01Cf5QyYdYkk7jXNeZApkjDr\n\n* fix pi electron calculation\n\n---------\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2026-02-11T15:24:59+01:00",
+          "tree_id": "9aceb7e1e8631104eefd3dd72dee04cf2798f96f",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/babebc6d9d0d5be46ff6037327e18b50c7a80b98"
+        },
+        "date": 1770820339370,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "reference/ethanol",
+            "value": 228,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/cyclohexane",
+            "value": 549,
+            "range": "± 8",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/benzene",
+            "value": 554,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/ibuprofen",
+            "value": 1522,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/caffeine",
+            "value": 1465,
+            "range": "± 42",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10",
+            "value": 6653,
+            "range": "± 20",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10",
+            "value": 16029,
+            "range": "± 1582",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/100",
+            "value": 72521,
+            "range": "± 251",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/100",
+            "value": 56078,
+            "range": "± 2828",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/1000",
+            "value": 734157,
+            "range": "± 1621",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/1000",
+            "value": 394374,
+            "range": "± 12524",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/5000",
+            "value": 3563040,
+            "range": "± 11897",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/5000",
+            "value": 1749198,
+            "range": "± 50252",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10000",
+            "value": 7110814,
+            "range": "± 105475",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10000",
+            "value": 3394286,
+            "range": "± 35697",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/50000",
+            "value": 35435788,
+            "range": "± 393092",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/50000",
+            "value": 17192668,
+            "range": "± 296746",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/100",
+            "value": 15617,
+            "range": "± 215",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/500",
+            "value": 73522,
+            "range": "± 1704",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/1000",
+            "value": 145369,
+            "range": "± 1131",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/5000",
+            "value": 713006,
+            "range": "± 1276",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/100",
+            "value": 30835,
+            "range": "± 147",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/500",
+            "value": 147762,
+            "range": "± 707",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/1000",
+            "value": 293005,
+            "range": "± 704",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/5000",
+            "value": 1450970,
+            "range": "± 20862",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ethanol",
+            "value": 234,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ethanol",
+            "value": 299,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/benzene",
+            "value": 550,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/benzene",
+            "value": 2523,
+            "range": "± 9",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/naphthalene",
+            "value": 903,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/naphthalene",
+            "value": 5101,
+            "range": "± 23",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ibuprofen",
+            "value": 1490,
+            "range": "± 59",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ibuprofen",
+            "value": 3583,
+            "range": "± 19",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/caffeine",
+            "value": 1401,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/caffeine",
+            "value": 1498,
+            "range": "± 7",
             "unit": "ns/iter"
           }
         ]
