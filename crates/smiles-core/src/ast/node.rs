@@ -135,7 +135,8 @@ impl NodeBuilder {
 
     pub fn build(mut self, bond_order_sum: Option<u8>) -> Result<Node, NodeError> {
         if self.hydrogens.is_none() {
-            self.set_hydrogens(self.atom.implicit_hydrogens(bond_order_sum)?);
+            let aromatic = self.aromatic.unwrap_or(false);
+            self.set_hydrogens(self.atom.implicit_hydrogens(bond_order_sum, aromatic)?);
         }
 
         Node::new(

@@ -16,11 +16,12 @@ A Rust library for parsing [SMILES](http://opensmiles.org/opensmiles.html) and [
 
 ## Features
 
-- 🧪 OpenSMILES specification support (see [compliance status](#opensmiles-compliance) below)
+- 🧪 Full OpenSMILES specification support (see [compliance status](#opensmiles-compliance) below)
 - 🔬 BigSMILES extensions for polymer chemistry
 - 🦀 Pure Rust, no dependencies on external chemistry libraries
 - 📝 Detailed error messages with position information
 - ⚡ Optional parallel batch parsing with Rayon (~4x speedup on large datasets)
+- 🧬 Optional Hückel's rule aromaticity validation (4n+2 π-electron check)
 
 ## Installation
 
@@ -114,7 +115,34 @@ fn main() {
 
 > Note: For small batches (<500), sequential parsing is faster due to thread synchronization overhead.
 
-See the full [benchmark comparison dashboard](https://peariforme.github.io/bigsmiles-rs/dev/bench/compare.html) for interactive charts including sequential vs parallel crossover, linear vs branched chain scaling, and reference molecule comparisons.
+See the full [benchmark comparison dashboard](https://peariforme.github.io/bigsmiles-rs/dev/bench/compare.html) for interactive charts including sequential vs parallel crossover, linear vs branched chain scaling, Hückel validation overhead, and reference molecule comparisons.
+
+### Aromaticity Validation
+
+Enable the `huckel-validation` feature to reject aromatic SMILES that violate Hückel's rule (4n+2 π electrons):
+
+```toml
+[dependencies]
+smiles-core = { version = "0.1", features = ["huckel-validation"] }
+```
+
+With this feature enabled, `parse()` will return `MoleculeError::HuckelViolation` for chemically invalid aromatic rings. Without the feature, the validation API is still available for explicit use:
+
+```rust
+use smiles_core::{parse, ast::aromaticity::validate_aromaticity};
+
+let mol = parse("c1ccccc1")?;  // benzene
+let checks = validate_aromaticity(&mol);
+assert!(checks[0].is_valid);               // 6 π-electrons → 4(1)+2 ✓
+assert_eq!(checks[0].pi_electrons, Some(6));
+```
+
+### Feature Flags
+
+| Feature | Default | Description |
+|---------|---------|-------------|
+| `parallel` | off | Multi-threaded batch parsing with Rayon |
+| `huckel-validation` | off | Reject invalid aromatic rings in `parse()` |
 
 ## Public API
 
@@ -313,7 +341,7 @@ Detailed compliance status against the [OpenSMILES specification](http://opensmi
 | Kekule form acceptance | ✅ Done | Uppercase + explicit double bonds |
 | Elements that can be aromatic | ✅ Done | C, N, O, S, P, B, Se, As, Te, `*` |
 | Aromatic `[se]`, `[as]` bracket notation | ✅ Done | Two-letter lowercase aromatic symbols parsed |
-| **Hückel's rule validation** | ❌ Missing | Parser trusts input aromaticity, no 4N+2 π-electron verification |
+| **Hückel's rule validation** | ✅ Done | Opt-in via `huckel-validation` feature; ring detection + π-electron counting + 4n+2 check |
 
 ### Stereochemistry (Section not yet in final spec)
 
@@ -342,10 +370,10 @@ Detailed compliance status against the [OpenSMILES specification](http://opensmi
 | Bonds | 7 | 0 |
 | Branches | 4 | 0 |
 | Rings | 11 | 0 |
-| Aromaticity | 5 | 1 |
+| Aromaticity | 6 | 0 |
 | Stereochemistry | 6 | 0 |
 | Grammar | 3 | 0 |
-| **Total** | **48** | **1** |
+| **Total** | **49** | **0** |
 
 ## Roadmap
 
@@ -356,10 +384,11 @@ Detailed compliance status against the [OpenSMILES specification](http://opensmi
 - [x] Reject duplicate bonds `C12CCCCC12` — two bonds between same atom pair
 - [x] Whitespace terminator — stop parsing at SPACE/TAB/LF/CR
 - [x] Fix disconnected structures — `.` no longer creates a bond in the graph
-- [ ] Hückel's rule aromaticity validation (4N+2 π-electron check)
+- [x] Hückel's rule aromaticity validation (4N+2 π-electron check)
 
 ### SMILES Parser — Beyond OpenSMILES
 - [x] Parallel batch parsing (optional `parallel` feature)
+- [x] Element data (atomic number, standard mass, valence electrons for all 118 elements)
 - [ ] `to_smiles()` — convert molecule back to SMILES string
 - [ ] Canonical SMILES output
 - [ ] SMILES normalization

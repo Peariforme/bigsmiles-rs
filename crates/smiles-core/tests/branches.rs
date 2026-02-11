@@ -70,7 +70,7 @@ fn parse_branch_with_double_bond() {
     let double_bond = molecule
         .bonds()
         .iter()
-        .find(|b| *b.kind() == BondType::Double);
+        .find(|b| b.kind() == BondType::Double);
     assert!(double_bond.is_some(), "Should have a double bond");
 }
 
@@ -83,7 +83,7 @@ fn parse_branch_with_triple_bond() {
     let triple_bond = molecule
         .bonds()
         .iter()
-        .find(|b| *b.kind() == BondType::Triple);
+        .find(|b| b.kind() == BondType::Triple);
     assert!(triple_bond.is_some(), "Should have a triple bond");
 }
 

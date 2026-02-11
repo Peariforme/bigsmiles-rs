@@ -68,7 +68,7 @@ fn parse_cyclohexene() {
     let double_bonds: Vec<_> = molecule
         .bonds()
         .iter()
-        .filter(|b| *b.kind() == BondType::Double)
+        .filter(|b| b.kind() == BondType::Double)
         .collect();
     assert_eq!(double_bonds.len(), 1);
 }
@@ -88,7 +88,7 @@ fn parse_benzene() {
 
     // All bonds must be aromatic
     for bond in molecule.bonds() {
-        assert_eq!(*bond.kind(), BondType::Aromatic);
+        assert_eq!(bond.kind(), BondType::Aromatic);
     }
 }
 
@@ -168,7 +168,7 @@ fn parse_cyclopropene() {
     let double_bonds: Vec<_> = molecule
         .bonds()
         .iter()
-        .filter(|b| *b.kind() == BondType::Double)
+        .filter(|b| b.kind() == BondType::Double)
         .collect();
     assert_eq!(double_bonds.len(), 1);
 }

@@ -13,6 +13,7 @@ categories = ["parser-implementations", "science"]
 [features]
 default = []
 parallel = ["rayon"]
+huckel-validation = []
 
 [dependencies]
 thiserror.workspace = true

@@ -190,6 +190,7 @@
         <div class="nav">
             <a href="#section-seq-parallel">Seq vs Parallel</a>
             <a href="#section-scaling">Linear vs Branched</a>
+            <a href="#section-huckel">H&uuml;ckel Overhead</a>
             <a href="#section-reference">Reference Molecules</a>
         </div>
     </header>
@@ -242,6 +243,26 @@
             <table id="scalingTable"></table>
         </section>
 
+        <!-- ========== Hückel Validation Overhead ========== -->
+        <section id="section-huckel">
+            <h2>H&uuml;ckel Validation Overhead</h2>
+            <p class="description">
+                Measures the cost of aromaticity validation (ring detection + &pi;-electron
+                counting + 4n+2 check) on top of parsing. The <code>huckel-validation</code>
+                feature flag adds this check to <code>parse()</code> automatically.
+                Molecules without aromatic rings should show near-zero overhead.
+            </p>
+            <div class="chart-row">
+                <div class="chart-container">
+                    <canvas id="huckelTimeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="huckelOverheadChart"></canvas>
+                </div>
+            </div>
+            <table id="huckelTable"></table>
+        </section>
+
         <!-- ========== Reference Molecules ========== -->
         <section id="section-reference">
             <h2>Reference Molecules</h2>
@@ -281,6 +302,7 @@
             var groups = {
                 seqParallel: { sequential: {}, parallel: {} },
                 scaling:     { peg: {}, teflon: {} },
+                huckel:      { parse_only: {}, parse_and_validate: {} },
                 reference:   {}
             };
 
@@ -294,6 +316,10 @@
                     groups.scaling.peg[+m[1]] = bench.value;
                 } else if ((m = bench.name.match(/^scaling\/teflon\/(\d+)$/))) {
                     groups.scaling.teflon[+m[1]] = bench.value;
+                } else if ((m = bench.name.match(/^huckel\/parse_only\/(.+)$/))) {
+                    groups.huckel.parse_only[m[1]] = bench.value;
+                } else if ((m = bench.name.match(/^huckel\/parse_and_validate\/(.+)$/))) {
+                    groups.huckel.parse_and_validate[m[1]] = bench.value;
                 } else if ((m = bench.name.match(/^reference\/(.+)$/))) {
                     groups.reference[m[1]] = bench.value;
                 }
@@ -536,6 +562,84 @@
             document.getElementById('scalingTable').innerHTML = html;
         }
 
+        function buildHuckel(g) {
+            var molecules = Object.keys(g.huckel.parse_only);
+            if (!molecules.length) {
+                document.getElementById('section-huckel').style.display = 'none';
+                return;
+            }
+
+            // Sort by parse_only time (ascending)
+            molecules.sort(function (a, b) {
+                return g.huckel.parse_only[a] - g.huckel.parse_only[b];
+            });
+
+            var parseV    = molecules.map(function (m) { return g.huckel.parse_only[m]; });
+            var validateV = molecules.map(function (m) { return g.huckel.parse_and_validate[m]; });
+            var overheads = molecules.map(function (_, i) {
+                return validateV[i] && parseV[i] ? ((validateV[i] - parseV[i]) / parseV[i]) * 100 : 0;
+            });
+
+            // Time comparison chart
+            barChart('huckelTimeChart', {
+                title: 'Parse Time: with and without Validation',
+                xTitle: 'Molecule',
+                yTitle: 'Time',
+                logScale: false,
+                data: {
+                    labels: molecules,
+                    datasets: [
+                        { label: 'Parse only', data: parseV,
+                          backgroundColor: COLORS.blueBg, borderColor: COLORS.blue, borderWidth: 1 },
+                        { label: 'Parse + Validate', data: validateV,
+                          backgroundColor: COLORS.purpleBg, borderColor: COLORS.purple, borderWidth: 1 }
+                    ]
+                }
+            });
+
+            // Overhead % chart
+            barChart('huckelOverheadChart', {
+                title: 'Validation Overhead (%)',
+                xTitle: 'Molecule',
+                yTitle: 'Overhead',
+                logScale: false,
+                yTick: function (v) { return v.toFixed(0) + '%'; },
+                tooltipLabel: function (ctx) { return ctx.raw.toFixed(1) + '%'; },
+                data: {
+                    labels: molecules,
+                    datasets: [{
+                        label: 'Overhead %',
+                        data: overheads,
+                        backgroundColor: overheads.map(function (o) {
+                            return o < 10 ? COLORS.greenBg : o < 30 ? COLORS.orangeBg : 'rgba(239,68,68,0.7)';
+                        }),
+                        borderColor: overheads.map(function (o) {
+                            return o < 10 ? COLORS.green : o < 30 ? COLORS.orange : '#ef4444';
+                        }),
+                        borderWidth: 1
+                    }]
+                }
+            });
+
+            // Table
+            var html = '<thead><tr>' +
+                '<th>Molecule</th><th>Parse Only</th><th>Parse + Validate</th>' +
+                '<th>Overhead</th></tr></thead><tbody>';
+
+            molecules.forEach(function (mol, i) {
+                var diff = validateV[i] - parseV[i];
+                var pct = overheads[i];
+                var cls = pct < 10 ? 'speedup-positive' : 'speedup-negative';
+                html += '<tr><td>' + mol + '</td>' +
+                    '<td>' + formatNs(parseV[i]) + '</td>' +
+                    '<td>' + formatNs(validateV[i]) + '</td>' +
+                    '<td class="' + cls + '">+' + formatNs(diff) + ' (' + pct.toFixed(1) + '%)</td></tr>';
+            });
+
+            html += '</tbody>';
+            document.getElementById('huckelTable').innerHTML = html;
+        }
+
         function buildReference(g) {
             var molecules = Object.keys(g.reference);
             if (!molecules.length) {
@@ -580,6 +684,7 @@
 
             buildSeqParallel(groups);
             buildScaling(groups);
+            buildHuckel(groups);
             buildReference(groups);
 
             // Footer

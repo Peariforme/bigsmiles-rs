@@ -33,10 +33,6 @@ pub enum ParserError {
     #[error("charge in bracket atom must have a sign")]
     ChargeWithoutSign,
 
-    /// Missing closing bracket.
-    #[error("missing closing bracket ']'")]
-    UnclosedBracket,
-
     /// Missing closing parenthesis.
     #[error("missing closing parenthesis ')'")]
     UnclosedParenthesis,
@@ -45,7 +41,7 @@ pub enum ParserError {
     #[error("missing opening parenthesis '('")]
     UnopenedParenthesis,
 
-    /// Empty branche
+    /// Empty branch.
     #[error("empty branch detected")]
     EmptyBranch,
 
@@ -126,11 +122,6 @@ mod tests {
         assert_eq!(
             ParserError::UnexpectedEndOfInput("element".to_string()).to_string(),
             "unexpected end of input, expected: element"
-        );
-
-        assert_eq!(
-            ParserError::UnclosedBracket.to_string(),
-            "missing closing bracket ']'"
         );
 
         assert_eq!(

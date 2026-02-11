@@ -43,6 +43,25 @@ impl BondType {
             BondType::Down => 2,
         }
     }
+
+    /// Returns the bond order contribution for implicit hydrogen calculation.
+    ///
+    /// According to OpenSMILES spec, aromatic bonds count as 1 (not 1.5)
+    /// for the purpose of calculating implicit hydrogens on aromatic atoms.
+    ///
+    /// Returns the value multiplied by 2 (to avoid floating point).
+    pub fn bond_order_x2_for_implicit_h(&self) -> u8 {
+        match self {
+            BondType::Simple => 2,
+            BondType::Double => 4,
+            BondType::Triple => 6,
+            BondType::Quadruple => 8,
+            BondType::Aromatic => 2, // Counts as 1.0 bond (not 1.5) for implicit H
+            BondType::Disconnected => 0,
+            BondType::Up => 2,
+            BondType::Down => 2,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -61,8 +80,8 @@ impl Bond {
         }
     }
 
-    pub fn kind(&self) -> &BondType {
-        &self.kind
+    pub fn kind(&self) -> BondType {
+        self.kind
     }
 
     pub fn source(&self) -> u16 {

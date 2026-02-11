@@ -315,10 +315,21 @@ impl OrganicAtom {
         }
     }
 
-    pub fn implicit_hydrogens(&self, bond_order_sum: u8) -> u8 {
+    pub fn implicit_hydrogens(&self, bond_order_sum: u8, aromatic: bool) -> u8 {
         for v in self.valence() {
             if *v >= bond_order_sum {
-                return *v - bond_order_sum;
+                let subvalence = *v - bond_order_sum;
+                // OpenSMILES spec: "If an aromatic atom's subvalence is greater than one,
+                // the implicit hydrogen count is reported as subvalence minus one.
+                // Otherwise, implicit hydrogen count is zero."
+                if aromatic {
+                    if subvalence > 1 {
+                        return subvalence - 1;
+                    } else {
+                        return 0;
+                    }
+                }
+                return subvalence;
             }
         }
 
@@ -369,9 +380,14 @@ impl Atom {
         })
     }
 
-    pub fn implicit_hydrogens(&self, bond_order_sum: Option<u8>) -> Result<u8, AtomError> {
+    pub fn implicit_hydrogens(
+        &self,
+        bond_order_sum: Option<u8>,
+        aromatic: bool,
+    ) -> Result<u8, AtomError> {
         if let AtomSymbol::Organic(organic) = self.element() {
-            Ok(organic.implicit_hydrogens(bond_order_sum.ok_or(AtomError::MissingBondOrder)?))
+            Ok(organic
+                .implicit_hydrogens(bond_order_sum.ok_or(AtomError::MissingBondOrder)?, aromatic))
         } else {
             Ok(0)
         }

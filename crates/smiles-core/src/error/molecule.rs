@@ -14,6 +14,10 @@ pub enum MoleculeError {
     /// Error from an atom.
     #[error(transparent)]
     AtomError(#[from] AtomError),
+
+    /// Aromatic ring violates Hückel's rule (4n+2 pi electrons required).
+    #[error("aromatic ring {ring:?} has {pi_electrons} pi electrons (Huckel: 4n+2 required)")]
+    HuckelViolation { ring: Vec<u16>, pi_electrons: u8 },
 }
 
 #[cfg(test)]

@@ -7,7 +7,6 @@ use crate::{
     },
     MoleculeError, NodeError,
 };
-use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Molecule {
@@ -51,7 +50,7 @@ impl MoleculeBuilder {
     #[allow(clippy::too_many_arguments)]
     pub fn add_atom(
         &mut self,
-        element: String,
+        element: AtomSymbol,
         charge: i8,
         isotope: Option<u16>,
         aromatic: Option<bool>,
@@ -60,13 +59,7 @@ impl MoleculeBuilder {
         chirality: Option<Chirality>,
     ) -> Result<usize, NodeError> {
         self.nodes.push(NodeBuilder::new(
-            AtomSymbol::from_str(&element)?,
-            charge,
-            isotope,
-            aromatic,
-            hydrogens,
-            class,
-            chirality,
+            element, charge, isotope, aromatic, hydrogens, class, chirality,
         )?);
         Ok(self.nodes.len() - 1)
     }
@@ -84,7 +77,7 @@ impl MoleculeBuilder {
             self.add_bond(
                 node_count + bond.source(),
                 node_count + bond.target(),
-                *bond.kind(),
+                bond.kind(),
             );
         }
     }
@@ -98,9 +91,11 @@ impl MoleculeBuilder {
         let mut nodes: Vec<Node> = Vec::new();
         let mut bond_orders_x2 = vec![0u8; self.nodes.len()];
 
+        // Calculate bond order sum for implicit hydrogen calculation
+        // According to OpenSMILES, aromatic bonds count as 1.0 (not 1.5) for this purpose
         for bond in &self.bonds {
-            bond_orders_x2[bond.source() as usize] += bond.kind().electrons_involved();
-            bond_orders_x2[bond.target() as usize] += bond.kind().electrons_involved();
+            bond_orders_x2[bond.source() as usize] += bond.kind().bond_order_x2_for_implicit_h();
+            bond_orders_x2[bond.target() as usize] += bond.kind().bond_order_x2_for_implicit_h();
         }
 
         for (index, node) in self.nodes.into_iter().enumerate() {

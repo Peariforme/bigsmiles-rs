@@ -19,3 +19,4 @@ Thumbs.db
 coverage/
 CLAUDE.md
 docs/REFERENCES.md
+.claude/settings.local.json

@@ -13,11 +13,24 @@ use smiles_core::{parse, AtomSymbol, BondType, ParserError};
 #[test]
 fn parse_aromatic_selenium_bracket() {
     // [se] is aromatic selenium per OpenSMILES
-    let mol = parse("c1cc[se]cc1").expect("Failed to parse c1cc[se]cc1");
-    assert_eq!(mol.nodes().len(), 6);
-    // The [se] atom should be Se and aromatic
-    assert_eq!(*mol.nodes()[3].atom().element(), AtomSymbol::Se);
-    assert!(mol.nodes()[3].aromatic());
+    // c1cc[se]cc1 is a 6-membered ring with Se → 5×1 + 2 = 7 pi electrons (not 4n+2)
+    // Without huckel-validation: parses successfully (syntax is valid)
+    // With huckel-validation: rejected as chemically invalid
+    let result = parse("c1cc[se]cc1");
+    #[cfg(not(feature = "huckel-validation"))]
+    {
+        let mol = result.expect("Failed to parse c1cc[se]cc1");
+        assert_eq!(mol.nodes().len(), 6);
+        assert_eq!(*mol.nodes()[3].atom().element(), AtomSymbol::Se);
+        assert!(mol.nodes()[3].aromatic());
+    }
+    #[cfg(feature = "huckel-validation")]
+    {
+        assert!(
+            result.is_err(),
+            "c1cc[se]cc1 should fail Hückel validation (7 pi electrons)"
+        );
+    }
 }
 
 #[test]
@@ -285,7 +298,7 @@ fn bond_at_ring_open() {
         .iter()
         .find(|b| (b.source() == 0 && b.target() == 5) || (b.source() == 5 && b.target() == 0));
     assert!(ring_bond.is_some());
-    assert_eq!(*ring_bond.unwrap().kind(), BondType::Double);
+    assert_eq!(ring_bond.unwrap().kind(), BondType::Double);
 }
 
 #[test]
@@ -297,7 +310,7 @@ fn bond_at_ring_close() {
         .iter()
         .find(|b| (b.source() == 0 && b.target() == 5) || (b.source() == 5 && b.target() == 0));
     assert!(ring_bond.is_some());
-    assert_eq!(*ring_bond.unwrap().kind(), BondType::Double);
+    assert_eq!(ring_bond.unwrap().kind(), BondType::Double);
 }
 
 #[test]

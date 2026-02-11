@@ -55,7 +55,7 @@ fn parse_ethane() {
 
     // Check the bond: C(0) - C(1)
     let bond = &molecule.bonds()[0];
-    assert_eq!(*bond.kind(), BondType::Simple);
+    assert_eq!(bond.kind(), BondType::Simple);
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 }
@@ -98,12 +98,12 @@ fn parse_ethanol() {
 
     // Check the bonds: C(0) - C(1) - O(2)
     let bond0 = &molecule.bonds()[0];
-    assert_eq!(*bond0.kind(), BondType::Simple);
+    assert_eq!(bond0.kind(), BondType::Simple);
     assert_eq!(bond0.source(), 0);
     assert_eq!(bond0.target(), 1);
 
     let bond1 = &molecule.bonds()[1];
-    assert_eq!(*bond1.kind(), BondType::Simple);
+    assert_eq!(bond1.kind(), BondType::Simple);
     assert_eq!(bond1.source(), 1);
     assert_eq!(bond1.target(), 2);
 }
@@ -140,7 +140,7 @@ fn parse_chloromethane() {
 
     // Check the bond: C(0) - Cl(1)
     let bond = &molecule.bonds()[0];
-    assert_eq!(*bond.kind(), BondType::Simple);
+    assert_eq!(bond.kind(), BondType::Simple);
     assert_eq!(bond.source(), 0);
     assert_eq!(bond.target(), 1);
 }
