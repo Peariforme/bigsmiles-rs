@@ -389,10 +389,35 @@ impl<'a> Parser<'a> {
         }
         let elem = self.parse_element_symbol(first_char, true)?;
 
-        let chirality = self.parse_chirality()?;
-        let hydrogen = self.parse_hydrogen()?;
-        let charge = self.parse_charge()?;
-        let class = self.parse_class();
+        let mut chirality = None;
+        let mut hydrogen: Option<u8> = None;
+        let mut charge: i8 = 0;
+        let mut class = None;
+
+        loop {
+            match self.peek() {
+                Some(&']') | None => break,
+                Some(&'@') => {
+                    chirality = self.parse_chirality()?;
+                }
+                Some(&'H') => {
+                    hydrogen = self.parse_hydrogen()?;
+                }
+                Some(&'+') | Some(&'-') => {
+                    charge = self.parse_charge()?;
+                }
+                Some(&':') => {
+                    class = self.parse_class();
+                    break;
+                }
+                Some(&c) => {
+                    self.next();
+                    return Err(ParserError::UnexpectedCharacter(c, self.position));
+                }
+            }
+        }
+
+        let hydrogen = hydrogen.or(Some(0));
 
         match self.next() {
             Some(']') => (),
@@ -598,25 +623,18 @@ impl<'a> Parser<'a> {
             }
         }
 
-        if self.peek().is_some_and(|c| *c == ':' || *c == ']') {
-            if builder.is_empty() {
-                return Ok(charge);
-            } else if charge > 0 {
-                return builder
-                    .parse::<i8>()
-                    .map_err(|_| ParserError::ChargeOutOfRange(builder));
-            } else if charge < 0 {
-                return Ok(0 - builder
-                    .parse::<i8>()
-                    .map_err(|_| ParserError::ChargeOutOfRange(builder))?);
-            } else {
-                return Err(ParserError::ChargeWithoutSign);
-            }
-        }
-
-        match self.next() {
-            Some(c) => Err(ParserError::UnexpectedCharacter(c, self.position)),
-            None => Err(ParserError::UnexpectedEndOfInput("]".to_string())),
+        if builder.is_empty() {
+            Ok(charge)
+        } else if charge > 0 {
+            builder
+                .parse::<i8>()
+                .map_err(|_| ParserError::ChargeOutOfRange(builder))
+        } else if charge < 0 {
+            Ok(0 - builder
+                .parse::<i8>()
+                .map_err(|_| ParserError::ChargeOutOfRange(builder))?)
+        } else {
+            Err(ParserError::ChargeWithoutSign)
         }
     }
 

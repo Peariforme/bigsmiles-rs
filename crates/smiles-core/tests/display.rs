@@ -156,8 +156,8 @@ fn display_standard_form_atoms() {
     let mol4 = parse("[C-H3]").unwrap();
     assert_eq!(format!("{}", mol4), "[CH3-]");
 
-    let mol5 = parse("C[CH@](Br)Cl").unwrap();
-    assert_eq!(format!("{}", mol5), "C[C@H](Br)Cl");
+    let mol5 = parse("F[CH@](Br)Cl").unwrap();
+    assert_eq!(format!("{}", mol5), "F[C@H](Br)Cl");
 
     // Represent hydrogens as a property of the heavy atom rather than as explicit atoms, unless other rules (e.g. [2H]) require that the hydrogen be explicit.
     let mol6 = parse("[H][C-]([H])[H]").unwrap();
