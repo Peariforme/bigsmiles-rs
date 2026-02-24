@@ -1,17 +1,52 @@
+use std::collections::HashMap;
+use std::fmt;
+
 use crate::{
     ast::{
-        atom::AtomSymbol,
+        atom::{AtomSymbol, OrganicAtom},
         bond::{Bond, BondType},
         chirality::Chirality,
         node::{Node, NodeBuilder},
     },
-    MoleculeError, NodeError,
+    AtomError, MoleculeError, NodeError,
 };
+
+type SpanningTreeResult = (Vec<Vec<(u16, BondType)>>, Vec<Vec<u8>>);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Molecule {
     nodes: Vec<Node>,
     bonds: Vec<Bond>,
+}
+
+struct DfsState<'a> {
+    neighbour_list: &'a [Vec<(u16, BondType)>],
+    tree_children: &'a mut Vec<Vec<(u16, BondType)>>,
+    ring_pair_ids: &'a [Vec<u8>],
+    visited: &'a mut Vec<bool>,
+    output: &'a mut Vec<String>,
+    nodes_to_output_positions: &'a mut Vec<usize>,
+    pair_to_rnum: &'a mut HashMap<u8, u8>,
+    next_rnum: &'a mut u8,
+    bridges: &'a [(u16, u16)],
+}
+
+struct BridgeDfsState<'a> {
+    neighbour_list: &'a [Vec<(u16, BondType)>],
+    visited: &'a mut Vec<bool>,
+    disc: &'a mut Vec<u32>,
+    low: &'a mut Vec<u32>,
+    timer: &'a mut u32,
+    bridges: &'a mut Vec<(u16, u16)>,
+}
+
+struct SpanningTreeState<'a> {
+    visited: &'a mut Vec<bool>,
+    on_stack: &'a mut Vec<bool>,
+    ring_counter: &'a mut u8,
+    neighbour_list: &'a [Vec<(u16, BondType)>],
+    tree_children: &'a mut Vec<Vec<(u16, BondType)>>,
+    ring_digits: &'a mut Vec<Vec<u8>>,
 }
 
 impl Molecule {
@@ -25,6 +60,351 @@ impl Molecule {
 
     pub fn bonds(&self) -> &[Bond] {
         &self.bonds
+    }
+
+    fn dfs(&self, current: u16, state: &mut DfsState) -> Result<(), AtomError> {
+        let pos = state.output.len();
+        state.nodes_to_output_positions[current as usize] = pos;
+        let bond_order_sum = state.neighbour_list[current as usize]
+            .iter()
+            .map(|(_, k)| k.bond_order_x2_for_implicit_h())
+            .sum::<u8>()
+            / 2;
+        state
+            .output
+            .push(self.format_atom(current as usize, bond_order_sum)?);
+
+        for &pair_id in &state.ring_pair_ids[current as usize] {
+            let rnum = *state.pair_to_rnum.entry(pair_id).or_insert_with(|| {
+                let n = *state.next_rnum;
+                *state.next_rnum += 1;
+                n
+            });
+            if rnum >= 10 {
+                state.output.push(format!("%{:02}", rnum));
+            } else {
+                state.output.push(rnum.to_string());
+            }
+        }
+
+        state.visited[current as usize] = true;
+
+        let mut children = state.tree_children[current as usize].clone();
+        children.sort_by_key(|(n, _)| Self::subtree_size(*n, state.tree_children));
+        if let Some((main, branches)) = children.split_last() {
+            for branch in branches {
+                state.output.push("(".to_string());
+                let edge = (current.min(branch.0), current.max(branch.0));
+                if let Some(s) = Self::bond_symbol(
+                    branch.1,
+                    self.nodes[current as usize].aromatic(),
+                    self.nodes[branch.0 as usize].aromatic(),
+                    state.bridges.contains(&edge),
+                ) {
+                    state.output.push(s.to_string());
+                }
+                self.dfs(branch.0, state)?;
+                state.output.push(")".to_string());
+            }
+            let edge = (current.min(main.0), current.max(main.0));
+            if let Some(s) = Self::bond_symbol(
+                main.1,
+                self.nodes[current as usize].aromatic(),
+                self.nodes[main.0 as usize].aromatic(),
+                state.bridges.contains(&edge),
+            ) {
+                state.output.push(s.to_string());
+            }
+            self.dfs(main.0, state)?;
+        }
+
+        Ok(())
+    }
+
+    fn subtree_size(start: u16, tree_children: &[Vec<(u16, BondType)>]) -> usize {
+        1 + tree_children[start as usize]
+            .iter()
+            .map(|(child, _)| Self::subtree_size(*child, tree_children))
+            .sum::<usize>()
+    }
+
+    fn best_starting_atom(&self, neighbour_list: &[Vec<(u16, BondType)>]) -> u16 {
+        let terminals: Vec<u16> = (0..self.nodes.len() as u16)
+            .filter(|&i| neighbour_list[i as usize].len() == 1)
+            .collect();
+
+        if terminals.is_empty() {
+            // Pas de terminaux : préférer les atomes de degré minimal pour éviter de
+            // commencer sur un atome de jonction (spiro, pont) qui accumulerait
+            // plusieurs ring closures sur le même atome dans la sortie canonique.
+            let min_degree = (0..self.nodes.len() as u16)
+                .map(|i| neighbour_list[i as usize].len())
+                .min()
+                .unwrap_or(0);
+            let candidates: Vec<u16> = (0..self.nodes.len() as u16)
+                .filter(|&i| neighbour_list[i as usize].len() == min_degree)
+                .collect();
+            for &c in &candidates {
+                if *self.nodes[c as usize].atom().element() != AtomSymbol::Organic(OrganicAtom::C) {
+                    return c;
+                }
+            }
+            return candidates[0];
+        }
+
+        for &t in &terminals {
+            if *self.nodes[t as usize].atom().element() != AtomSymbol::Organic(OrganicAtom::C) {
+                return t;
+            }
+        }
+
+        terminals[0]
+    }
+
+    fn find_bridges(n: usize, neighbour_list: &[Vec<(u16, BondType)>]) -> Vec<(u16, u16)> {
+        let mut visited = vec![false; n];
+        let mut disc = vec![0u32; n];
+        let mut low = vec![0u32; n];
+        let mut timer = 0u32;
+        let mut bridges = Vec::new();
+
+        let mut state = BridgeDfsState {
+            neighbour_list,
+            visited: &mut visited,
+            disc: &mut disc,
+            low: &mut low,
+            timer: &mut timer,
+            bridges: &mut bridges,
+        };
+        for start in 0..n as u16 {
+            if !state.visited[start as usize] {
+                Self::bridge_dfs(start, u16::MAX, &mut state);
+            }
+        }
+        bridges
+    }
+
+    fn bridge_dfs(u: u16, parent: u16, state: &mut BridgeDfsState) {
+        state.visited[u as usize] = true;
+        state.disc[u as usize] = *state.timer;
+        state.low[u as usize] = *state.timer;
+        *state.timer += 1;
+
+        for v_idx in 0..state.neighbour_list[u as usize].len() {
+            let (v, _) = state.neighbour_list[u as usize][v_idx];
+            if v == parent {
+                continue;
+            }
+            if !state.visited[v as usize] {
+                Self::bridge_dfs(v, u, state);
+                state.low[u as usize] = state.low[u as usize].min(state.low[v as usize]);
+                if state.low[v as usize] > state.disc[u as usize] {
+                    state.bridges.push((u.min(v), u.max(v)));
+                }
+            } else {
+                state.low[u as usize] = state.low[u as usize].min(state.disc[v as usize]);
+            }
+        }
+    }
+
+    fn build_spanning_tree_inner(
+        &self,
+        current: u16,
+        parent: Option<u16>,
+        state: &mut SpanningTreeState,
+    ) {
+        state.visited[current as usize] = true;
+        state.on_stack[current as usize] = true;
+
+        // Trier les voisins (hors parent) par priorité de liaison décroissante.
+        // Les liaisons doubles/triples deviennent ainsi des arêtes de l'arbre couvrant
+        // (chain bonds) plutôt que des back edges (ring closures), ce qui évite d'avoir
+        // une double liaison sur un ring closure dans la sortie canonique.
+        let mut sorted_neighbors: Vec<(u16, BondType)> = state.neighbour_list[current as usize]
+            .iter()
+            .copied()
+            .filter(|&(v, _)| Some(v) != parent)
+            .collect();
+        sorted_neighbors.sort_by(|a, b| b.1.bond_order_priority().cmp(&a.1.bond_order_priority()));
+
+        for (voisin, bond_type) in sorted_neighbors {
+            if state.visited[voisin as usize] {
+                // On ne traite l'arête de retour que si le voisin est encore
+                // sur la pile DFS (ancêtre), pour éviter de compter l'arête
+                // une deuxième fois depuis l'autre extrémité.
+                if state.on_stack[voisin as usize] {
+                    *state.ring_counter += 1;
+                    state.ring_digits[current as usize].push(*state.ring_counter);
+                    state.ring_digits[voisin as usize].push(*state.ring_counter);
+                }
+            } else {
+                state.tree_children[current as usize].push((voisin, bond_type));
+                self.build_spanning_tree_inner(voisin, Some(current), state);
+            }
+        }
+
+        state.on_stack[current as usize] = false;
+    }
+
+    pub fn build_spanning_tree(
+        &self,
+        neighbour_list: &[Vec<(u16, BondType)>],
+    ) -> SpanningTreeResult {
+        self.build_spanning_tree_from(0, neighbour_list)
+    }
+
+    fn build_spanning_tree_from(
+        &self,
+        start: u16,
+        neighbour_list: &[Vec<(u16, BondType)>],
+    ) -> SpanningTreeResult {
+        let mut tree_children: Vec<Vec<(u16, BondType)>> = vec![Vec::new(); self.nodes.len()];
+        let mut ring_pair_ids: Vec<Vec<u8>> = vec![Vec::new(); self.nodes.len()];
+        let mut visited = vec![false; self.nodes.len()];
+        let mut on_stack = vec![false; self.nodes.len()];
+        let mut ring_counter = 0;
+
+        let mut state = SpanningTreeState {
+            visited: &mut visited,
+            on_stack: &mut on_stack,
+            ring_counter: &mut ring_counter,
+            neighbour_list,
+            tree_children: &mut tree_children,
+            ring_digits: &mut ring_pair_ids,
+        };
+        self.build_spanning_tree_inner(start, None, &mut state);
+
+        (tree_children, ring_pair_ids)
+    }
+
+    fn bond_symbol(
+        kind: BondType,
+        source_aromatic: bool,
+        target_aromatic: bool,
+        is_bridge: bool,
+    ) -> Option<&'static str> {
+        match kind {
+            BondType::Simple => {
+                if source_aromatic && target_aromatic {
+                    Some("-")
+                } else {
+                    None
+                }
+            }
+            BondType::Aromatic => {
+                if is_bridge {
+                    Some("-")
+                } else {
+                    None
+                }
+            }
+            BondType::Double => Some("="),
+            BondType::Triple => Some("#"),
+            BondType::Quadruple => Some("$"),
+            BondType::Disconnected => Some("."),
+            BondType::Down => Some("\\"),
+            BondType::Up => Some("/"),
+        }
+    }
+
+    fn format_atom(&self, node_idx: usize, bond_order_sum: u8) -> Result<String, AtomError> {
+        let node = &self.nodes[node_idx];
+
+        if node.atom().is_organic()
+            && node.atom().charge() == 0
+            && node.atom().isotope().is_none()
+            && node.chirality().is_none()
+            && node.class().is_none()
+            && node.hydrogens()
+                == node
+                    .atom()
+                    .implicit_hydrogens(Some(bond_order_sum), node.aromatic())?
+        {
+            if node.aromatic() {
+                Ok(node.atom().element().to_string().to_ascii_lowercase())
+            } else {
+                Ok(node.atom().element().to_string())
+            }
+        } else {
+            let mut output = String::new();
+            output.push('[');
+            if let Some(i) = node.atom().isotope() {
+                output.push_str(&i.to_string());
+            }
+            output.push_str(&node.atom().element().to_string());
+            if let Some(c) = node.chirality() {
+                output.push_str(&c.to_string());
+            }
+
+            match node.hydrogens() {
+                0 => {}
+                1 => output.push('H'),
+                n => {
+                    output.push('H');
+                    output.push_str(&n.to_string());
+                }
+            }
+
+            match node.atom().charge() {
+                0 => (),
+                1 => output.push('+'),
+                -1 => output.push('-'),
+                n => {
+                    if n < 0 {
+                        output.push('-');
+                    } else {
+                        output.push('+');
+                    }
+                    output.push_str(&n.abs().to_string());
+                }
+            }
+
+            if let Some(c) = node.class() {
+                output.push(':');
+                output.push_str(&c.to_string());
+            }
+            output.push(']');
+            Ok(output)
+        }
+    }
+}
+
+impl fmt::Display for Molecule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut neighbour_list: Vec<Vec<(u16, BondType)>> = vec![Vec::new(); self.nodes.len()];
+        for bond in &self.bonds {
+            neighbour_list[bond.source() as usize].push((bond.target(), bond.kind()));
+            neighbour_list[bond.target() as usize].push((bond.source(), bond.kind()));
+        }
+
+        let start = self.best_starting_atom(&neighbour_list);
+        let bridges = Self::find_bridges(self.nodes.len(), &neighbour_list);
+        let (mut tree_children, ring_pair_ids) =
+            self.build_spanning_tree_from(start, &neighbour_list);
+
+        let mut output: Vec<String> = Vec::new();
+        let mut visited: Vec<bool> = vec![false; self.nodes.len()];
+        let mut nodes_to_output_positions: Vec<usize> = vec![0; self.nodes.len()];
+        let mut pair_to_rnum: HashMap<u8, u8> = HashMap::new();
+        let mut next_rnum: u8 = 1;
+
+        {
+            let mut state = DfsState {
+                neighbour_list: &neighbour_list,
+                tree_children: &mut tree_children,
+                ring_pair_ids: &ring_pair_ids,
+                visited: &mut visited,
+                output: &mut output,
+                nodes_to_output_positions: &mut nodes_to_output_positions,
+                pair_to_rnum: &mut pair_to_rnum,
+                next_rnum: &mut next_rnum,
+                bridges: &bridges,
+            };
+            self.dfs(start, &mut state).map_err(|_| fmt::Error)?;
+        }
+
+        let final_output = output.join("");
+        write!(f, "{final_output}")
     }
 }
 
