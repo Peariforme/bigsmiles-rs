@@ -5,11 +5,13 @@
 //!
 //! ## Usage
 //!
-//! ```rust,ignore
-//! use smiles_core::parser_parallel::parse_batch;
+//! ```rust
+//! use opensmiles::parse_batch;
 //!
 //! let smiles = vec!["CCO", "c1ccccc1", "CC(=O)O"];
 //! let results = parse_batch(&smiles);
+//! assert_eq!(results.len(), 3);
+//! assert!(results.iter().all(|r| r.is_ok()));
 //! ```
 
 use rayon::prelude::*;
@@ -33,10 +35,10 @@ use crate::Molecule;
 ///
 /// # Example
 ///
-/// ```rust,ignore
-/// use smiles_core::parser_parallel::parse_batch;
+/// ```rust
+/// use opensmiles::parse_batch;
 ///
-/// let smiles = vec!["CCO", "c1ccccc1", "CC(=O)O", "invalid"];
+/// let smiles = vec!["CCO", "c1ccccc1", "CC(=O)O", "invalid["];
 /// let results = parse_batch(&smiles);
 ///
 /// assert!(results[0].is_ok()); // ethanol
@@ -62,10 +64,10 @@ pub fn parse_batch(inputs: &[&str]) -> Vec<Result<Molecule, ParserError>> {
 ///
 /// # Example
 ///
-/// ```rust,ignore
-/// use smiles_core::parser_parallel::parse_batch_ok;
+/// ```rust
+/// use opensmiles::parse_batch_ok;
 ///
-/// let smiles = vec!["CCO", "invalid", "c1ccccc1"];
+/// let smiles = vec!["CCO", "invalid[", "c1ccccc1"];
 /// let molecules = parse_batch_ok(&smiles);
 ///
 /// assert_eq!(molecules.len(), 2); // only valid ones
