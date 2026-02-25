@@ -39,7 +39,7 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Run benchmarks
-        run: cargo bench -p smiles-core --features parallel --bench parser_benchmarks -- --output-format bencher 2>&1 | tee benchmark_output.txt
+        run: cargo bench -p opensmiles --features parallel --bench parser_benchmarks -- --output-format bencher 2>&1 | tee benchmark_output.txt
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1

@@ -11,11 +11,11 @@
 //! - `huckel`: overhead of Hückel aromaticity validation on aromatic molecules
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use smiles_core::ast::aromaticity::validate_aromaticity;
-use smiles_core::{parse, Molecule};
+use opensmiles::ast::aromaticity::validate_aromaticity;
+use opensmiles::{parse, Molecule};
 
 #[cfg(feature = "parallel")]
-use smiles_core::parser_parallel::parse_batch;
+use opensmiles::parser_parallel::parse_batch;
 
 #[cfg(feature = "parallel")]
 /// Diverse set of molecules for batch benchmarks.

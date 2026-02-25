@@ -1,0 +1,38 @@
+name: Release-plz
+
+on:
+  push:
+    branches:
+      - master
+
+# Empêche les runs concurrents qui pourraient créer des conflits de version
+concurrency:
+  group: release-plz-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-plz:
+    name: Release-plz
+    runs-on: ubuntu-latest
+    # Nécessaire pour créer des PRs et pousser des tags
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # fetch-depth: 0 est requis par release-plz pour analyser l'historique git
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run release-plz
+        uses: release-plz/action@v0.5
+        env:
+          # Token GitHub pour créer des PRs et des releases
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Token crates.io pour publier — à ajouter dans Settings > Secrets
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

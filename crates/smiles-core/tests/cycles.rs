@@ -6,7 +6,7 @@
 //! - Fused and spiro rings
 //! - Two-digit notation (%nn)
 
-use smiles_core::{parse, BondType};
+use opensmiles::{parse, BondType};
 
 #[test]
 fn parse_cyclopropane() {

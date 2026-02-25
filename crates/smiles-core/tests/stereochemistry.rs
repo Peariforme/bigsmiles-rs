@@ -7,7 +7,7 @@
 //! - Interactions with branches and ring closures
 //! - Error cases
 
-use smiles_core::{parse, BondType, Chirality, ParserError};
+use opensmiles::{parse, BondType, Chirality, ParserError};
 
 // ============================================================================
 // Tetrahedral chirality — basic

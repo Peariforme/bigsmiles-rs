@@ -3,7 +3,7 @@
 //! Tests for features required by the OpenSMILES spec that were previously
 //! missing or incorrect.
 
-use smiles_core::{parse, AtomSymbol, BondType, ParserError};
+use opensmiles::{parse, AtomSymbol, BondType, ParserError};
 
 // ============================================================================
 // Aromatic two-letter bracket symbols: [se], [as], [te]

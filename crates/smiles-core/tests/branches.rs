@@ -6,7 +6,7 @@
 //! - Nested branches `CC(C(C)C)C`
 //! - Branches with different bond types
 
-use smiles_core::{parse, BondType, ParserError};
+use opensmiles::{parse, BondType, ParserError};
 
 #[test]
 fn parse_simple_branch() {

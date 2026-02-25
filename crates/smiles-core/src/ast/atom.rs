@@ -3,6 +3,13 @@ use std::str::FromStr;
 
 use crate::AtomError;
 
+/// An element symbol, covering the full periodic table plus the organic subset and wildcard.
+///
+/// Atoms parsed outside brackets (e.g. `C`, `N`, `Cl`) are represented as
+/// `Organic(OrganicAtom)` variants, which carry implicit-hydrogen rules.
+/// Atoms inside brackets (e.g. `[Fe]`, `[13C]`) use the element variants directly.
+///
+/// The wildcard atom `*` is represented by `Wildcard`.
 #[derive(Debug, Clone, PartialEq, Copy)]
 #[rustfmt::skip]
 pub enum AtomSymbol {
@@ -13,13 +20,16 @@ pub enum AtomSymbol {
     Rb, Sr, Y, Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd, In, Sn, Sb, Te, Xe,
     Cs, Ba, Lu, Hf, Ta, W, Re, Os, Ir, Pt, Au, Hg, Tl, Pb, Bi, Po, At, Rn,
     Fr, Ra, Lr, Rf, Db, Sg, Bh, Hs, Mt, Ds, Rg, Cn, Nh, Fl, Mc, Lv, Ts, Og,
-    La, Ce, Pr, Nd, Pm, Sm, Eu, Gd, Tb, Dy, Ho, Er, Tm, Yb, 
+    La, Ce, Pr, Nd, Pm, Sm, Eu, Gd, Tb, Dy, Ho, Er, Tm, Yb,
     Ac, Th, Pa, U, Np, Pu, Am, Cm, Bk, Cf, Es, Fm, Md, No,
+    /// Wildcard atom (`*`).
     Wildcard,
+    /// An atom from the organic subset (B, C, N, O, P, S, F, Cl, Br, I).
     Organic(OrganicAtom)
 }
 
 impl AtomSymbol {
+    /// Returns `true` if this element can participate in an aromatic ring.
     pub fn can_be_aromatic(self) -> bool {
         match self {
             AtomSymbol::Organic(OrganicAtom::C) => true,
@@ -285,6 +295,10 @@ impl FromStr for AtomSymbol {
     }
 }
 
+/// An atom from the SMILES organic subset.
+///
+/// These atoms can appear outside brackets and have well-defined implicit
+/// hydrogen rules based on their standard valences.
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum OrganicAtom {
     B,
@@ -300,6 +314,9 @@ pub enum OrganicAtom {
 }
 
 impl OrganicAtom {
+    /// Returns the standard valences for this organic atom.
+    ///
+    /// The lowest valence ≥ current bond order sum determines implicit hydrogen count.
     pub fn valence(&self) -> &'static [u8] {
         match self {
             OrganicAtom::B => &[3],
@@ -315,13 +332,15 @@ impl OrganicAtom {
         }
     }
 
+    /// Calculates the number of implicit hydrogens for this atom.
+    ///
+    /// `bond_order_sum` is the sum of bond orders of all bonds to this atom.
+    /// `aromatic` applies the OpenSMILES aromatic subvalence rule:
+    /// if subvalence > 1, implicit H = subvalence − 1; otherwise 0.
     pub fn implicit_hydrogens(&self, bond_order_sum: u8, aromatic: bool) -> u8 {
         for v in self.valence() {
             if *v >= bond_order_sum {
                 let subvalence = *v - bond_order_sum;
-                // OpenSMILES spec: "If an aromatic atom's subvalence is greater than one,
-                // the implicit hydrogen count is reported as subvalence minus one.
-                // Otherwise, implicit hydrogen count is zero."
                 if aromatic {
                     if subvalence > 1 {
                         return subvalence - 1;
@@ -354,11 +373,12 @@ impl fmt::Display for OrganicAtom {
     }
 }
 
+/// A chemical atom with element, formal charge, and isotope.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Atom {
     element: AtomSymbol,
     charge: i8,           // -15 to +15
-    isotope: Option<u16>, // 0 to 999 ou unspecified
+    isotope: Option<u16>, // 0 to 999 or unspecified
 }
 
 impl Atom {
@@ -380,6 +400,11 @@ impl Atom {
         })
     }
 
+    /// Calculates implicit hydrogens for organic-subset atoms.
+    ///
+    /// Returns `Ok(0)` for bracket atoms (non-organic), where hydrogen count
+    /// is always explicit. Returns an error if `bond_order_sum` is missing
+    /// for an organic atom.
     pub fn implicit_hydrogens(
         &self,
         bond_order_sum: Option<u8>,
@@ -393,18 +418,22 @@ impl Atom {
         }
     }
 
+    /// Returns `true` if this atom is from the organic subset (B, C, N, O, P, S, F, Cl, Br, I).
     pub fn is_organic(&self) -> bool {
         matches!(self.element, AtomSymbol::Organic(_))
     }
 
+    /// Returns the element symbol.
     pub fn element(&self) -> &AtomSymbol {
         &self.element
     }
 
+    /// Returns the formal charge (range: −15 to +15).
     pub fn charge(&self) -> i8 {
         self.charge
     }
 
+    /// Returns the isotope mass number, if specified (e.g. `[13C]` → `Some(13)`).
     pub fn isotope(&self) -> Option<u16> {
         self.isotope
     }

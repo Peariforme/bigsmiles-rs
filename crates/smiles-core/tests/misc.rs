@@ -5,7 +5,7 @@
 //! - Complex real molecules
 //! - Edge cases
 
-use smiles_core::{parse, AtomSymbol};
+use opensmiles::{parse, AtomSymbol};
 
 // ============================================================================
 // Wildcards

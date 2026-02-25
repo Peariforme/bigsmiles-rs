@@ -5,7 +5,7 @@
 //! - Ionic compounds `[Na+].[Cl-]`
 //! - Complex mixtures
 
-use smiles_core::{parse, AtomSymbol, OrganicAtom};
+use opensmiles::{parse, AtomSymbol, OrganicAtom};
 
 #[test]
 fn parse_disconnected_simple() {

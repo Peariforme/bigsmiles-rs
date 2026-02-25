@@ -709,6 +709,27 @@ impl<'a> Parser<'a> {
     }
 }
 
+/// Parses a SMILES string into a [`Molecule`].
+///
+/// Follows the [OpenSMILES specification](http://opensmiles.org/opensmiles.html).
+/// Whitespace (space, tab, newline) terminates the SMILES string as per the spec,
+/// so `"CCO ethanol"` parses successfully as ethanol.
+///
+/// # Errors
+///
+/// Returns a [`ParserError`] if the input is not valid SMILES.
+///
+/// # Examples
+///
+/// ```
+/// use opensmiles::parse;
+///
+/// let ethanol = parse("CCO").unwrap();
+/// let benzene = parse("c1ccccc1").unwrap();
+/// let chiral  = parse("[C@H](F)(Cl)Br").unwrap();
+///
+/// assert!(parse("C(C").is_err()); // unclosed parenthesis
+/// ```
 pub fn parse(input: &str) -> Result<Molecule, ParserError> {
     let parser = Parser::new(input);
     let (builder, branch_bond_type, next_bond_type, cycles_target, _) = parser.parse()?;

@@ -5,7 +5,7 @@
 //! - Linear chains (ethane, ethanol)
 //! - Two-letter atoms (chloromethane)
 
-use smiles_core::{parse, AtomSymbol, BondType, OrganicAtom};
+use opensmiles::{parse, AtomSymbol, BondType, OrganicAtom};
 
 #[test]
 fn parse_methane() {

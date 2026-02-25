@@ -18,8 +18,8 @@
 //! let polymer = parse("{[]CC(c1ccccc1)[]}")?; // polystyrene
 //! ```
 
-// Re-export smiles-core for convenience
-pub use smiles_core;
+// Re-export opensmiles for convenience
+pub use opensmiles;
 
 // TODO: Uncomment these as you implement each module
 // pub mod ast;
