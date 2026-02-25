@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772016098630,
+  "lastUpdate": 1772016241430,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -1721,6 +1721,240 @@ window.BENCHMARK_DATA = {
             "name": "huckel/parse_and_validate/caffeine",
             "value": 1512,
             "range": "± 7",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "distinct": true,
+          "id": "a0318676b045f061bbc3c4c6cdb8230682a762e8",
+          "message": "fix: remove invalid dependencies_update field from release-plz.toml",
+          "timestamp": "2026-02-25T11:36:07+01:00",
+          "tree_id": "0dd7b0dd10edb3caa5b1ab79db053713917cffe0",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/a0318676b045f061bbc3c4c6cdb8230682a762e8"
+        },
+        "date": 1772016241154,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "reference/ethanol",
+            "value": 228,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/cyclohexane",
+            "value": 558,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/benzene",
+            "value": 544,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/ibuprofen",
+            "value": 1512,
+            "range": "± 47",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/caffeine",
+            "value": 1446,
+            "range": "± 14",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10",
+            "value": 6764,
+            "range": "± 37",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10",
+            "value": 15969,
+            "range": "± 1836",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/100",
+            "value": 71369,
+            "range": "± 270",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/100",
+            "value": 56081,
+            "range": "± 6737",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/1000",
+            "value": 711617,
+            "range": "± 39842",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/1000",
+            "value": 393281,
+            "range": "± 20895",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/5000",
+            "value": 3632635,
+            "range": "± 26419",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/5000",
+            "value": 1738618,
+            "range": "± 43252",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10000",
+            "value": 7234651,
+            "range": "± 40477",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10000",
+            "value": 3410644,
+            "range": "± 53367",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/50000",
+            "value": 36226402,
+            "range": "± 524216",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/50000",
+            "value": 16885483,
+            "range": "± 425025",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/100",
+            "value": 16776,
+            "range": "± 440",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/500",
+            "value": 75945,
+            "range": "± 1179",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/1000",
+            "value": 144556,
+            "range": "± 1243",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/5000",
+            "value": 720402,
+            "range": "± 14691",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/100",
+            "value": 30207,
+            "range": "± 363",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/500",
+            "value": 143544,
+            "range": "± 677",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/1000",
+            "value": 285348,
+            "range": "± 1208",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/5000",
+            "value": 1421897,
+            "range": "± 30118",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ethanol",
+            "value": 237,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ethanol",
+            "value": 303,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/benzene",
+            "value": 538,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/benzene",
+            "value": 2460,
+            "range": "± 17",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/naphthalene",
+            "value": 904,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/naphthalene",
+            "value": 4909,
+            "range": "± 11",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ibuprofen",
+            "value": 1506,
+            "range": "± 8",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ibuprofen",
+            "value": 3489,
+            "range": "± 21",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/caffeine",
+            "value": 1372,
+            "range": "± 8",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/caffeine",
+            "value": 1507,
+            "range": "± 6",
             "unit": "ns/iter"
           }
         ]
