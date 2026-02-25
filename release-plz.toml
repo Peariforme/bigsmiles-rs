@@ -9,8 +9,6 @@ git_release_enable = true
 changelog_update = true
 
 [[package]]
-name = "bigsmiles-core"
-# Pas encore prêt pour publication
-publish = false
-git_release_enable = false
-changelog_update = false
+name = "bigsmiles"
+git_release_enable = true
+changelog_update = true
