@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1](https://github.com/Peariforme/bigsmiles-rs/compare/bigsmiles-v0.1.0...bigsmiles-v0.1.1) - 2026-02-25
+
+### Other
+
+- release ([#24](https://github.com/Peariforme/bigsmiles-rs/pull/24))
+
 ## [0.1.0](https://github.com/Peariforme/bigsmiles-rs/releases/tag/bigsmiles-v0.1.0) - 2026-02-25
 
 ### Other
