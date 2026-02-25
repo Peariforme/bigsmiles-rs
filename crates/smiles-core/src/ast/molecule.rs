@@ -40,10 +40,7 @@ fn canonical_subtree_string(
     }
     children.sort();
     let charge = n.atom().charge();
-    let isotope_str = n
-        .atom()
-        .isotope()
-        .map_or(String::new(), |i| i.to_string());
+    let isotope_str = n.atom().isotope().map_or(String::new(), |i| i.to_string());
     format!(
         "({}{}{},{})",
         n.atom().element(),
@@ -797,8 +794,12 @@ impl fmt::Display for Molecule {
         // Déterminer les atomes chiraux fictifs et les liaisons stéréo fictives
         let suppress_chirality =
             compute_suppress_chirality(&self.nodes, &neighbour_list_heavy, &virtual_h);
-        let suppress_stereo_bonds =
-            compute_suppress_stereo_bonds(&self.nodes, &neighbour_list_heavy, &self.bonds, &virtual_h);
+        let suppress_stereo_bonds = compute_suppress_stereo_bonds(
+            &self.nodes,
+            &neighbour_list_heavy,
+            &self.bonds,
+            &virtual_h,
+        );
 
         let start = self.best_starting_atom(&neighbour_list_heavy, &removable_h);
         let bridges = Self::find_bridges(self.nodes.len(), &neighbour_list_heavy);
