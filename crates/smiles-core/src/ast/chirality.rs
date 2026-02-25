@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// Chirality specification per the OpenSMILES specification.
 ///
 /// Uses `#[repr(u8)]` starting at 1 so that `Option<Chirality>` benefits
@@ -84,5 +86,29 @@ impl Chirality {
             Chirality::OH30,
         ];
         OH.get((n as usize).wrapping_sub(1)).copied()
+    }
+}
+
+impl fmt::Display for Chirality {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Chirality::TH1 => write!(f, "@"),
+            Chirality::TH2 => write!(f, "@@"),
+            Chirality::SP1 => write!(f, "@SP1"),
+            Chirality::SP2 => write!(f, "@SP2"),
+            Chirality::SP3 => write!(f, "@SP3"),
+            Chirality::AL1 => write!(f, "@AL1"),
+            Chirality::AL2 => write!(f, "@AL2"),
+            n => {
+                let val = *n as u8;
+                if val <= Chirality::TB20 as u8 {
+                    let num = val - Chirality::TB1 as u8 + 1;
+                    write!(f, "@TB{}", num)
+                } else {
+                    let num = val - Chirality::OH1 as u8 + 1;
+                    write!(f, "@OH{}", num)
+                }
+            }
+        }
     }
 }

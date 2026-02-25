@@ -50,6 +50,19 @@ impl BondType {
     /// for the purpose of calculating implicit hydrogens on aromatic atoms.
     ///
     /// Returns the value multiplied by 2 (to avoid floating point).
+    /// Returns a priority used when sorting neighbors in the spanning tree.
+    /// Higher-order bonds get higher priority so they become tree (chain) edges
+    /// rather than ring-closure back edges, keeping ring closures simple.
+    pub fn bond_order_priority(&self) -> u8 {
+        match self {
+            BondType::Quadruple => 4,
+            BondType::Triple => 3,
+            BondType::Double => 2,
+            BondType::Aromatic => 1,
+            _ => 0,
+        }
+    }
+
     pub fn bond_order_x2_for_implicit_h(&self) -> u8 {
         match self {
             BondType::Simple => 2,

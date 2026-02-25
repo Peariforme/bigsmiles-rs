@@ -53,12 +53,21 @@ pub fn find_aromatic_rings(molecule: &Molecule) -> Vec<Ring> {
         }
     }
 
-    // For each edge, find the shortest cycle containing it
+    find_rings_in_subgraph(&adj, &aromatic_edges, n)
+}
+
+/// Finds all minimal rings in a subgraph defined by an adjacency list and edge set.
+/// For each edge, finds the shortest cycle containing it (BFS), then deduplicates.
+/// Shared by `find_aromatic_rings` and Kekulé ring detection in display.
+pub(crate) fn find_rings_in_subgraph(
+    adj: &[Vec<u16>],
+    edges: &HashSet<(u16, u16)>,
+    n: usize,
+) -> Vec<Ring> {
     let mut rings: Vec<Vec<u16>> = Vec::new();
 
-    for &(u, v) in &aromatic_edges {
-        if let Some(path) = shortest_path_excluding_edge(u, v, &adj, n) {
-            // Canonicalize ring for deduplication (sorted node set)
+    for &(u, v) in edges {
+        if let Some(path) = shortest_path_excluding_edge(u, v, adj, n) {
             let mut sorted = path.clone();
             sorted.sort();
             let is_duplicate = rings.iter().any(|existing| {
@@ -72,16 +81,19 @@ pub fn find_aromatic_rings(molecule: &Molecule) -> Vec<Ring> {
         }
     }
 
-    // Sort by size (prefer smaller rings)
     rings.sort_by_key(|r| r.len());
-
     rings.into_iter().map(|nodes| Ring { nodes }).collect()
 }
 
 /// BFS from `u` to `v` without using the direct edge (u, v).
 /// Returns the ring as the path from u to v (which, combined with the
 /// excluded edge, forms a cycle).
-fn shortest_path_excluding_edge(u: u16, v: u16, adj: &[Vec<u16>], n: usize) -> Option<Vec<u16>> {
+pub(crate) fn shortest_path_excluding_edge(
+    u: u16,
+    v: u16,
+    adj: &[Vec<u16>],
+    n: usize,
+) -> Option<Vec<u16>> {
     let mut visited = vec![false; n];
     let mut parent: Vec<Option<u16>> = vec![None; n];
     let mut queue = VecDeque::new();
