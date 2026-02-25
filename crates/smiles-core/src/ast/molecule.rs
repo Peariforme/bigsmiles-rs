@@ -153,6 +153,25 @@ fn compute_suppress_stereo_bonds(
     suppress
 }
 
+/// A parsed SMILES molecule represented as a graph.
+///
+/// A `Molecule` is a collection of [`Node`]s (atoms) connected by [`Bond`]s.
+/// Nodes are indexed from `0` to `nodes().len() - 1`, and bonds reference
+/// these indices via [`Bond::source()`] and [`Bond::target()`].
+///
+/// `Molecule` implements [`Display`](std::fmt::Display) which serializes it
+/// back to a canonical SMILES string (round-trip).
+///
+/// # Example
+///
+/// ```
+/// use opensmiles::parse;
+///
+/// let mol = parse("CCO").unwrap();
+/// assert_eq!(mol.nodes().len(), 3); // C, C, O
+/// assert_eq!(mol.bonds().len(), 2);
+/// println!("{}", mol); // canonical SMILES
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Molecule {
     nodes: Vec<Node>,
@@ -199,10 +218,12 @@ impl Molecule {
         Molecule { nodes, bonds }
     }
 
+    /// Returns the atoms in this molecule, in parse order.
     pub fn nodes(&self) -> &[Node] {
         &self.nodes
     }
 
+    /// Returns the bonds in this molecule.
     pub fn bonds(&self) -> &[Bond] {
         &self.bonds
     }
@@ -454,13 +475,6 @@ impl Molecule {
         }
 
         state.on_stack[current as usize] = false;
-    }
-
-    pub fn build_spanning_tree(
-        &self,
-        neighbour_list: &[Vec<(u16, BondType)>],
-    ) -> SpanningTreeResult {
-        self.build_spanning_tree_from(0, neighbour_list)
     }
 
     fn build_spanning_tree_from(
@@ -838,26 +852,26 @@ impl fmt::Display for Molecule {
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct MoleculeBuilder {
+pub(crate) struct MoleculeBuilder {
     nodes: Vec<NodeBuilder>,
     bonds: Vec<Bond>,
 }
 
 impl MoleculeBuilder {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
-    pub fn nodes(&self) -> &[NodeBuilder] {
+    pub(crate) fn nodes(&self) -> &[NodeBuilder] {
         &self.nodes
     }
 
-    pub fn bonds(&self) -> &[Bond] {
+    pub(crate) fn bonds(&self) -> &[Bond] {
         &self.bonds
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn add_atom(
+    pub(crate) fn add_atom(
         &mut self,
         element: AtomSymbol,
         charge: i8,
@@ -873,7 +887,7 @@ impl MoleculeBuilder {
         Ok(self.nodes.len() - 1)
     }
 
-    pub fn add_branch(&mut self, m: MoleculeBuilder, bond_type: BondType, source: Option<u16>) {
+    pub(crate) fn add_branch(&mut self, m: MoleculeBuilder, bond_type: BondType, source: Option<u16>) {
         let node_count = self.nodes.len() as u16;
         if let Some(src) = source {
             self.add_bond(src, node_count, bond_type);
@@ -891,12 +905,11 @@ impl MoleculeBuilder {
         }
     }
 
-    pub fn add_bond(&mut self, source: u16, target: u16, kind: BondType) {
+    pub(crate) fn add_bond(&mut self, source: u16, target: u16, kind: BondType) {
         self.bonds.push(Bond::new(kind, source, target));
     }
 
-    // À la fin
-    pub fn build(self) -> Result<Molecule, MoleculeError> {
+    pub(crate) fn build(self) -> Result<Molecule, MoleculeError> {
         let mut nodes: Vec<Node> = Vec::new();
         let mut bond_orders_x2 = vec![0u8; self.nodes.len()];
 

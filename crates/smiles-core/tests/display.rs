@@ -1,4 +1,4 @@
-use smiles_core::parse;
+use opensmiles::parse;
 
 #[test]
 fn display_simple_methane() {

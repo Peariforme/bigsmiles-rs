@@ -1,5 +1,19 @@
 use crate::BondError;
 
+/// The type of a covalent bond between two atoms.
+///
+/// Corresponds directly to the bond symbols in SMILES notation:
+///
+/// | Variant       | Symbol | Description                            |
+/// |---------------|--------|----------------------------------------|
+/// | `Simple`      | `-`    | Single bond (default when omitted)     |
+/// | `Double`      | `=`    | Double bond                            |
+/// | `Triple`      | `#`    | Triple bond                            |
+/// | `Quadruple`   | `$`    | Quadruple bond                         |
+/// | `Aromatic`    | `:`    | Aromatic bond                          |
+/// | `Up`          | `/`    | Directional bond (E/Z stereochemistry) |
+/// | `Down`        | `\`    | Directional bond (E/Z stereochemistry) |
+/// | `Disconnected`| `.`    | No bond (disconnected fragments)       |
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum BondType {
     Simple,
@@ -31,6 +45,7 @@ impl TryFrom<&char> for BondType {
 }
 
 impl BondType {
+    /// Returns the number of electrons involved in this bond.
     pub fn electrons_involved(&self) -> u8 {
         match self {
             BondType::Simple => 2,
@@ -44,16 +59,11 @@ impl BondType {
         }
     }
 
-    /// Returns the bond order contribution for implicit hydrogen calculation.
-    ///
-    /// According to OpenSMILES spec, aromatic bonds count as 1 (not 1.5)
-    /// for the purpose of calculating implicit hydrogens on aromatic atoms.
-    ///
-    /// Returns the value multiplied by 2 (to avoid floating point).
     /// Returns a priority used when sorting neighbors in the spanning tree.
+    ///
     /// Higher-order bonds get higher priority so they become tree (chain) edges
-    /// rather than ring-closure back edges, keeping ring closures simple.
-    pub fn bond_order_priority(&self) -> u8 {
+    /// rather than ring-closure back edges, keeping ring closures simple in output.
+    pub(crate) fn bond_order_priority(&self) -> u8 {
         match self {
             BondType::Quadruple => 4,
             BondType::Triple => 3,
@@ -63,13 +73,18 @@ impl BondType {
         }
     }
 
-    pub fn bond_order_x2_for_implicit_h(&self) -> u8 {
+    /// Returns the bond order contribution × 2 for implicit hydrogen calculation.
+    ///
+    /// Per the OpenSMILES spec, aromatic bonds count as 1.0 (not 1.5)
+    /// for the purpose of calculating implicit hydrogens. The value is
+    /// multiplied by 2 to avoid floating-point arithmetic.
+    pub(crate) fn bond_order_x2_for_implicit_h(&self) -> u8 {
         match self {
             BondType::Simple => 2,
             BondType::Double => 4,
             BondType::Triple => 6,
             BondType::Quadruple => 8,
-            BondType::Aromatic => 2, // Counts as 1.0 bond (not 1.5) for implicit H
+            BondType::Aromatic => 2,
             BondType::Disconnected => 0,
             BondType::Up => 2,
             BondType::Down => 2,
@@ -77,6 +92,10 @@ impl BondType {
     }
 }
 
+/// A bond connecting two atom nodes in a [`Molecule`](crate::Molecule).
+///
+/// Bonds are undirected but stored with a `source` and `target` index
+/// (both indices into [`Molecule::nodes()`](crate::Molecule::nodes)).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bond {
     kind: BondType,
@@ -85,7 +104,7 @@ pub struct Bond {
 }
 
 impl Bond {
-    pub fn new(kind: BondType, source: u16, target: u16) -> Bond {
+    pub(crate) fn new(kind: BondType, source: u16, target: u16) -> Bond {
         Bond {
             kind,
             source,
@@ -93,14 +112,17 @@ impl Bond {
         }
     }
 
+    /// Returns the bond type.
     pub fn kind(&self) -> BondType {
         self.kind
     }
 
+    /// Returns the index of the source node.
     pub fn source(&self) -> u16 {
         self.source
     }
 
+    /// Returns the index of the target node.
     pub fn target(&self) -> u16 {
         self.target
     }

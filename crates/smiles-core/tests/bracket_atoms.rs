@@ -7,7 +7,7 @@
 //! - Classes/atom mapping (`[C:1]`, `[N:2]`, etc.)
 //! - All possible combinations of these attributes
 
-use smiles_core::{parse, AtomSymbol, MoleculeError, NodeError, OrganicAtom, ParserError};
+use opensmiles::{parse, AtomSymbol, MoleculeError, NodeError, OrganicAtom, ParserError};
 
 // ============================================================================
 // Explicit hydrogens

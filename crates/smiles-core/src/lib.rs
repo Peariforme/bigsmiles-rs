@@ -1,13 +1,14 @@
-//! # smiles-core
+//! # opensmiles
 //!
 //! A SMILES parser following the [OpenSMILES specification](http://opensmiles.org/opensmiles.html).
 //!
 //! ## Quick Start
 //!
-//! ```rust,ignore
-//! use smiles_core::parse;
+//! ```rust
+//! use opensmiles::parse;
 //!
-//! let molecule = parse("CCO")?; // ethanol
+//! let molecule = parse("CCO").unwrap(); // ethanol
+//! println!("{}", molecule); // OCC
 //! ```
 //!
 //! ## Parallel Parsing
@@ -15,10 +16,10 @@
 //! Enable the `parallel` feature for multi-threaded batch parsing:
 //!
 //! ```rust,ignore
-//! use smiles_core::parser_parallel::parse_batch;
+//! use opensmiles::parse_batch;
 //!
 //! let smiles = vec!["CCO", "c1ccccc1", "CC(=O)O"];
-//! let results = parse_batch(&smiles); // parsed in parallel
+//! let results = parse_batch(&smiles);
 //! ```
 //!
 //! ## Grammar
@@ -27,12 +28,10 @@
 //! described at <https://depth-first.com/articles/2020/12/21/smiles-formal-grammar-revisited/>
 
 pub mod ast;
-// pub mod element;
 mod error;
 pub mod parser;
 #[cfg(feature = "parallel")]
 pub mod parser_parallel;
-// mod display;
 
 // Re-export public API
 pub use ast::*;

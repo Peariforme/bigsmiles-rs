@@ -7,11 +7,12 @@ repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
 description = "A BigSMILES parser for polymer notation"
+publish = false
 keywords = ["chemistry", "smiles", "bigsmiles", "polymer", "macromolecules"]
 categories = ["parser-implementations", "science"]
 
 [dependencies]
-smiles-core = { path = "../smiles-core" }
+opensmiles = { path = "../smiles-core" }
 thiserror.workspace = true
 
 [dev-dependencies]

@@ -7,7 +7,7 @@
 //! - Quadruple (`$`)
 //! - Aromatic (`:`)
 
-use smiles_core::{parse, BondType};
+use opensmiles::{parse, BondType};
 
 #[test]
 fn parse_explicit_single_bond() {
