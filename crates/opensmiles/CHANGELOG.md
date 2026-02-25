@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/Peariforme/bigsmiles-rs/compare/opensmiles-v0.1.1...opensmiles-v0.1.2) - 2026-02-25
+
+### Fixed
+
+- *(opensmiles)* correct ring-closure index in branch parser ([#26](https://github.com/Peariforme/bigsmiles-rs/pull/26))
+
 ## [0.1.1](https://github.com/Peariforme/bigsmiles-rs/compare/opensmiles-v0.1.0...opensmiles-v0.1.1) - 2026-02-25
 
 ### Other
