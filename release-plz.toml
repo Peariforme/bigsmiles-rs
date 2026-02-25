@@ -7,8 +7,6 @@ name = "opensmiles"
 # Active la création de GitHub releases et du CHANGELOG pour cette crate
 git_release_enable = true
 changelog_update = true
-# Inclut les PRs de dépendances dans le CHANGELOG
-dependencies_update = true
 
 [[package]]
 name = "bigsmiles-core"
