@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772016582159,
+  "lastUpdate": 1772033406778,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -2189,6 +2189,240 @@ window.BENCHMARK_DATA = {
             "name": "huckel/parse_and_validate/caffeine",
             "value": 1518,
             "range": "± 3",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c09648ee9374bfb6e94e8f4f5962b0f62bd1ca4f",
+          "message": "Bigsmiles (#23)\n\n* refactor(bigsmiles): split AST into modules, add integration tests and benchmark\n\n- Decompose monolithic ast.rs into ast/{bigsmiles,bond_descriptor,\n  stochastic_fragment,stochastic_object}.rs\n- Add StochasticFragment::smiles_raw to preserve original SMILES for\n  topology-faithful display (CC(C) ≠ CCC in polymer context)\n- Add left_atom/right_atom to StochasticFragment with right_connection_atom()\n  helper that identifies the last main-chain atom at parenthesis depth 0\n- Add integration tests: tests/parse.rs (19), tests/display.rs (13),\n  tests/errors.rs (6)\n- Add Criterion benchmark: benches/parser.rs\n- Add criterion to workspace dev-dependencies\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* fix(opensmiles): fix doctest compilation under --feature-powerset\n\n- Wrap parse_batch doctest in #[cfg(feature = \"parallel\")] so it\n  compiles to an empty main() when the parallel feature is disabled\n- Fix parser_parallel.rs doctests: use correct crate name opensmiles,\n  remove ignore, fix invalid input to trigger a real parse error\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* ci: split workflows by crate with path-based change detection\n\n- ci.yml: add changes job (dorny/paths-filter), separate test-opensmiles\n  and test-bigsmiles jobs; bigsmiles tests also run when opensmiles changes\n- benchmark.yml: split bench-opensmiles / bench-bigsmiles, shared\n  concurrency group on gh-pages to avoid push conflicts\n- release-plz.yml: add paths filter so the workflow only fires when\n  crate sources or manifests change\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* chore(bigsmiles): prepare crate for v0.1.0 publication\n\n- Cargo.toml: remove publish=false, add readme and documentation fields,\n  pin opensmiles dependency version to \"0.1\"\n- release-plz.toml: rename package entry bigsmiles-core → bigsmiles,\n  enable git_release_enable and changelog_update\n- Add README.md with usage examples, feature table, connection-atom\n  documentation and references\n- Fix all bigsmiles_core → bigsmiles crate name references in doctests\n  and module-level docs\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* refactor: rename crate directories to match package names\n\n- crates/smiles-core/   → crates/opensmiles/\n- crates/bigsmiles-core/ → crates/bigsmiles/\n\nAligns the directory names with the published crate names (opensmiles,\nbigsmiles) to eliminate the mismatch that caused CI failures such as\n\"package ID specification bigsmiles-core did not match any packages\".\n\nUpdate all references:\n- Cargo.toml workspace members\n- crates/bigsmiles/Cargo.toml path dependency\n- .github/workflows/{ci,benchmark,release-plz}.yml path filters and\n  cargo -p flags\n- README.md workspace diagram and dependency snippets\n- benches comments\n\nAdd bigsmiles to git hooks:\n- pre-commit: cargo clippy -p bigsmiles after opensmiles powerset check\n- pre-push: cargo test -p bigsmiles after opensmiles powerset test\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-25T16:22:14+01:00",
+          "tree_id": "0ff1487646205bc553a046113a01c1c15d48ad20",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/c09648ee9374bfb6e94e8f4f5962b0f62bd1ca4f"
+        },
+        "date": 1772033406116,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "reference/ethanol",
+            "value": 231,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/cyclohexane",
+            "value": 547,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/benzene",
+            "value": 562,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/ibuprofen",
+            "value": 1516,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/caffeine",
+            "value": 1416,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10",
+            "value": 6681,
+            "range": "± 359",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10",
+            "value": 15869,
+            "range": "± 4377",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/100",
+            "value": 70498,
+            "range": "± 318",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/100",
+            "value": 55719,
+            "range": "± 2701",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/1000",
+            "value": 732051,
+            "range": "± 1982",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/1000",
+            "value": 393210,
+            "range": "± 12562",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/5000",
+            "value": 3576207,
+            "range": "± 14317",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/5000",
+            "value": 1740433,
+            "range": "± 44096",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10000",
+            "value": 7161607,
+            "range": "± 29499",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10000",
+            "value": 3494737,
+            "range": "± 42354",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/50000",
+            "value": 36638704,
+            "range": "± 499760",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/50000",
+            "value": 19256915,
+            "range": "± 880474",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/100",
+            "value": 15936,
+            "range": "± 401",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/500",
+            "value": 74699,
+            "range": "± 181",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/1000",
+            "value": 148784,
+            "range": "± 945",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/5000",
+            "value": 741271,
+            "range": "± 3709",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/100",
+            "value": 29779,
+            "range": "± 84",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/500",
+            "value": 143041,
+            "range": "± 267",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/1000",
+            "value": 285213,
+            "range": "± 434",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/5000",
+            "value": 1425267,
+            "range": "± 13552",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ethanol",
+            "value": 240,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ethanol",
+            "value": 304,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/benzene",
+            "value": 547,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/benzene",
+            "value": 2498,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/naphthalene",
+            "value": 916,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/naphthalene",
+            "value": 4956,
+            "range": "± 20",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ibuprofen",
+            "value": 1483,
+            "range": "± 21",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ibuprofen",
+            "value": 3615,
+            "range": "± 13",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/caffeine",
+            "value": 1404,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/caffeine",
+            "value": 1504,
+            "range": "± 8",
             "unit": "ns/iter"
           }
         ]
