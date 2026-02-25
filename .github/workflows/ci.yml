@@ -42,10 +42,10 @@ jobs:
         run: cargo build --all-targets
 
       - name: Test all feature combinations
-        run: cargo hack test --feature-powerset -p smiles-core
+        run: cargo hack test --feature-powerset -p opensmiles
 
       - name: Check formatting
         run: cargo fmt --all -- --check
 
       - name: Clippy on all feature combinations
-        run: cargo hack clippy --feature-powerset -p smiles-core -- -D warnings
+        run: cargo hack clippy --feature-powerset -p opensmiles -- -D warnings
