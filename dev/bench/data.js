@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772011980433,
+  "lastUpdate": 1772016098630,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -1487,6 +1487,240 @@ window.BENCHMARK_DATA = {
             "name": "huckel/parse_and_validate/caffeine",
             "value": 1542,
             "range": "± 2",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d8a066fbf1fca98b7a4c1f680463eb9ac54865e7",
+          "message": "Prepare to publish (#21)\n\n* feat: rename smiles-core to opensmiles and prepare for crates.io\n\n- Rename crate from smiles-core to opensmiles (Cargo.toml, imports, tests)\n- Clean public API: MoleculeBuilder, NodeBuilder, bond internals → pub(crate)\n- Remove dead code: unused NodeBuilder methods, build_spanning_tree()\n- Add /// doc comments on all public types and functions\n- Add README.md for the opensmiles crate with usage examples, feature table,\n  benchmark results and links, and compliance summary\n- Add documentation field and readme field in Cargo.toml\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* ci: add release-plz for automated crates.io publishing\n\n- Add .github/workflows/release-plz.yml: on push to master, release-plz\n  creates a release PR with bumped version and CHANGELOG; merging the PR\n  triggers automatic publish to crates.io\n- Add release-plz.toml: configure opensmiles as publishable,\n  bigsmiles-core as skipped (not ready)\n- Add .githooks/commit-msg: enforces Conventional Commits format\n  (feat/fix/docs/... with optional scope and breaking change marker)\n  Install with: git config core.hooksPath .githooks\n- Fix ci.yml: update cargo-hack references from smiles-core to opensmiles\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* ci: add pre-commit and pre-push git hooks\n\n- pre-commit: runs cargo fmt --check and cargo hack clippy (all feature\n  combinations) to catch formatting and lint issues before commit\n- pre-push: runs cargo hack test (all feature combinations) before push\n- fix: apply cargo fmt to molecule.rs (add_branch signature line length)\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* fix: update benchmark workflow to use opensmiles crate name\n\n* fix: benchmark reference to opensmiles\n\n---------\n\nCo-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-25T11:34:12+01:00",
+          "tree_id": "355c104da03f830704689f2db5234f67981ab43c",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/d8a066fbf1fca98b7a4c1f680463eb9ac54865e7"
+        },
+        "date": 1772016098087,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "reference/ethanol",
+            "value": 231,
+            "range": "± 9",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/cyclohexane",
+            "value": 544,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/benzene",
+            "value": 544,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/ibuprofen",
+            "value": 1530,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/caffeine",
+            "value": 1433,
+            "range": "± 73",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10",
+            "value": 6830,
+            "range": "± 129",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10",
+            "value": 15858,
+            "range": "± 3447",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/100",
+            "value": 72232,
+            "range": "± 301",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/100",
+            "value": 56292,
+            "range": "± 1612",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/1000",
+            "value": 741736,
+            "range": "± 14574",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/1000",
+            "value": 401185,
+            "range": "± 14243",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/5000",
+            "value": 3608827,
+            "range": "± 185212",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/5000",
+            "value": 1750743,
+            "range": "± 40234",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10000",
+            "value": 7201607,
+            "range": "± 334137",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10000",
+            "value": 3422551,
+            "range": "± 73564",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/50000",
+            "value": 36645330,
+            "range": "± 688478",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/50000",
+            "value": 17213791,
+            "range": "± 709090",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/100",
+            "value": 15558,
+            "range": "± 234",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/500",
+            "value": 74111,
+            "range": "± 1198",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/1000",
+            "value": 144989,
+            "range": "± 815",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/5000",
+            "value": 720489,
+            "range": "± 2633",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/100",
+            "value": 29871,
+            "range": "± 723",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/500",
+            "value": 143573,
+            "range": "± 3878",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/1000",
+            "value": 285359,
+            "range": "± 7781",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/5000",
+            "value": 1415012,
+            "range": "± 12474",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ethanol",
+            "value": 241,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ethanol",
+            "value": 306,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/benzene",
+            "value": 548,
+            "range": "± 11",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/benzene",
+            "value": 2454,
+            "range": "± 101",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/naphthalene",
+            "value": 909,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/naphthalene",
+            "value": 4917,
+            "range": "± 278",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ibuprofen",
+            "value": 1483,
+            "range": "± 119",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ibuprofen",
+            "value": 3526,
+            "range": "± 56",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/caffeine",
+            "value": 1404,
+            "range": "± 32",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/caffeine",
+            "value": 1512,
+            "range": "± 7",
             "unit": "ns/iter"
           }
         ]
