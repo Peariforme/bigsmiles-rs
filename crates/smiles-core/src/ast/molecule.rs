@@ -568,8 +568,7 @@ impl Molecule {
         let n = self.nodes.len();
 
         // Initialiser depuis l'aromaticité existante des nœuds
-        let mut effective_aromatic: Vec<bool> =
-            self.nodes.iter().map(|nd| nd.aromatic()).collect();
+        let mut effective_aromatic: Vec<bool> = self.nodes.iter().map(|nd| nd.aromatic()).collect();
         let mut aromatic_bonds: HashSet<(u16, u16)> = HashSet::new();
 
         for bond in &self.bonds {
@@ -586,7 +585,10 @@ impl Molecule {
         let cycles = Self::find_kekule_rings(n, neighbour_list);
 
         for ring in &cycles {
-            if self.kekule_pi_electrons(&ring.nodes, neighbour_list).is_some() {
+            if self
+                .kekule_pi_electrons(&ring.nodes, neighbour_list)
+                .is_some()
+            {
                 let len = ring.nodes.len();
                 for i in 0..len {
                     let a = ring.nodes[i];
