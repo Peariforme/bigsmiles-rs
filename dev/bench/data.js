@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772034332634,
+  "lastUpdate": 1772048135847,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -2890,6 +2890,240 @@ window.BENCHMARK_DATA = {
           {
             "name": "huckel/parse_and_validate/caffeine",
             "value": 1496,
+            "range": "± 7",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "95a52dd1de8fc7bda051b229112c8f55752e51fa",
+          "message": "fix(opensmiles): correct ring-closure index in branch parser (#26)\n\n`connect_ring_closure()` was passing the global atom index directly to\n`MoleculeBuilder::add_bond()`, which expects branch-local indices. This\ncaused two bugs:\n\n- Wrong ring connectivity for ring label 1 inside a branch (e.g.\n  `CC(c1ccccc1)` bonded the wrong pair of aromatic carbons).\n- Index-out-of-bounds panic for any ring label > 1 inside a branch\n  (e.g. `CC(c2ccccc2)` panicked because global index 10 exceeded the\n  6-atom branch builder).\n\nFix: subtract `self.node_offset` from `target` before calling\n`add_bond`, converting the global index to the expected local one.\n\nRegression tests added in `tests/cycles.rs`:\n- `parse_ring_inside_branch`           — label 1, checks correct bond\n- `parse_ring_label_gt1_inside_branch` — label 2, was panicking\n- `parse_multiple_rings_in_branches`   — two phenyl branches, label 1+2\n\nCo-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-25T20:27:53+01:00",
+          "tree_id": "8be8d3d673bedcf358daba89c42167fda6ecd821",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/95a52dd1de8fc7bda051b229112c8f55752e51fa"
+        },
+        "date": 1772048135316,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "reference/ethanol",
+            "value": 227,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/cyclohexane",
+            "value": 553,
+            "range": "± 15",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/benzene",
+            "value": 543,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/ibuprofen",
+            "value": 1502,
+            "range": "± 16",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "reference/caffeine",
+            "value": 1375,
+            "range": "± 28",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10",
+            "value": 6577,
+            "range": "± 83",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10",
+            "value": 19840,
+            "range": "± 231",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/100",
+            "value": 69720,
+            "range": "± 1088",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/100",
+            "value": 55339,
+            "range": "± 3101",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/1000",
+            "value": 725941,
+            "range": "± 47111",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/1000",
+            "value": 416986,
+            "range": "± 31624",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/5000",
+            "value": 3550913,
+            "range": "± 9488",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/5000",
+            "value": 1744884,
+            "range": "± 104718",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/10000",
+            "value": 7077352,
+            "range": "± 207171",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/10000",
+            "value": 3429889,
+            "range": "± 116019",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/sequential/50000",
+            "value": 35312845,
+            "range": "± 1098659",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "seq_vs_parallel/parallel/50000",
+            "value": 16866082,
+            "range": "± 422080",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/100",
+            "value": 15515,
+            "range": "± 87",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/500",
+            "value": 72804,
+            "range": "± 179",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/1000",
+            "value": 143983,
+            "range": "± 460",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/peg/5000",
+            "value": 711873,
+            "range": "± 9641",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/100",
+            "value": 29776,
+            "range": "± 167",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/500",
+            "value": 143332,
+            "range": "± 2138",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/1000",
+            "value": 284771,
+            "range": "± 7587",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scaling/teflon/5000",
+            "value": 1416562,
+            "range": "± 11615",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ethanol",
+            "value": 238,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ethanol",
+            "value": 312,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/benzene",
+            "value": 546,
+            "range": "± 9",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/benzene",
+            "value": 2455,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/naphthalene",
+            "value": 900,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/naphthalene",
+            "value": 4911,
+            "range": "± 32",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/ibuprofen",
+            "value": 1459,
+            "range": "± 8",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/ibuprofen",
+            "value": 3476,
+            "range": "± 16",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_only/caffeine",
+            "value": 1360,
+            "range": "± 25",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "huckel/parse_and_validate/caffeine",
+            "value": 1470,
             "range": "± 7",
             "unit": "ns/iter"
           }
