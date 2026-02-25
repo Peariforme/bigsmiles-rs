@@ -660,7 +660,11 @@ impl<'a> Parser<'a> {
             return Err(ParserError::NoAtomToBond);
         }
         let current_atom = self.get_current_atom_index()?;
-        self.builder.add_bond(current_atom, target, bond_type);
+        // `target` is a global atom index; convert to local branch-builder index.
+        // This is always valid because `connect_ring_closure` is only called when
+        // `target >= self.node_offset` (see ring-closure dispatch above).
+        let local_target = target - self.node_offset;
+        self.builder.add_bond(current_atom, local_target, bond_type);
         Ok(())
     }
 
