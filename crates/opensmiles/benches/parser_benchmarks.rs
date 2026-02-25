@@ -1,8 +1,8 @@
 //! Benchmarks for SMILES parsing performance.
 //!
 //! Run with:
-//!   cargo bench -p smiles-core                     # without parallel
-//!   cargo bench -p smiles-core --features parallel  # with parallel
+//!   cargo bench -p opensmiles                     # without parallel
+//!   cargo bench -p opensmiles --features parallel  # with parallel
 //!
 //! Benchmark groups:
 //! - `reference`: 5 representative molecules for cross-language comparison

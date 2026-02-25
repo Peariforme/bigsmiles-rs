@@ -15,3 +15,4 @@ fi
 
 echo "→ cargo clippy (all feature combinations)..."
 cargo hack clippy --feature-powerset -p opensmiles -- -D warnings
+cargo clippy -p bigsmiles -- -D warnings

@@ -38,7 +38,7 @@ jobs:
       - name: Run release-plz
         # release-plz détecte automatiquement quels crates ont de nouveaux commits
         # depuis leur dernière release et ne publie que ceux-là.
-        # Les crates avec `publish = false` (ex: bigsmiles-core) sont ignorés.
+        # release-plz détecte automatiquement quels crates ont de nouveaux commits
         uses: release-plz/action@v0.5
         env:
           # Token GitHub pour créer des PRs et des releases

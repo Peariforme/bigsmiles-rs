@@ -1,6 +1,6 @@
 //! Parser benchmarks.
 //!
-//! Run with:  `cargo bench -p bigsmiles-core`
+//! Run with:  `cargo bench -p bigsmiles`
 //! HTML report: `target/criterion/report/index.html`
 //!
 //! The `scaling` group measures throughput (MB/s) across inputs of different

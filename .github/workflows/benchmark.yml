@@ -29,12 +29,12 @@ jobs:
         with:
           filters: |
             opensmiles:
-              - 'crates/smiles-core/**'
+              - 'crates/opensmiles/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
             bigsmiles:
-              - 'crates/bigsmiles-core/**'
-              - 'crates/smiles-core/**'
+              - 'crates/bigsmiles/**'
+              - 'crates/opensmiles/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
 
@@ -101,10 +101,10 @@ jobs:
           git add dev/bench/compare.html dev/bench/nav.js dev/bench/index.html
           git diff --cached --quiet || (git commit -m "Update benchmark pages (comparison + navigation)" && git push origin gh-pages)
 
-  # ── Benchmark bigsmiles-core ──────────────────────────────────────────────
-  # bigsmiles-core dépend de smiles-core : on le rebenchmarke si l'un ou l'autre change.
+  # ── Benchmark bigsmiles ───────────────────────────────────────────────────
+  # bigsmiles dépend de opensmiles : on le rebenchmarke si l'un ou l'autre change.
   bench-bigsmiles:
-    name: Benchmark bigsmiles-core
+    name: Benchmark bigsmiles
     needs: changes
     if: needs.changes.outputs.bigsmiles == 'true'
     runs-on: ubuntu-latest
@@ -130,7 +130,7 @@ jobs:
 
       - name: Run benchmarks
         run: >
-          cargo bench -p bigsmiles-core --bench parser
+          cargo bench -p bigsmiles --bench parser
           -- --output-format bencher 2>&1 | tee benchmark_bigsmiles.txt
 
       - name: Store benchmark result

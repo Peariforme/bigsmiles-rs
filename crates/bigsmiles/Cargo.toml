@@ -14,7 +14,7 @@ categories = ["parser-implementations", "science"]
 
 [dependencies]
 # Local path for workspace development; `cargo publish` substitutes the crate.io version.
-opensmiles = { path = "../smiles-core", version = "0.1" }
+opensmiles = { path = "../opensmiles", version = "0.1" }
 thiserror.workspace = true
 
 [dev-dependencies]

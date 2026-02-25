@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/smiles-core",
-    "crates/bigsmiles-core",
+    "crates/opensmiles",
+    "crates/bigsmiles",
 ]
 
 [workspace.package]

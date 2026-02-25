@@ -7,3 +7,6 @@ set -e
 
 echo "→ cargo test (all feature combinations)..."
 cargo hack test --feature-powerset -p opensmiles
+
+echo "→ cargo test bigsmiles..."
+cargo test -p bigsmiles

@@ -27,12 +27,12 @@ jobs:
         with:
           filters: |
             opensmiles:
-              - 'crates/smiles-core/**'
+              - 'crates/opensmiles/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
             bigsmiles:
-              - 'crates/bigsmiles-core/**'
-              - 'crates/smiles-core/**'
+              - 'crates/bigsmiles/**'
+              - 'crates/opensmiles/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
 
@@ -78,10 +78,10 @@ jobs:
       - name: Clippy (all feature combinations)
         run: cargo hack clippy --feature-powerset -p opensmiles -- -D warnings
 
-  # ── bigsmiles-core ────────────────────────────────────────────────────────
-  # bigsmiles-core dépend de smiles-core : on le reteste si l'un ou l'autre change.
+  # ── bigsmiles ─────────────────────────────────────────────────────────────
+  # bigsmiles dépend de opensmiles : on le reteste si l'un ou l'autre change.
   test-bigsmiles:
-    name: Test bigsmiles-core
+    name: Test bigsmiles
     needs: changes
     if: needs.changes.outputs.bigsmiles == 'true'
     runs-on: ubuntu-latest
@@ -100,10 +100,10 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-bigsmiles-
 
       - name: Build
-        run: cargo build -p bigsmiles-core --all-targets
+        run: cargo build -p bigsmiles --all-targets
 
       - name: Test
-        run: cargo test -p bigsmiles-core
+        run: cargo test -p bigsmiles
 
       - name: Clippy
-        run: cargo clippy -p bigsmiles-core -- -D warnings
+        run: cargo clippy -p bigsmiles -- -D warnings
