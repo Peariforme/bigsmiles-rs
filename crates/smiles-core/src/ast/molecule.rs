@@ -29,6 +29,7 @@ struct DfsState<'a> {
     pair_to_rnum: &'a mut HashMap<u8, u8>,
     next_rnum: &'a mut u8,
     bridges: &'a [(u16, u16)],
+    virtual_h: &'a [u8],
 }
 
 struct BridgeDfsState<'a> {
@@ -72,7 +73,7 @@ impl Molecule {
             / 2;
         state
             .output
-            .push(self.format_atom(current as usize, bond_order_sum)?);
+            .push(self.format_atom(current as usize, bond_order_sum, state.virtual_h[current as usize])?);
 
         for &pair_id in &state.ring_pair_ids[current as usize] {
             let rnum = *state.pair_to_rnum.entry(pair_id).or_insert_with(|| {
@@ -128,9 +129,35 @@ impl Molecule {
             .sum::<usize>()
     }
 
-    fn best_starting_atom(&self, neighbour_list: &[Vec<(u16, BondType)>]) -> u16 {
+    fn removable_hydrogens(&self, neighbour_list: &[Vec<(u16, BondType)>]) -> Vec<bool> {
+        let mut removable = vec![false; self.nodes.len()];
+        for (i, node) in self.nodes.iter().enumerate() {
+            if *node.atom().element() != AtomSymbol::H {
+                continue;
+            }
+            if node.atom().charge() != 0
+                || node.atom().isotope().is_some()
+                || node.class().is_some()
+                || node.chirality().is_some()
+            {
+                continue;
+            }
+            let neighbors = &neighbour_list[i];
+            if neighbors.len() != 1 {
+                continue;
+            }
+            let (neighbor_idx, _) = neighbors[0];
+            if *self.nodes[neighbor_idx as usize].atom().element() == AtomSymbol::H {
+                continue;
+            }
+            removable[i] = true;
+        }
+        removable
+    }
+
+    fn best_starting_atom(&self, neighbour_list: &[Vec<(u16, BondType)>], removable_h: &[bool]) -> u16 {
         let terminals: Vec<u16> = (0..self.nodes.len() as u16)
-            .filter(|&i| neighbour_list[i as usize].len() == 1)
+            .filter(|&i| !removable_h[i as usize] && neighbour_list[i as usize].len() == 1)
             .collect();
 
         if terminals.is_empty() {
@@ -138,11 +165,12 @@ impl Molecule {
             // commencer sur un atome de jonction (spiro, pont) qui accumulerait
             // plusieurs ring closures sur le même atome dans la sortie canonique.
             let min_degree = (0..self.nodes.len() as u16)
+                .filter(|&i| !removable_h[i as usize])
                 .map(|i| neighbour_list[i as usize].len())
                 .min()
                 .unwrap_or(0);
             let candidates: Vec<u16> = (0..self.nodes.len() as u16)
-                .filter(|&i| neighbour_list[i as usize].len() == min_degree)
+                .filter(|&i| !removable_h[i as usize] && neighbour_list[i as usize].len() == min_degree)
                 .collect();
             for &c in &candidates {
                 if *self.nodes[c as usize].atom().element() != AtomSymbol::Organic(OrganicAtom::C) {
@@ -307,15 +335,16 @@ impl Molecule {
         }
     }
 
-    fn format_atom(&self, node_idx: usize, bond_order_sum: u8) -> Result<String, AtomError> {
+    fn format_atom(&self, node_idx: usize, bond_order_sum: u8, extra_h: u8) -> Result<String, AtomError> {
         let node = &self.nodes[node_idx];
+        let total_h = node.hydrogens() + extra_h;
 
         if node.atom().is_organic()
             && node.atom().charge() == 0
             && node.atom().isotope().is_none()
             && node.chirality().is_none()
             && node.class().is_none()
-            && node.hydrogens()
+            && total_h
                 == node
                     .atom()
                     .implicit_hydrogens(Some(bond_order_sum), node.aromatic())?
@@ -336,7 +365,7 @@ impl Molecule {
                 output.push_str(&c.to_string());
             }
 
-            match node.hydrogens() {
+            match total_h {
                 0 => {}
                 1 => output.push('H'),
                 n => {
@@ -377,10 +406,31 @@ impl fmt::Display for Molecule {
             neighbour_list[bond.target() as usize].push((bond.source(), bond.kind()));
         }
 
-        let start = self.best_starting_atom(&neighbour_list);
-        let bridges = Self::find_bridges(self.nodes.len(), &neighbour_list);
+        // Identifier les H explicites normaux et les absorber dans le hcount de l'atome lourd.
+        let removable_h = self.removable_hydrogens(&neighbour_list);
+
+        let mut virtual_h: Vec<u8> = vec![0; self.nodes.len()];
+        for (i, &removable) in removable_h.iter().enumerate() {
+            if removable {
+                let (neighbor_idx, _) = neighbour_list[i][0];
+                virtual_h[neighbor_idx as usize] += 1;
+            }
+        }
+
+        let mut neighbour_list_heavy: Vec<Vec<(u16, BondType)>> = vec![Vec::new(); self.nodes.len()];
+        for bond in &self.bonds {
+            let s = bond.source() as usize;
+            let t = bond.target() as usize;
+            if !removable_h[s] && !removable_h[t] {
+                neighbour_list_heavy[s].push((bond.target(), bond.kind()));
+                neighbour_list_heavy[t].push((bond.source(), bond.kind()));
+            }
+        }
+
+        let start = self.best_starting_atom(&neighbour_list_heavy, &removable_h);
+        let bridges = Self::find_bridges(self.nodes.len(), &neighbour_list_heavy);
         let (mut tree_children, ring_pair_ids) =
-            self.build_spanning_tree_from(start, &neighbour_list);
+            self.build_spanning_tree_from(start, &neighbour_list_heavy);
 
         let mut output: Vec<String> = Vec::new();
         let mut visited: Vec<bool> = vec![false; self.nodes.len()];
@@ -390,7 +440,7 @@ impl fmt::Display for Molecule {
 
         {
             let mut state = DfsState {
-                neighbour_list: &neighbour_list,
+                neighbour_list: &neighbour_list_heavy,
                 tree_children: &mut tree_children,
                 ring_pair_ids: &ring_pair_ids,
                 visited: &mut visited,
@@ -399,6 +449,7 @@ impl fmt::Display for Molecule {
                 pair_to_rnum: &mut pair_to_rnum,
                 next_rnum: &mut next_rnum,
                 bridges: &bridges,
+                virtual_h: &virtual_h,
             };
             self.dfs(start, &mut state).map_err(|_| fmt::Error)?;
         }
