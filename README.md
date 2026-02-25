@@ -29,9 +29,9 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-smiles-core = "0.1"
+opensmiles = "0.1"
 # Or for BigSMILES support:
-bigsmiles-core = "0.1"
+bigsmiles = "0.1"
 ```
 
 ## Usage
@@ -86,7 +86,7 @@ For processing large datasets, enable the `parallel` feature for multi-threaded 
 
 ```toml
 [dependencies]
-smiles-core = { version = "0.1", features = ["parallel"] }
+opensmiles = { version = "0.1", features = ["parallel"] }
 ```
 
 ```rust
@@ -123,7 +123,7 @@ Enable the `huckel-validation` feature to reject aromatic SMILES that violate H�
 
 ```toml
 [dependencies]
-smiles-core = { version = "0.1", features = ["huckel-validation"] }
+opensmiles = { version = "0.1", features = ["huckel-validation"] }
 ```
 
 With this feature enabled, `parse()` will return `MoleculeError::HuckelViolation` for chemically invalid aromatic rings. Without the feature, the validation API is still available for explicit use:
@@ -269,8 +269,8 @@ Parse with full error tracking and statistics.
 ```
 bigsmiles-rs/
 ├── crates/
-│   ├── smiles-core/      # Core SMILES parser
-│   └── bigsmiles-core/   # BigSMILES extensions
+│   ├── opensmiles/       # Core SMILES parser
+│   └── bigsmiles/        # BigSMILES extensions
 └── tests/                # Integration tests
 ```
 

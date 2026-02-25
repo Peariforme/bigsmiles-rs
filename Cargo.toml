@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/smiles-core",
-    "crates/bigsmiles-core",
+    "crates/opensmiles",
+    "crates/bigsmiles",
 ]
 
 [workspace.package]
@@ -18,3 +18,4 @@ thiserror = "1"
 
 # Dev dependencies
 pretty_assertions = "1"
+criterion = { version = "0.5", features = ["html_reports"] }

@@ -15,11 +15,15 @@
 //!
 //! Enable the `parallel` feature for multi-threaded batch parsing:
 //!
-//! ```rust,ignore
+//! ```rust
+//! # #[cfg(feature = "parallel")]
+//! # {
 //! use opensmiles::parse_batch;
 //!
 //! let smiles = vec!["CCO", "c1ccccc1", "CC(=O)O"];
 //! let results = parse_batch(&smiles);
+//! assert_eq!(results.len(), 3);
+//! # }
 //! ```
 //!
 //! ## Grammar

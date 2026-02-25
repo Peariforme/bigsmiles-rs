@@ -15,38 +15,66 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  benchmark:
-    name: Performance Benchmarks
+  # ── Détection des crates modifiés ─────────────────────────────────────────
+  changes:
+    name: Detect changed crates
     runs-on: ubuntu-latest
-
+    outputs:
+      opensmiles: ${{ steps.filter.outputs.opensmiles }}
+      bigsmiles: ${{ steps.filter.outputs.bigsmiles }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            opensmiles:
+              - 'crates/opensmiles/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+            bigsmiles:
+              - 'crates/bigsmiles/**'
+              - 'crates/opensmiles/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+  # ── Benchmark opensmiles ──────────────────────────────────────────────────
+  bench-opensmiles:
+    name: Benchmark opensmiles
+    needs: changes
+    if: needs.changes.outputs.opensmiles == 'true'
+    runs-on: ubuntu-latest
+    # Évite les conflits git sur gh-pages si les deux jobs s'exécutent en même temps.
+    concurrency:
+      group: gh-pages-bench-push
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-bench-opensmiles-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-bench-opensmiles-
             ${{ runner.os }}-cargo-bench-
-            ${{ runner.os }}-cargo-
 
       - name: Run benchmarks
-        run: cargo bench -p opensmiles --features parallel --bench parser_benchmarks -- --output-format bencher 2>&1 | tee benchmark_output.txt
+        run: >
+          cargo bench -p opensmiles --features parallel --bench parser_benchmarks
+          -- --output-format bencher 2>&1 | tee benchmark_opensmiles.txt
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: SMILES Parser Benchmarks
-          tool: 'cargo'
-          output-file-path: benchmark_output.txt
+          tool: cargo
+          output-file-path: benchmark_opensmiles.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           comment-on-alert: true
@@ -64,13 +92,58 @@ jobs:
           git fetch origin gh-pages:gh-pages
           git worktree add /tmp/gh-pages gh-pages
           mkdir -p /tmp/gh-pages/dev/bench
-          # Copy custom pages
           cp bench-pages/compare.html /tmp/gh-pages/dev/bench/compare.html
           cp bench-pages/nav.js /tmp/gh-pages/dev/bench/nav.js
-          # Inject shared nav into benchmark-action's index.html (only if not already present)
           if [ -f /tmp/gh-pages/dev/bench/index.html ] && ! grep -q 'nav\.js' /tmp/gh-pages/dev/bench/index.html; then
             sed -i 's|</body>|<script src="./nav.js"></script></body>|' /tmp/gh-pages/dev/bench/index.html
           fi
           cd /tmp/gh-pages
           git add dev/bench/compare.html dev/bench/nav.js dev/bench/index.html
           git diff --cached --quiet || (git commit -m "Update benchmark pages (comparison + navigation)" && git push origin gh-pages)
+
+  # ── Benchmark bigsmiles ───────────────────────────────────────────────────
+  # bigsmiles dépend de opensmiles : on le rebenchmarke si l'un ou l'autre change.
+  bench-bigsmiles:
+    name: Benchmark bigsmiles
+    needs: changes
+    if: needs.changes.outputs.bigsmiles == 'true'
+    runs-on: ubuntu-latest
+    # Même groupe de concurrence que bench-opensmiles pour sérialiser les push gh-pages.
+    concurrency:
+      group: gh-pages-bench-push
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-bench-bigsmiles-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-bench-bigsmiles-
+            ${{ runner.os }}-cargo-bench-
+
+      - name: Run benchmarks
+        run: >
+          cargo bench -p bigsmiles --bench parser
+          -- --output-format bencher 2>&1 | tee benchmark_bigsmiles.txt
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: BigSMILES Parser Benchmarks
+          tool: cargo
+          output-file-path: benchmark_bigsmiles.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          comment-on-alert: true
+          alert-threshold: '150%'
+          fail-on-alert: false
+          comment-always: ${{ github.event_name == 'pull_request' }}
+          save-data-file: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          alert-comment-cc-users: '@Peariforme'

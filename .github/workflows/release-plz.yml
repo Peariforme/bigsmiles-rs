@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - master
+    # Ne déclencher que si du code ou des manifestes ont changé.
+    # Les modifications de fichiers CI seuls n'entraînent pas de release.
+    paths:
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
 
 # Empêche les runs concurrents qui pourraient créer des conflits de version
 concurrency:
@@ -30,6 +36,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run release-plz
+        # release-plz détecte automatiquement quels crates ont de nouveaux commits
+        # depuis leur dernière release et ne publie que ceux-là.
+        # release-plz détecte automatiquement quels crates ont de nouveaux commits
         uses: release-plz/action@v0.5
         env:
           # Token GitHub pour créer des PRs et des releases

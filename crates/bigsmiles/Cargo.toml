@@ -1,19 +1,26 @@
 [package]
-name = "bigsmiles-core"
+name = "bigsmiles"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
 rust-version.workspace = true
-description = "A BigSMILES parser for polymer notation"
-publish = false
+description = "A BigSMILES parser for polymer and macromolecule notation"
+readme = "README.md"
+documentation = "https://docs.rs/bigsmiles"
 keywords = ["chemistry", "smiles", "bigsmiles", "polymer", "macromolecules"]
 categories = ["parser-implementations", "science"]
 
 [dependencies]
-opensmiles = { path = "../smiles-core" }
+# Local path for workspace development; `cargo publish` substitutes the crate.io version.
+opensmiles = { path = "../opensmiles", version = "0.1" }
 thiserror.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
+criterion.workspace = true
+
+[[bench]]
+name = "parser"
+harness = false
