@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 use crate::{
@@ -30,6 +30,8 @@ struct DfsState<'a> {
     next_rnum: &'a mut u8,
     bridges: &'a [(u16, u16)],
     virtual_h: &'a [u8],
+    effective_aromatic: &'a [bool],
+    aromatic_bonds: &'a HashSet<(u16, u16)>,
 }
 
 struct BridgeDfsState<'a> {
@@ -66,14 +68,27 @@ impl Molecule {
     fn dfs(&self, current: u16, state: &mut DfsState) -> Result<(), AtomError> {
         let pos = state.output.len();
         state.nodes_to_output_positions[current as usize] = pos;
+
+        // Compute effective bond order sum (Kekulé double bonds treated as aromatic when in overlay)
         let bond_order_sum = state.neighbour_list[current as usize]
             .iter()
-            .map(|(_, k)| k.bond_order_x2_for_implicit_h())
+            .map(|(v, k)| {
+                let edge = (current.min(*v), current.max(*v));
+                if state.aromatic_bonds.contains(&edge) {
+                    BondType::Aromatic.bond_order_x2_for_implicit_h()
+                } else {
+                    k.bond_order_x2_for_implicit_h()
+                }
+            })
             .sum::<u8>()
             / 2;
-        state
-            .output
-            .push(self.format_atom(current as usize, bond_order_sum, state.virtual_h[current as usize])?);
+
+        state.output.push(self.format_atom(
+            current as usize,
+            bond_order_sum,
+            state.virtual_h[current as usize],
+            state.effective_aromatic[current as usize],
+        )?);
 
         for &pair_id in &state.ring_pair_ids[current as usize] {
             let rnum = *state.pair_to_rnum.entry(pair_id).or_insert_with(|| {
@@ -96,10 +111,15 @@ impl Molecule {
             for branch in branches {
                 state.output.push("(".to_string());
                 let edge = (current.min(branch.0), current.max(branch.0));
+                let effective_bond = if state.aromatic_bonds.contains(&edge) {
+                    BondType::Aromatic
+                } else {
+                    branch.1
+                };
                 if let Some(s) = Self::bond_symbol(
-                    branch.1,
-                    self.nodes[current as usize].aromatic(),
-                    self.nodes[branch.0 as usize].aromatic(),
+                    effective_bond,
+                    state.effective_aromatic[current as usize],
+                    state.effective_aromatic[branch.0 as usize],
                     state.bridges.contains(&edge),
                 ) {
                     state.output.push(s.to_string());
@@ -108,10 +128,15 @@ impl Molecule {
                 state.output.push(")".to_string());
             }
             let edge = (current.min(main.0), current.max(main.0));
+            let effective_bond = if state.aromatic_bonds.contains(&edge) {
+                BondType::Aromatic
+            } else {
+                main.1
+            };
             if let Some(s) = Self::bond_symbol(
-                main.1,
-                self.nodes[current as usize].aromatic(),
-                self.nodes[main.0 as usize].aromatic(),
+                effective_bond,
+                state.effective_aromatic[current as usize],
+                state.effective_aromatic[main.0 as usize],
                 state.bridges.contains(&edge),
             ) {
                 state.output.push(s.to_string());
@@ -155,7 +180,11 @@ impl Molecule {
         removable
     }
 
-    fn best_starting_atom(&self, neighbour_list: &[Vec<(u16, BondType)>], removable_h: &[bool]) -> u16 {
+    fn best_starting_atom(
+        &self,
+        neighbour_list: &[Vec<(u16, BondType)>],
+        removable_h: &[bool],
+    ) -> u16 {
         let terminals: Vec<u16> = (0..self.nodes.len() as u16)
             .filter(|&i| !removable_h[i as usize] && neighbour_list[i as usize].len() == 1)
             .collect();
@@ -170,7 +199,9 @@ impl Molecule {
                 .min()
                 .unwrap_or(0);
             let candidates: Vec<u16> = (0..self.nodes.len() as u16)
-                .filter(|&i| !removable_h[i as usize] && neighbour_list[i as usize].len() == min_degree)
+                .filter(|&i| {
+                    !removable_h[i as usize] && neighbour_list[i as usize].len() == min_degree
+                })
                 .collect();
             for &c in &candidates {
                 if *self.nodes[c as usize].atom().element() != AtomSymbol::Organic(OrganicAtom::C) {
@@ -335,7 +366,13 @@ impl Molecule {
         }
     }
 
-    fn format_atom(&self, node_idx: usize, bond_order_sum: u8, extra_h: u8) -> Result<String, AtomError> {
+    fn format_atom(
+        &self,
+        node_idx: usize,
+        bond_order_sum: u8,
+        extra_h: u8,
+        effective_aromatic: bool,
+    ) -> Result<String, AtomError> {
         let node = &self.nodes[node_idx];
         let total_h = node.hydrogens() + extra_h;
 
@@ -347,9 +384,9 @@ impl Molecule {
             && total_h
                 == node
                     .atom()
-                    .implicit_hydrogens(Some(bond_order_sum), node.aromatic())?
+                    .implicit_hydrogens(Some(bond_order_sum), effective_aromatic)?
         {
-            if node.aromatic() {
+            if effective_aromatic {
                 Ok(node.atom().element().to_string().to_ascii_lowercase())
             } else {
                 Ok(node.atom().element().to_string())
@@ -360,7 +397,12 @@ impl Molecule {
             if let Some(i) = node.atom().isotope() {
                 output.push_str(&i.to_string());
             }
-            output.push_str(&node.atom().element().to_string());
+            let element_str = node.atom().element().to_string();
+            if effective_aromatic && node.atom().element().can_be_aromatic() {
+                output.push_str(&element_str.to_ascii_lowercase());
+            } else {
+                output.push_str(&element_str);
+            }
             if let Some(c) = node.chirality() {
                 output.push_str(&c.to_string());
             }
@@ -396,6 +438,167 @@ impl Molecule {
             Ok(output)
         }
     }
+
+    /// Trouve les cycles minimaux pour chaque arête du sous-graphe Kekulé
+    /// (liaisons Simple et Double uniquement).
+    fn find_kekule_rings(
+        n: usize,
+        neighbour_list: &[Vec<(u16, BondType)>],
+    ) -> Vec<super::graph::Ring> {
+        let mut adj: Vec<Vec<u16>> = vec![Vec::new(); n];
+        let mut edges: HashSet<(u16, u16)> = HashSet::new();
+
+        for u in 0..n as u16 {
+            for &(v, bond) in &neighbour_list[u as usize] {
+                if matches!(bond, BondType::Simple | BondType::Double) {
+                    adj[u as usize].push(v);
+                    edges.insert((u.min(v), u.max(v)));
+                }
+            }
+        }
+
+        super::graph::find_rings_in_subgraph(&adj, &edges, n)
+    }
+
+    /// Vérifie si un cycle (avec liaisons Kekulé) est aromatique selon Hückel.
+    /// Retourne Some(pi_electrons) si aromatique, None sinon.
+    fn kekule_pi_electrons(
+        &self,
+        cycle: &[u16],
+        neighbour_list: &[Vec<(u16, BondType)>],
+    ) -> Option<u8> {
+        let n = cycle.len();
+        if n < 3 {
+            return None;
+        }
+
+        // Tous les atomes doivent pouvoir être aromatiques et ne pas l'être déjà
+        for &node_idx in cycle {
+            let node = &self.nodes[node_idx as usize];
+            if !node.atom().element().can_be_aromatic() {
+                return None;
+            }
+            if node.aromatic() {
+                return None;
+            }
+        }
+
+        let mut pi_electrons: i32 = 0;
+        let mut has_double_bond = vec![false; n];
+
+        for i in 0..n {
+            let a = cycle[i];
+            let b = cycle[(i + 1) % n];
+
+            let bond_type = neighbour_list[a as usize]
+                .iter()
+                .find(|&&(v, _)| v == b)
+                .map(|&(_, t)| t)?;
+
+            match bond_type {
+                BondType::Double => {
+                    pi_electrons += 2;
+                    has_double_bond[i] = true;
+                    has_double_bond[(i + 1) % n] = true;
+                }
+                BondType::Simple => {}
+                _ => return None,
+            }
+        }
+
+        // Pour les atomes sans double liaison dans le cycle, vérifier la paire libre
+        for i in 0..n {
+            if !has_double_bond[i] {
+                let node = &self.nodes[cycle[i] as usize];
+                let element = *node.atom().element();
+                let charge = node.atom().charge();
+                let hydrogens = node.hydrogens();
+
+                let contribution: i32 = match element {
+                    AtomSymbol::Organic(OrganicAtom::C) => {
+                        if charge < 0 {
+                            2
+                        } else {
+                            return None;
+                        }
+                    }
+                    AtomSymbol::Organic(OrganicAtom::N) => {
+                        if hydrogens > 0 || charge < 0 {
+                            2
+                        } else {
+                            return None;
+                        }
+                    }
+                    AtomSymbol::Organic(OrganicAtom::O) => 2,
+                    AtomSymbol::Organic(OrganicAtom::S) => 2,
+                    AtomSymbol::Organic(OrganicAtom::P) => {
+                        if hydrogens > 0 || charge < 0 {
+                            2
+                        } else {
+                            return None;
+                        }
+                    }
+                    AtomSymbol::Organic(OrganicAtom::B) => 0,
+                    AtomSymbol::Se | AtomSymbol::As | AtomSymbol::Te => 2,
+                    _ => return None,
+                };
+
+                pi_electrons += contribution;
+            }
+        }
+
+        if pi_electrons < 0 {
+            return None;
+        }
+        let pi = pi_electrons as u8;
+        if super::aromaticity::satisfies_huckel(pi) {
+            Some(pi)
+        } else {
+            None
+        }
+    }
+
+    /// Calcule l'overlay d'aromaticité pour l'affichage.
+    /// Détecte les cycles Kekulé aromatiques et les combine avec l'aromaticité existante.
+    /// Retourne (effective_aromatic_par_atome, ensemble_des_liaisons_aromatiques).
+    fn compute_kekule_aromatic_overlay(
+        &self,
+        neighbour_list: &[Vec<(u16, BondType)>],
+    ) -> (Vec<bool>, HashSet<(u16, u16)>) {
+        let n = self.nodes.len();
+
+        // Initialiser depuis l'aromaticité existante des nœuds
+        let mut effective_aromatic: Vec<bool> =
+            self.nodes.iter().map(|nd| nd.aromatic()).collect();
+        let mut aromatic_bonds: HashSet<(u16, u16)> = HashSet::new();
+
+        for bond in &self.bonds {
+            if bond.kind() == BondType::Aromatic {
+                let edge = (
+                    bond.source().min(bond.target()),
+                    bond.source().max(bond.target()),
+                );
+                aromatic_bonds.insert(edge);
+            }
+        }
+
+        // Détecter les cycles Kekulé aromatiques et les ajouter à l'overlay
+        let cycles = Self::find_kekule_rings(n, neighbour_list);
+
+        for ring in &cycles {
+            if self.kekule_pi_electrons(&ring.nodes, neighbour_list).is_some() {
+                let len = ring.nodes.len();
+                for i in 0..len {
+                    let a = ring.nodes[i];
+                    let b = ring.nodes[(i + 1) % len];
+                    effective_aromatic[a as usize] = true;
+                    aromatic_bonds.insert((a.min(b), a.max(b)));
+                }
+            }
+        }
+
+        (effective_aromatic, aromatic_bonds)
+    }
 }
 
 impl fmt::Display for Molecule {
@@ -417,7 +620,8 @@ impl fmt::Display for Molecule {
             }
         }
 
-        let mut neighbour_list_heavy: Vec<Vec<(u16, BondType)>> = vec![Vec::new(); self.nodes.len()];
+        let mut neighbour_list_heavy: Vec<Vec<(u16, BondType)>> =
+            vec![Vec::new(); self.nodes.len()];
         for bond in &self.bonds {
             let s = bond.source() as usize;
             let t = bond.target() as usize;
@@ -426,6 +630,10 @@ impl fmt::Display for Molecule {
                 neighbour_list_heavy[t].push((bond.source(), bond.kind()));
             }
         }
+
+        // Calculer l'overlay d'aromaticité Kekulé avant la construction de l'arbre couvrant
+        let (effective_aromatic, aromatic_bonds) =
+            self.compute_kekule_aromatic_overlay(&neighbour_list_heavy);
 
         let start = self.best_starting_atom(&neighbour_list_heavy, &removable_h);
         let bridges = Self::find_bridges(self.nodes.len(), &neighbour_list_heavy);
@@ -450,6 +658,8 @@ impl fmt::Display for Molecule {
                 next_rnum: &mut next_rnum,
                 bridges: &bridges,
                 virtual_h: &virtual_h,
+                effective_aromatic: &effective_aromatic,
+                aromatic_bonds: &aromatic_bonds,
             };
             self.dfs(start, &mut state).map_err(|_| fmt::Error)?;
         }

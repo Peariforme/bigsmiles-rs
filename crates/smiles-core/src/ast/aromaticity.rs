@@ -87,7 +87,7 @@ fn pi_electron_contribution(molecule: &Molecule, node_idx: u16) -> Option<u8> {
 }
 
 /// Checks whether a pi electron count satisfies Hückel's rule (4n+2).
-fn satisfies_huckel(pi_electrons: u8) -> bool {
+pub(crate) fn satisfies_huckel(pi_electrons: u8) -> bool {
     pi_electrons >= 2 && (pi_electrons - 2) % 4 == 0
 }
 
