@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# pre-commit hook — runs fmt and clippy before every commit
+# Install: git config core.hooksPath .githooks
+
+set -e
+
+echo "→ cargo fmt..."
+cargo fmt --all -- --check
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "  ✗ Formatting issues found. Run 'cargo fmt' to fix them."
+  exit 1
+fi
+
+echo "→ cargo clippy (all feature combinations)..."
+cargo hack clippy --feature-powerset -p opensmiles -- -D warnings

@@ -887,7 +887,12 @@ impl MoleculeBuilder {
         Ok(self.nodes.len() - 1)
     }
 
-    pub(crate) fn add_branch(&mut self, m: MoleculeBuilder, bond_type: BondType, source: Option<u16>) {
+    pub(crate) fn add_branch(
+        &mut self,
+        m: MoleculeBuilder,
+        bond_type: BondType,
+        source: Option<u16>,
+    ) {
         let node_count = self.nodes.len() as u16;
         if let Some(src) = source {
             self.add_bond(src, node_count, bond_type);

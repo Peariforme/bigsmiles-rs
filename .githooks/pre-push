@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#
+# pre-push hook — runs the full test suite before every push
+# Install: git config core.hooksPath .githooks
+
+set -e
+
+echo "→ cargo test (all feature combinations)..."
+cargo hack test --feature-powerset -p opensmiles
