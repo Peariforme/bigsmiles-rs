@@ -13,6 +13,149 @@ use crate::{
 
 type SpanningTreeResult = (Vec<Vec<(u16, BondType)>>, Vec<Vec<u8>>);
 
+/// Calcule la signature canonique du sous-graphe enraciné à `node`, sans
+/// repasser par les nœuds déjà visités. Utilisé pour détecter les voisins
+/// structurellement identiques (neutralisant la chiralité ou l'isomérisme E/Z).
+fn canonical_subtree_string(
+    node: usize,
+    visited: &mut Vec<bool>,
+    nodes: &[Node],
+    neighbour_list: &[Vec<(u16, BondType)>],
+    virtual_h: &[u8],
+) -> String {
+    if visited[node] {
+        return "~".to_string();
+    }
+    visited[node] = true;
+    let n = &nodes[node];
+    let mut children: Vec<String> = neighbour_list[node]
+        .iter()
+        .map(|&(w, _)| {
+            canonical_subtree_string(w as usize, visited, nodes, neighbour_list, virtual_h)
+        })
+        .collect();
+    let total_h = n.hydrogens() + virtual_h[node];
+    for _ in 0..total_h {
+        children.push("H".to_string());
+    }
+    children.sort();
+    let charge = n.atom().charge();
+    let isotope_str = n
+        .atom()
+        .isotope()
+        .map_or(String::new(), |i| i.to_string());
+    format!(
+        "({}{}{},{})",
+        n.atom().element(),
+        if charge >= 0 {
+            format!("+{}", charge)
+        } else {
+            format!("{}", charge)
+        },
+        isotope_str,
+        children.join(",")
+    )
+}
+
+/// Pour chaque atome portant une annotation chirale, renvoie `true` si deux
+/// voisins (y compris les H virtuels) ont la même signature canonique, auquel
+/// cas la chiralité n'est pas réelle et ne doit pas être affichée.
+fn compute_suppress_chirality(
+    nodes: &[Node],
+    neighbour_list: &[Vec<(u16, BondType)>],
+    virtual_h: &[u8],
+) -> Vec<bool> {
+    let n = nodes.len();
+    let mut suppress = vec![false; n];
+    for i in 0..n {
+        if nodes[i].chirality().is_none() {
+            continue;
+        }
+        let mut neighbor_strings: Vec<String> = Vec::new();
+        for &(w, _) in neighbour_list[i].iter() {
+            let mut visited = vec![false; n];
+            visited[i] = true;
+            neighbor_strings.push(canonical_subtree_string(
+                w as usize,
+                &mut visited,
+                nodes,
+                neighbour_list,
+                virtual_h,
+            ));
+        }
+        let total_h = nodes[i].hydrogens() + virtual_h[i];
+        for _ in 0..total_h {
+            neighbor_strings.push("H".to_string());
+        }
+        let mut sorted = neighbor_strings.clone();
+        sorted.sort();
+        sorted.dedup();
+        if sorted.len() < neighbor_strings.len() {
+            suppress[i] = true;
+        }
+    }
+    suppress
+}
+
+/// Identifie les liaisons Up/Down qui décrivent un isomérisme E/Z inexistant
+/// (l'un des carbones de la double liaison a deux substituants identiques).
+fn compute_suppress_stereo_bonds(
+    nodes: &[Node],
+    neighbour_list: &[Vec<(u16, BondType)>],
+    bonds: &[Bond],
+    virtual_h: &[u8],
+) -> HashSet<(u16, u16)> {
+    let n = nodes.len();
+    let mut suppress: HashSet<(u16, u16)> = HashSet::new();
+
+    for bond in bonds {
+        if bond.kind() != BondType::Double {
+            continue;
+        }
+        let u = bond.source() as usize;
+        let v = bond.target() as usize;
+
+        let side_has_identical = |center: usize, other: usize| -> bool {
+            let subs: Vec<usize> = neighbour_list[center]
+                .iter()
+                .filter(|&&(w, _)| w as usize != other)
+                .map(|&(w, _)| w as usize)
+                .collect();
+            if subs.len() < 2 {
+                return false;
+            }
+            let strings: Vec<String> = subs
+                .iter()
+                .map(|&w| {
+                    let mut visited = vec![false; n];
+                    visited[center] = true;
+                    canonical_subtree_string(w, &mut visited, nodes, neighbour_list, virtual_h)
+                })
+                .collect();
+            let mut sorted = strings.clone();
+            sorted.sort();
+            sorted.dedup();
+            sorted.len() < strings.len()
+        };
+
+        if side_has_identical(u, v) || side_has_identical(v, u) {
+            for bond2 in bonds {
+                if matches!(bond2.kind(), BondType::Up | BondType::Down) {
+                    let s = bond2.source() as usize;
+                    let t = bond2.target() as usize;
+                    if s == u || t == u || s == v || t == v {
+                        suppress.insert((
+                            bond2.source().min(bond2.target()),
+                            bond2.source().max(bond2.target()),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    suppress
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Molecule {
     nodes: Vec<Node>,
@@ -32,6 +175,8 @@ struct DfsState<'a> {
     virtual_h: &'a [u8],
     effective_aromatic: &'a [bool],
     aromatic_bonds: &'a HashSet<(u16, u16)>,
+    suppress_chirality: &'a [bool],
+    suppress_stereo_bonds: &'a HashSet<(u16, u16)>,
 }
 
 struct BridgeDfsState<'a> {
@@ -88,6 +233,7 @@ impl Molecule {
             bond_order_sum,
             state.virtual_h[current as usize],
             state.effective_aromatic[current as usize],
+            state.suppress_chirality[current as usize],
         )?);
 
         for &pair_id in &state.ring_pair_ids[current as usize] {
@@ -113,6 +259,10 @@ impl Molecule {
                 let edge = (current.min(branch.0), current.max(branch.0));
                 let effective_bond = if state.aromatic_bonds.contains(&edge) {
                     BondType::Aromatic
+                } else if matches!(branch.1, BondType::Up | BondType::Down)
+                    && state.suppress_stereo_bonds.contains(&edge)
+                {
+                    BondType::Simple
                 } else {
                     branch.1
                 };
@@ -130,6 +280,10 @@ impl Molecule {
             let edge = (current.min(main.0), current.max(main.0));
             let effective_bond = if state.aromatic_bonds.contains(&edge) {
                 BondType::Aromatic
+            } else if matches!(main.1, BondType::Up | BondType::Down)
+                && state.suppress_stereo_bonds.contains(&edge)
+            {
+                BondType::Simple
             } else {
                 main.1
             };
@@ -372,6 +526,7 @@ impl Molecule {
         bond_order_sum: u8,
         extra_h: u8,
         effective_aromatic: bool,
+        suppress_chirality: bool,
     ) -> Result<String, AtomError> {
         let node = &self.nodes[node_idx];
         let total_h = node.hydrogens() + extra_h;
@@ -379,7 +534,7 @@ impl Molecule {
         if node.atom().is_organic()
             && node.atom().charge() == 0
             && node.atom().isotope().is_none()
-            && node.chirality().is_none()
+            && (node.chirality().is_none() || suppress_chirality)
             && node.class().is_none()
             && total_h
                 == node
@@ -404,7 +559,9 @@ impl Molecule {
                 output.push_str(&element_str);
             }
             if let Some(c) = node.chirality() {
-                output.push_str(&c.to_string());
+                if !suppress_chirality {
+                    output.push_str(&c.to_string());
+                }
             }
 
             match total_h {
@@ -637,6 +794,12 @@ impl fmt::Display for Molecule {
         let (effective_aromatic, aromatic_bonds) =
             self.compute_kekule_aromatic_overlay(&neighbour_list_heavy);
 
+        // Déterminer les atomes chiraux fictifs et les liaisons stéréo fictives
+        let suppress_chirality =
+            compute_suppress_chirality(&self.nodes, &neighbour_list_heavy, &virtual_h);
+        let suppress_stereo_bonds =
+            compute_suppress_stereo_bonds(&self.nodes, &neighbour_list_heavy, &self.bonds, &virtual_h);
+
         let start = self.best_starting_atom(&neighbour_list_heavy, &removable_h);
         let bridges = Self::find_bridges(self.nodes.len(), &neighbour_list_heavy);
         let (mut tree_children, ring_pair_ids) =
@@ -662,6 +825,8 @@ impl fmt::Display for Molecule {
                 virtual_h: &virtual_h,
                 effective_aromatic: &effective_aromatic,
                 aromatic_bonds: &aromatic_bonds,
+                suppress_chirality: &suppress_chirality,
+                suppress_stereo_bonds: &suppress_stereo_bonds,
             };
             self.dfs(start, &mut state).map_err(|_| fmt::Error)?;
         }
