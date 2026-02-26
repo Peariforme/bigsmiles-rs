@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772048633662,
+  "lastUpdate": 1772145764950,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -3359,6 +3359,134 @@ window.BENCHMARK_DATA = {
             "name": "huckel/parse_and_validate/caffeine",
             "value": 1485,
             "range": "± 11",
+            "unit": "ns/iter"
+          }
+        ]
+      }
+    ],
+    "BigSMILES Parser Benchmarks": [
+      {
+        "commit": {
+          "author": {
+            "email": "47952322+Peariforme@users.noreply.github.com",
+            "name": "Peariforme",
+            "username": "Peariforme"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "898730c1801afe85b3d4c1fd31d29fb6d372d096",
+          "message": "feat(bigsmiles): add prefix_segments and suffix_segments methods (#28)\n\nAdd two zero-allocation slice-returning methods on BigSmiles:\n- `prefix_segments()`: returns segments before the first stochastic object (α-end group)\n- `suffix_segments()`: returns segments after the last stochastic object (ω-end group)\n\nBoth return `&[BigSmilesSegment]` so callers can choose how to use the\nsegments (display, mass calculation, atom counting, etc.) without forcing\nan intermediate String allocation.\n\nhttps://claude.ai/code/session_01EuXZGdnrvcFH2MnotPwktm\n\nCo-authored-by: Claude <noreply@anthropic.com>",
+          "timestamp": "2026-02-26T23:38:41+01:00",
+          "tree_id": "88ffcf07b366095019f16d114eb6cb9c5c462e07",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/898730c1801afe85b3d4c1fd31d29fb6d372d096"
+        },
+        "date": 1772145764623,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "polyethylene_no_bond",
+            "value": 337,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "polyethylene_non_directional",
+            "value": 352,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "polystyrene",
+            "value": 1083,
+            "range": "± 27",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "isotactic_polypropylene_with_terminals",
+            "value": 517,
+            "range": "± 8",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "alpha_omega_dimethyl_polyethylene",
+            "value": 770,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "copolymer_2_units",
+            "value": 795,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "copolymer_with_end_groups",
+            "value": 1133,
+            "range": "± 7",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/1",
+            "value": 334,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/10",
+            "value": 3098,
+            "range": "± 8",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/50",
+            "value": 17228,
+            "range": "± 245",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/100",
+            "value": 29486,
+            "range": "± 80",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/500",
+            "value": 147409,
+            "range": "± 2043",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/1000",
+            "value": 337613,
+            "range": "± 1768",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "complex_smiles_scaling/polystyrene_units/1",
+            "value": 1075,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "complex_smiles_scaling/polystyrene_units/10",
+            "value": 10723,
+            "range": "± 45",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "complex_smiles_scaling/polystyrene_units/50",
+            "value": 51574,
+            "range": "± 126",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "complex_smiles_scaling/polystyrene_units/100",
+            "value": 102208,
+            "range": "± 399",
             "unit": "ns/iter"
           }
         ]
