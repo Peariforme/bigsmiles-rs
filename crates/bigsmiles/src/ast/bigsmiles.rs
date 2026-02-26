@@ -30,6 +30,34 @@ pub struct BigSmiles {
     pub segments: Vec<BigSmilesSegment>,
 }
 
+impl BigSmiles {
+    /// Returns the segments preceding the first stochastic object
+    /// (initiator / α-end group, e.g. the `CC` in `CC{[$]CC[$]}`).
+    pub fn prefix_segments(&self) -> &[BigSmilesSegment] {
+        match self
+            .segments
+            .iter()
+            .position(|s| matches!(s, BigSmilesSegment::Stochastic(_)))
+        {
+            Some(i) => &self.segments[..i],
+            None => &[],
+        }
+    }
+
+    /// Returns the segments following the last stochastic object
+    /// (terminator / ω-end group, e.g. the `CC` in `{[$]CC[$]}CC`).
+    pub fn suffix_segments(&self) -> &[BigSmilesSegment] {
+        match self
+            .segments
+            .iter()
+            .rposition(|s| matches!(s, BigSmilesSegment::Stochastic(_)))
+        {
+            Some(i) => &self.segments[i + 1..],
+            None => &[],
+        }
+    }
+}
+
 impl fmt::Display for BigSmiles {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for seg in &self.segments {
