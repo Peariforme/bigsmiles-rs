@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/Peariforme/bigsmiles-rs/compare/bigsmiles-v0.1.1...bigsmiles-v0.1.2) - 2026-02-26
+
+### Added
+
+- *(bigsmiles)* add prefix_segments and suffix_segments methods ([#28](https://github.com/Peariforme/bigsmiles-rs/pull/28))
+
 ## [0.1.1](https://github.com/Peariforme/bigsmiles-rs/compare/bigsmiles-v0.1.0...bigsmiles-v0.1.1) - 2026-02-25
 
 ### Other
