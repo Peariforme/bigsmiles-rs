@@ -31,6 +31,24 @@ pub struct BigSmiles {
 }
 
 impl BigSmiles {
+    /// Returns the first stochastic object in the BigSMILES string, if any.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use bigsmiles::parse;
+    ///
+    /// let bs = parse("CC{[$]CC[$]}CC").unwrap();
+    /// let stoch = bs.first_stochastic().unwrap();
+    /// assert_eq!(stoch.repeat_units.len(), 1);
+    /// ```
+    pub fn first_stochastic(&self) -> Option<&StochasticObject> {
+        self.segments.iter().find_map(|seg| match seg {
+            BigSmilesSegment::Stochastic(obj) => Some(obj),
+            _ => None,
+        })
+    }
+
     /// Returns the segments preceding the first stochastic object
     /// (initiator / α-end group, e.g. the `CC` in `CC{[$]CC[$]}`).
     pub fn prefix_segments(&self) -> &[BigSmilesSegment] {
