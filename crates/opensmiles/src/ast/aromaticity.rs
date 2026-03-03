@@ -1,6 +1,6 @@
 use super::graph::Ring;
 use super::molecule::Molecule;
-use crate::MoleculeError;
+use crate::{MoleculeError, NodeIndex};
 
 /// Result of aromaticity validation for a single ring.
 #[derive(Debug, Clone, PartialEq)]
@@ -15,7 +15,7 @@ pub struct AromaticityCheck {
 /// For aromatic pi-electron calculation, we count:
 /// - Each bond in the molecule as 1 sigma bond (regardless of bond type)
 /// - All hydrogens (now correctly calculated by the fixed implicit H logic)
-fn count_sigma_bonds(molecule: &Molecule, node_idx: u16) -> u8 {
+fn count_sigma_bonds(molecule: &Molecule, node_idx: NodeIndex) -> u8 {
     let node = &molecule.nodes()[node_idx as usize];
 
     // Count bonds to other atoms (each bond = 1 sigma)
@@ -34,7 +34,7 @@ fn count_sigma_bonds(molecule: &Molecule, node_idx: u16) -> u8 {
 /// Calculates the contribution based on valence electrons, sigma bonds, and charge.
 ///
 /// Returns `None` if the contribution cannot be determined (e.g., Wildcard).
-fn pi_electron_contribution(molecule: &Molecule, node_idx: u16) -> Option<u8> {
+fn pi_electron_contribution(molecule: &Molecule, node_idx: NodeIndex) -> Option<u8> {
     let node = &molecule.nodes()[node_idx as usize];
     let element = node.atom().element();
     let charge = node.atom().charge();

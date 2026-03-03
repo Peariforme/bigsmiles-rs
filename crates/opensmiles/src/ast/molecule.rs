@@ -8,10 +8,10 @@ use crate::{
         chirality::Chirality,
         node::{Node, NodeBuilder},
     },
-    AtomError, MoleculeError, NodeError,
+    AtomError, MoleculeError, NodeError, NodeIndex,
 };
 
-type SpanningTreeResult = (Vec<Vec<(u16, BondType)>>, Vec<Vec<u8>>);
+type SpanningTreeResult = (Vec<Vec<(NodeIndex, BondType)>>, Vec<Vec<u8>>);
 
 /// Calcule la signature canonique du sous-graphe enraciné à `node`, sans
 /// repasser par les nœuds déjà visités. Utilisé pour détecter les voisins
@@ -20,7 +20,7 @@ fn canonical_subtree_string(
     node: usize,
     visited: &mut Vec<bool>,
     nodes: &[Node],
-    neighbour_list: &[Vec<(u16, BondType)>],
+    neighbour_list: &[Vec<(NodeIndex, BondType)>],
     virtual_h: &[u8],
 ) -> String {
     if visited[node] {
@@ -59,7 +59,7 @@ fn canonical_subtree_string(
 /// cas la chiralité n'est pas réelle et ne doit pas être affichée.
 fn compute_suppress_chirality(
     nodes: &[Node],
-    neighbour_list: &[Vec<(u16, BondType)>],
+    neighbour_list: &[Vec<(NodeIndex, BondType)>],
     virtual_h: &[u8],
 ) -> Vec<bool> {
     let n = nodes.len();
@@ -98,12 +98,12 @@ fn compute_suppress_chirality(
 /// (l'un des carbones de la double liaison a deux substituants identiques).
 fn compute_suppress_stereo_bonds(
     nodes: &[Node],
-    neighbour_list: &[Vec<(u16, BondType)>],
+    neighbour_list: &[Vec<(NodeIndex, BondType)>],
     bonds: &[Bond],
     virtual_h: &[u8],
-) -> HashSet<(u16, u16)> {
+) -> HashSet<(NodeIndex, NodeIndex)> {
     let n = nodes.len();
-    let mut suppress: HashSet<(u16, u16)> = HashSet::new();
+    let mut suppress: HashSet<(NodeIndex, NodeIndex)> = HashSet::new();
 
     for bond in bonds {
         if bond.kind() != BondType::Double {
@@ -179,37 +179,37 @@ pub struct Molecule {
 }
 
 struct DfsState<'a> {
-    neighbour_list: &'a [Vec<(u16, BondType)>],
-    tree_children: &'a mut Vec<Vec<(u16, BondType)>>,
+    neighbour_list: &'a [Vec<(NodeIndex, BondType)>],
+    tree_children: &'a mut Vec<Vec<(NodeIndex, BondType)>>,
     ring_pair_ids: &'a [Vec<u8>],
     visited: &'a mut Vec<bool>,
     output: &'a mut Vec<String>,
     nodes_to_output_positions: &'a mut Vec<usize>,
     pair_to_rnum: &'a mut HashMap<u8, u8>,
     next_rnum: &'a mut u8,
-    bridges: &'a [(u16, u16)],
+    bridges: &'a [(NodeIndex, NodeIndex)],
     virtual_h: &'a [u8],
     effective_aromatic: &'a [bool],
-    aromatic_bonds: &'a HashSet<(u16, u16)>,
+    aromatic_bonds: &'a HashSet<(NodeIndex, NodeIndex)>,
     suppress_chirality: &'a [bool],
-    suppress_stereo_bonds: &'a HashSet<(u16, u16)>,
+    suppress_stereo_bonds: &'a HashSet<(NodeIndex, NodeIndex)>,
 }
 
 struct BridgeDfsState<'a> {
-    neighbour_list: &'a [Vec<(u16, BondType)>],
+    neighbour_list: &'a [Vec<(NodeIndex, BondType)>],
     visited: &'a mut Vec<bool>,
     disc: &'a mut Vec<u32>,
     low: &'a mut Vec<u32>,
     timer: &'a mut u32,
-    bridges: &'a mut Vec<(u16, u16)>,
+    bridges: &'a mut Vec<(NodeIndex, NodeIndex)>,
 }
 
 struct SpanningTreeState<'a> {
     visited: &'a mut Vec<bool>,
     on_stack: &'a mut Vec<bool>,
     ring_counter: &'a mut u8,
-    neighbour_list: &'a [Vec<(u16, BondType)>],
-    tree_children: &'a mut Vec<Vec<(u16, BondType)>>,
+    neighbour_list: &'a [Vec<(NodeIndex, BondType)>],
+    tree_children: &'a mut Vec<Vec<(NodeIndex, BondType)>>,
     ring_digits: &'a mut Vec<Vec<u8>>,
 }
 
@@ -228,7 +228,7 @@ impl Molecule {
         &self.bonds
     }
 
-    fn dfs(&self, current: u16, state: &mut DfsState) -> Result<(), AtomError> {
+    fn dfs(&self, current: NodeIndex, state: &mut DfsState) -> Result<(), AtomError> {
         let pos = state.output.len();
         state.nodes_to_output_positions[current as usize] = pos;
 
@@ -319,14 +319,14 @@ impl Molecule {
         Ok(())
     }
 
-    fn subtree_size(start: u16, tree_children: &[Vec<(u16, BondType)>]) -> usize {
+    fn subtree_size(start: NodeIndex, tree_children: &[Vec<(NodeIndex, BondType)>]) -> usize {
         1 + tree_children[start as usize]
             .iter()
             .map(|(child, _)| Self::subtree_size(*child, tree_children))
             .sum::<usize>()
     }
 
-    fn removable_hydrogens(&self, neighbour_list: &[Vec<(u16, BondType)>]) -> Vec<bool> {
+    fn removable_hydrogens(&self, neighbour_list: &[Vec<(NodeIndex, BondType)>]) -> Vec<bool> {
         let mut removable = vec![false; self.nodes.len()];
         for (i, node) in self.nodes.iter().enumerate() {
             if *node.atom().element() != AtomSymbol::H {
@@ -354,10 +354,10 @@ impl Molecule {
 
     fn best_starting_atom(
         &self,
-        neighbour_list: &[Vec<(u16, BondType)>],
+        neighbour_list: &[Vec<(NodeIndex, BondType)>],
         removable_h: &[bool],
-    ) -> u16 {
-        let terminals: Vec<u16> = (0..self.nodes.len() as u16)
+    ) -> NodeIndex {
+        let terminals: Vec<NodeIndex> = (0..self.nodes.len() as NodeIndex)
             .filter(|&i| !removable_h[i as usize] && neighbour_list[i as usize].len() == 1)
             .collect();
 
@@ -365,12 +365,12 @@ impl Molecule {
             // Pas de terminaux : préférer les atomes de degré minimal pour éviter de
             // commencer sur un atome de jonction (spiro, pont) qui accumulerait
             // plusieurs ring closures sur le même atome dans la sortie canonique.
-            let min_degree = (0..self.nodes.len() as u16)
+            let min_degree = (0..self.nodes.len() as NodeIndex)
                 .filter(|&i| !removable_h[i as usize])
                 .map(|i| neighbour_list[i as usize].len())
                 .min()
                 .unwrap_or(0);
-            let candidates: Vec<u16> = (0..self.nodes.len() as u16)
+            let candidates: Vec<NodeIndex> = (0..self.nodes.len() as NodeIndex)
                 .filter(|&i| {
                     !removable_h[i as usize] && neighbour_list[i as usize].len() == min_degree
                 })
@@ -392,7 +392,10 @@ impl Molecule {
         terminals[0]
     }
 
-    fn find_bridges(n: usize, neighbour_list: &[Vec<(u16, BondType)>]) -> Vec<(u16, u16)> {
+    fn find_bridges(
+        n: usize,
+        neighbour_list: &[Vec<(NodeIndex, BondType)>],
+    ) -> Vec<(NodeIndex, NodeIndex)> {
         let mut visited = vec![false; n];
         let mut disc = vec![0u32; n];
         let mut low = vec![0u32; n];
@@ -407,15 +410,15 @@ impl Molecule {
             timer: &mut timer,
             bridges: &mut bridges,
         };
-        for start in 0..n as u16 {
+        for start in 0..n as NodeIndex {
             if !state.visited[start as usize] {
-                Self::bridge_dfs(start, u16::MAX, &mut state);
+                Self::bridge_dfs(start, NodeIndex::MAX, &mut state);
             }
         }
         bridges
     }
 
-    fn bridge_dfs(u: u16, parent: u16, state: &mut BridgeDfsState) {
+    fn bridge_dfs(u: NodeIndex, parent: NodeIndex, state: &mut BridgeDfsState) {
         state.visited[u as usize] = true;
         state.disc[u as usize] = *state.timer;
         state.low[u as usize] = *state.timer;
@@ -440,8 +443,8 @@ impl Molecule {
 
     fn build_spanning_tree_inner(
         &self,
-        current: u16,
-        parent: Option<u16>,
+        current: NodeIndex,
+        parent: Option<NodeIndex>,
         state: &mut SpanningTreeState,
     ) {
         state.visited[current as usize] = true;
@@ -451,7 +454,8 @@ impl Molecule {
         // Les liaisons doubles/triples deviennent ainsi des arêtes de l'arbre couvrant
         // (chain bonds) plutôt que des back edges (ring closures), ce qui évite d'avoir
         // une double liaison sur un ring closure dans la sortie canonique.
-        let mut sorted_neighbors: Vec<(u16, BondType)> = state.neighbour_list[current as usize]
+        let mut sorted_neighbors: Vec<(NodeIndex, BondType)> = state.neighbour_list
+            [current as usize]
             .iter()
             .copied()
             .filter(|&(v, _)| Some(v) != parent)
@@ -479,10 +483,10 @@ impl Molecule {
 
     fn build_spanning_tree_from(
         &self,
-        start: u16,
-        neighbour_list: &[Vec<(u16, BondType)>],
+        start: NodeIndex,
+        neighbour_list: &[Vec<(NodeIndex, BondType)>],
     ) -> SpanningTreeResult {
-        let mut tree_children: Vec<Vec<(u16, BondType)>> = vec![Vec::new(); self.nodes.len()];
+        let mut tree_children: Vec<Vec<(NodeIndex, BondType)>> = vec![Vec::new(); self.nodes.len()];
         let mut ring_pair_ids: Vec<Vec<u8>> = vec![Vec::new(); self.nodes.len()];
         let mut visited = vec![false; self.nodes.len()];
         let mut on_stack = vec![false; self.nodes.len()];
@@ -611,12 +615,12 @@ impl Molecule {
     /// (liaisons Simple et Double uniquement).
     fn find_kekule_rings(
         n: usize,
-        neighbour_list: &[Vec<(u16, BondType)>],
+        neighbour_list: &[Vec<(NodeIndex, BondType)>],
     ) -> Vec<super::graph::Ring> {
-        let mut adj: Vec<Vec<u16>> = vec![Vec::new(); n];
-        let mut edges: HashSet<(u16, u16)> = HashSet::new();
+        let mut adj: Vec<Vec<NodeIndex>> = vec![Vec::new(); n];
+        let mut edges: HashSet<(NodeIndex, NodeIndex)> = HashSet::new();
 
-        for u in 0..n as u16 {
+        for u in 0..n as NodeIndex {
             for &(v, bond) in &neighbour_list[u as usize] {
                 if matches!(bond, BondType::Simple | BondType::Double) {
                     adj[u as usize].push(v);
@@ -632,8 +636,8 @@ impl Molecule {
     /// Retourne Some(pi_electrons) si aromatique, None sinon.
     fn kekule_pi_electrons(
         &self,
-        cycle: &[u16],
-        neighbour_list: &[Vec<(u16, BondType)>],
+        cycle: &[NodeIndex],
+        neighbour_list: &[Vec<(NodeIndex, BondType)>],
     ) -> Option<u8> {
         let n = cycle.len();
         if n < 3 {
@@ -731,13 +735,13 @@ impl Molecule {
     /// Retourne (effective_aromatic_par_atome, ensemble_des_liaisons_aromatiques).
     fn compute_kekule_aromatic_overlay(
         &self,
-        neighbour_list: &[Vec<(u16, BondType)>],
-    ) -> (Vec<bool>, HashSet<(u16, u16)>) {
+        neighbour_list: &[Vec<(NodeIndex, BondType)>],
+    ) -> (Vec<bool>, HashSet<(NodeIndex, NodeIndex)>) {
         let n = self.nodes.len();
 
         // Initialiser depuis l'aromaticité existante des nœuds
         let mut effective_aromatic: Vec<bool> = self.nodes.iter().map(|nd| nd.aromatic()).collect();
-        let mut aromatic_bonds: HashSet<(u16, u16)> = HashSet::new();
+        let mut aromatic_bonds: HashSet<(NodeIndex, NodeIndex)> = HashSet::new();
 
         for bond in &self.bonds {
             if bond.kind() == BondType::Aromatic {
@@ -773,7 +777,8 @@ impl Molecule {
 
 impl fmt::Display for Molecule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut neighbour_list: Vec<Vec<(u16, BondType)>> = vec![Vec::new(); self.nodes.len()];
+        let mut neighbour_list: Vec<Vec<(NodeIndex, BondType)>> =
+            vec![Vec::new(); self.nodes.len()];
         for bond in &self.bonds {
             neighbour_list[bond.source() as usize].push((bond.target(), bond.kind()));
             neighbour_list[bond.target() as usize].push((bond.source(), bond.kind()));
@@ -790,7 +795,7 @@ impl fmt::Display for Molecule {
             }
         }
 
-        let mut neighbour_list_heavy: Vec<Vec<(u16, BondType)>> =
+        let mut neighbour_list_heavy: Vec<Vec<(NodeIndex, BondType)>> =
             vec![Vec::new(); self.nodes.len()];
         for bond in &self.bonds {
             let s = bond.source() as usize;
@@ -891,9 +896,9 @@ impl MoleculeBuilder {
         &mut self,
         m: MoleculeBuilder,
         bond_type: BondType,
-        source: Option<u16>,
+        source: Option<NodeIndex>,
     ) {
-        let node_count = self.nodes.len() as u16;
+        let node_count = self.nodes.len() as NodeIndex;
         if let Some(src) = source {
             self.add_bond(src, node_count, bond_type);
         }
@@ -910,7 +915,7 @@ impl MoleculeBuilder {
         }
     }
 
-    pub(crate) fn add_bond(&mut self, source: u16, target: u16, kind: BondType) {
+    pub(crate) fn add_bond(&mut self, source: NodeIndex, target: NodeIndex, kind: BondType) {
         self.bonds.push(Bond::new(kind, source, target));
     }
 

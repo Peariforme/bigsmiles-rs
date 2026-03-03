@@ -1,4 +1,4 @@
-use crate::BondError;
+use crate::{BondError, NodeIndex};
 
 /// The type of a covalent bond between two atoms.
 ///
@@ -99,12 +99,12 @@ impl BondType {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bond {
     kind: BondType,
-    source: u16,
-    target: u16,
+    source: NodeIndex,
+    target: NodeIndex,
 }
 
 impl Bond {
-    pub(crate) fn new(kind: BondType, source: u16, target: u16) -> Bond {
+    pub(crate) fn new(kind: BondType, source: NodeIndex, target: NodeIndex) -> Bond {
         Bond {
             kind,
             source,
@@ -118,12 +118,12 @@ impl Bond {
     }
 
     /// Returns the index of the source node.
-    pub fn source(&self) -> u16 {
+    pub fn source(&self) -> NodeIndex {
         self.source
     }
 
     /// Returns the index of the target node.
-    pub fn target(&self) -> u16 {
+    pub fn target(&self) -> NodeIndex {
         self.target
     }
 }

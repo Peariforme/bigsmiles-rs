@@ -1,11 +1,12 @@
 use super::bond::BondType;
 use super::molecule::Molecule;
+use crate::NodeIndex;
 use std::collections::{HashSet, VecDeque};
 
 /// A ring represented by the ordered sequence of node indices.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Ring {
-    pub nodes: Vec<u16>,
+    pub nodes: Vec<NodeIndex>,
 }
 
 impl Ring {
@@ -28,9 +29,9 @@ pub fn find_aromatic_rings(molecule: &Molecule) -> Vec<Ring> {
     }
 
     // Build aromatic subgraph adjacency list
-    let mut adj: Vec<Vec<u16>> = vec![Vec::new(); n];
+    let mut adj: Vec<Vec<NodeIndex>> = vec![Vec::new(); n];
     let mut is_aromatic = vec![false; n];
-    let mut aromatic_edges: HashSet<(u16, u16)> = HashSet::new();
+    let mut aromatic_edges: HashSet<(NodeIndex, NodeIndex)> = HashSet::new();
 
     for (i, node) in molecule.nodes().iter().enumerate() {
         if node.aromatic() {
@@ -60,11 +61,11 @@ pub fn find_aromatic_rings(molecule: &Molecule) -> Vec<Ring> {
 /// For each edge, finds the shortest cycle containing it (BFS), then deduplicates.
 /// Shared by `find_aromatic_rings` and Kekulé ring detection in display.
 pub(crate) fn find_rings_in_subgraph(
-    adj: &[Vec<u16>],
-    edges: &HashSet<(u16, u16)>,
+    adj: &[Vec<NodeIndex>],
+    edges: &HashSet<(NodeIndex, NodeIndex)>,
     n: usize,
 ) -> Vec<Ring> {
-    let mut rings: Vec<Vec<u16>> = Vec::new();
+    let mut rings: Vec<Vec<NodeIndex>> = Vec::new();
 
     for &(u, v) in edges {
         if let Some(path) = shortest_path_excluding_edge(u, v, adj, n) {
@@ -89,13 +90,13 @@ pub(crate) fn find_rings_in_subgraph(
 /// Returns the ring as the path from u to v (which, combined with the
 /// excluded edge, forms a cycle).
 pub(crate) fn shortest_path_excluding_edge(
-    u: u16,
-    v: u16,
-    adj: &[Vec<u16>],
+    u: NodeIndex,
+    v: NodeIndex,
+    adj: &[Vec<NodeIndex>],
     n: usize,
-) -> Option<Vec<u16>> {
+) -> Option<Vec<NodeIndex>> {
     let mut visited = vec![false; n];
-    let mut parent: Vec<Option<u16>> = vec![None; n];
+    let mut parent: Vec<Option<NodeIndex>> = vec![None; n];
     let mut queue = VecDeque::new();
 
     visited[u as usize] = true;
