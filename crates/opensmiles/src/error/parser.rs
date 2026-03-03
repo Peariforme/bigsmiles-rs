@@ -3,6 +3,7 @@
 use thiserror::Error;
 
 use super::{BondError, MoleculeError, NodeError};
+use crate::NodeIndex;
 
 /// Errors that can occur when parsing a SMILES string.
 #[derive(Debug, Clone, PartialEq, Error)]
@@ -11,8 +12,8 @@ pub enum ParserError {
     #[error("feature not yet implemented")]
     NotYetImplemented,
 
-    /// The molecule contains too many nodes (maximum 65535).
-    #[error("too many nodes in molecule (maximum 65535)")]
+    /// The molecule contains too many nodes (maximum 4294967295).
+    #[error("too many nodes in molecule (maximum 4294967295)")]
     TooManyNodes,
 
     #[error("At least one node is necessary before creating a bond")]
@@ -83,7 +84,7 @@ pub enum ParserError {
 
     /// Duplicate bond between the same pair of atoms (e.g., C12CCCCC12).
     #[error("duplicate bond between atoms {0} and {1}")]
-    DuplicateBond(u16, u16),
+    DuplicateBond(NodeIndex, NodeIndex),
 
     /// Error from molecule construction.
     #[error(transparent)]
@@ -111,7 +112,7 @@ mod tests {
 
         assert_eq!(
             ParserError::TooManyNodes.to_string(),
-            "too many nodes in molecule (maximum 65535)"
+            "too many nodes in molecule (maximum 4294967295)"
         );
 
         assert_eq!(

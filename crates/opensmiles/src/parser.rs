@@ -3,18 +3,20 @@ use std::iter::Peekable;
 use std::str::{Chars, FromStr};
 
 use crate::error::ParserError;
-use crate::{AtomSymbol, BondType, Chirality, Molecule, MoleculeBuilder, NodeError, OrganicAtom};
+use crate::{
+    AtomSymbol, BondType, Chirality, Molecule, MoleculeBuilder, NodeError, NodeIndex, OrganicAtom,
+};
 
 struct Parser<'a> {
     chars: Peekable<Chars<'a>>,
     position: usize,
     builder: MoleculeBuilder,
     next_bond_type: Option<BondType>,
-    next_bond_source: Option<u16>,
+    next_bond_source: Option<NodeIndex>,
     branch_bond_type: Option<BondType>,
-    cycles_target: HashMap<u8, (u16, Option<BondType>)>, // (node_index, bond_type_at_open)
-    node_offset: u16, // Offset for global node indexing (used in branches)
-    deferred_ring_bonds: Vec<(u16, u16, BondType)>, // (main_target, local_source, bond_type)
+    cycles_target: HashMap<u8, (NodeIndex, Option<BondType>)>, // (node_index, bond_type_at_open)
+    node_offset: NodeIndex, // Offset for global node indexing (used in branches)
+    deferred_ring_bonds: Vec<(NodeIndex, NodeIndex, BondType)>, // (main_target, local_source, bond_type)
 }
 
 impl<'a> Parser<'a> {
@@ -35,8 +37,8 @@ impl<'a> Parser<'a> {
     fn new_with_offset(
         input: &'a str,
         position_offset: usize,
-        node_offset: u16,
-        cycles_target: HashMap<u8, (u16, Option<BondType>)>,
+        node_offset: NodeIndex,
+        cycles_target: HashMap<u8, (NodeIndex, Option<BondType>)>,
     ) -> Self {
         Parser {
             chars: input.chars().peekable(),
@@ -66,10 +68,10 @@ impl<'a> Parser<'a> {
     ) -> Result<
         (
             MoleculeBuilder,
-            Option<BondType>,                     // branch_bond_type
-            Option<BondType>,                     // next_bond_type (for dangling bond detection)
-            HashMap<u8, (u16, Option<BondType>)>, // cycles_target
-            Vec<(u16, u16, BondType)>,            // deferred_ring_bonds
+            Option<BondType>,                           // branch_bond_type
+            Option<BondType>, // next_bond_type (for dangling bond detection)
+            HashMap<u8, (NodeIndex, Option<BondType>)>, // cycles_target
+            Vec<(NodeIndex, NodeIndex, BondType)>, // deferred_ring_bonds
         ),
         ParserError,
     > {
@@ -252,7 +254,7 @@ impl<'a> Parser<'a> {
         // Calculate the global node offset for the branch
         let branch_node_offset = self
             .node_offset
-            .checked_add(self.builder.nodes().len() as u16)
+            .checked_add(self.builder.nodes().len() as NodeIndex)
             .ok_or(ParserError::TooManyNodes)?;
 
         // Pass cycles_target to branch so rings can span branch boundaries
@@ -653,7 +655,7 @@ impl<'a> Parser<'a> {
 
     fn connect_ring_closure(
         &mut self,
-        target: u16,
+        target: NodeIndex,
         bond_type: BondType,
     ) -> Result<(), ParserError> {
         if self.builder.nodes().is_empty() {
@@ -668,14 +670,14 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn get_current_atom_index(&self) -> Result<u16, ParserError> {
-        let current_atom: u16 = (self.builder.nodes().len() - 1)
+    fn get_current_atom_index(&self) -> Result<NodeIndex, ParserError> {
+        let current_atom: NodeIndex = (self.builder.nodes().len() - 1)
             .try_into()
             .map_err(|_| ParserError::TooManyNodes)?;
         Ok(current_atom)
     }
 
-    fn add_bond_between(&mut self, source: u16, target: u16) {
+    fn add_bond_between(&mut self, source: NodeIndex, target: NodeIndex) {
         // Explicit bonds take priority, otherwise determine implicit bond type
         let bond_type = self.next_bond_type.take().unwrap_or(
             if self.builder.nodes()[source as usize].aromatic() == Some(true)
@@ -691,7 +693,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Check if a bond already exists between two atoms (in either direction).
-    fn has_bond_between(&self, a: u16, b: u16) -> bool {
+    fn has_bond_between(&self, a: NodeIndex, b: NodeIndex) -> bool {
         // Check local bonds
         for bond in self.builder.bonds() {
             let (s, t) = (

@@ -31,6 +31,12 @@
 //! This parser implements an LL(1) grammar based on the formal grammar
 //! described at <https://depth-first.com/articles/2020/12/21/smiles-formal-grammar-revisited/>
 
+/// Index type for atoms/nodes in a molecule graph.
+///
+/// Using `u32` allows molecules with up to ~4 billion atoms,
+/// sufficient for any polymer simulation.
+pub type NodeIndex = u32;
+
 pub mod ast;
 mod error;
 pub mod parser;

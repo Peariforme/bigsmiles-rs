@@ -3,6 +3,7 @@
 use thiserror::Error;
 
 use super::{AtomError, NodeError};
+use crate::NodeIndex;
 
 /// Errors that can occur when building a molecule.
 #[derive(Debug, Clone, PartialEq, Error)]
@@ -17,7 +18,10 @@ pub enum MoleculeError {
 
     /// Aromatic ring violates Hückel's rule (4n+2 pi electrons required).
     #[error("aromatic ring {ring:?} has {pi_electrons} pi electrons (Huckel: 4n+2 required)")]
-    HuckelViolation { ring: Vec<u16>, pi_electrons: u8 },
+    HuckelViolation {
+        ring: Vec<NodeIndex>,
+        pi_electrons: u8,
+    },
 }
 
 #[cfg(test)]
