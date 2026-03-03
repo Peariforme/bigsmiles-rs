@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3](https://github.com/Peariforme/bigsmiles-rs/compare/opensmiles-v0.1.2...opensmiles-v0.1.3) - 2026-03-03
+
+### Added
+
+- *(opensmiles)* widen node index from u16 to u32 ([#32](https://github.com/Peariforme/bigsmiles-rs/pull/32))
+
 ## [0.1.2](https://github.com/Peariforme/bigsmiles-rs/compare/opensmiles-v0.1.1...opensmiles-v0.1.2) - 2026-02-25
 
 ### Fixed
