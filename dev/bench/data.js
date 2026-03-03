@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772554929931,
+  "lastUpdate": 1772563077560,
   "repoUrl": "https://github.com/Peariforme/bigsmiles-rs",
   "entries": {
     "SMILES Parser Benchmarks": [
@@ -4567,6 +4567,132 @@ window.BENCHMARK_DATA = {
             "name": "complex_smiles_scaling/polystyrene_units/100",
             "value": 96494,
             "range": "± 1962",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "41898282+github-actions[bot]@users.noreply.github.com",
+            "name": "github-actions[bot]",
+            "username": "github-actions[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a9c15d6afb6d196cb4efd985b1f1478f2f513d1a",
+          "message": "chore(opensmiles): release v0.1.3 (#33)\n\nCo-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+          "timestamp": "2026-03-03T19:33:54+01:00",
+          "tree_id": "5495c7028413c6e8b376917932515b8ce1878907",
+          "url": "https://github.com/Peariforme/bigsmiles-rs/commit/a9c15d6afb6d196cb4efd985b1f1478f2f513d1a"
+        },
+        "date": 1772563076988,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "polyethylene_no_bond",
+            "value": 330,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "polyethylene_non_directional",
+            "value": 337,
+            "range": "± 12",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "polystyrene",
+            "value": 1077,
+            "range": "± 11",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "isotactic_polypropylene_with_terminals",
+            "value": 512,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "alpha_omega_dimethyl_polyethylene",
+            "value": 763,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "copolymer_2_units",
+            "value": 772,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "copolymer_with_end_groups",
+            "value": 1129,
+            "range": "± 11",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/1",
+            "value": 335,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/10",
+            "value": 3236,
+            "range": "± 82",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/50",
+            "value": 17978,
+            "range": "± 111",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/100",
+            "value": 34048,
+            "range": "± 160",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/500",
+            "value": 152022,
+            "range": "± 3147",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parser_scaling/copolymer_units/1000",
+            "value": 339039,
+            "range": "± 2205",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "complex_smiles_scaling/polystyrene_units/1",
+            "value": 1048,
+            "range": "± 21",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "complex_smiles_scaling/polystyrene_units/10",
+            "value": 10078,
+            "range": "± 56",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "complex_smiles_scaling/polystyrene_units/50",
+            "value": 48124,
+            "range": "± 442",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "complex_smiles_scaling/polystyrene_units/100",
+            "value": 96334,
+            "range": "± 263",
             "unit": "ns/iter"
           }
         ]
