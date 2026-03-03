@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3](https://github.com/Peariforme/bigsmiles-rs/compare/bigsmiles-v0.1.2...bigsmiles-v0.1.3) - 2026-03-03
+
+### Added
+
+- *(bigsmiles)* add first_stochastic() method to BigSmiles ([#30](https://github.com/Peariforme/bigsmiles-rs/pull/30))
+
 ## [0.1.2](https://github.com/Peariforme/bigsmiles-rs/compare/bigsmiles-v0.1.1...bigsmiles-v0.1.2) - 2026-02-26
 
 ### Added
